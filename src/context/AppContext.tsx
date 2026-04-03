@@ -29,18 +29,48 @@ const MOCK_KELAS: Kelas[] = [
 
 const today = new Date().toISOString().split('T')[0];
 
+// Generate mock data for the past 7 days
+function generateWeeklyAbsen(): AbsenRecord[] {
+  const records: AbsenRecord[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    // Random absences per day
+    const absent = Math.floor(Math.random() * 3);
+    for (let j = 0; j < absent; j++) {
+      const studentIdx = Math.floor(Math.random() * MOCK_STUDENTS_7A.length);
+      const s = MOCK_STUDENTS_7A[studentIdx];
+      const statuses: ('S' | 'I' | 'A')[] = ['S', 'I', 'A'];
+      records.push({
+        id: `wa_${i}_${j}`,
+        studentId: s.id,
+        studentName: s.name,
+        date: dateStr,
+        status: statuses[Math.floor(Math.random() * 3)],
+        kelasId: 'k1',
+      });
+    }
+  }
+  return records;
+}
+
 const INITIAL_ABSEN: AbsenRecord[] = [
   { id: 'a1', studentId: '3', studentName: 'Budi Santoso', date: today, status: 'S', kelasId: 'k1' },
   { id: 'a2', studentId: '5', studentName: 'Eko Prasetyo', date: today, status: 'A', kelasId: 'k1' },
+  ...generateWeeklyAbsen(),
 ];
 
 const INITIAL_KASUS: KasusRecord[] = [
   { id: 'ks1', studentId: '2', studentName: 'Siti Nurhaliza', date: today, description: 'Tidak mengerjakan PR Matematika', category: 'Akademik', kelasId: 'k1' },
+  { id: 'ks2', studentId: '5', studentName: 'Eko Prasetyo', date: today, description: 'Terlambat masuk kelas 15 menit', category: 'Kedisiplinan', kelasId: 'k1' },
+  { id: 'ks3', studentId: '7', studentName: 'Gunawan Wibowo', date: today, description: 'Mengganggu teman saat pelajaran berlangsung', category: 'Perilaku', kelasId: 'k1' },
 ];
 
 const INITIAL_CATATAN: CatatanRecord[] = [
   { id: 'c1', studentId: '1', studentName: 'Ahmad Rizki', date: today, content: 'Menunjukkan peningkatan dalam diskusi kelas. Aktif bertanya dan memberikan pendapat.', kelasId: 'k1' },
   { id: 'c2', studentId: '4', studentName: 'Dewi Lestari', date: today, content: 'Membantu teman yang kesulitan memahami materi pelajaran.', kelasId: 'k1' },
+  { id: 'c3', studentId: '6', studentName: 'Fitri Handayani', date: today, content: 'Presentasi kelompok sangat baik, menunjukkan kepemimpinan.', kelasId: 'k1' },
 ];
 
 interface AppState {
@@ -48,6 +78,8 @@ interface AppState {
   setActiveTab: (tab: TabId) => void;
   activeKelas: string;
   setActiveKelas: (id: string) => void;
+  activeStudentId: string | null;
+  setActiveStudentId: (id: string | null) => void;
   kelasList: Kelas[];
   absenRecords: AbsenRecord[];
   addAbsenRecords: (records: AbsenRecord[]) => void;
@@ -64,6 +96,7 @@ const AppContext = createContext<AppState | null>(null);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [activeTab, setActiveTab] = useState<TabId>('home');
   const [activeKelas, setActiveKelas] = useState('k1');
+  const [activeStudentId, setActiveStudentId] = useState<string | null>(null);
   const [absenRecords, setAbsenRecords] = useState<AbsenRecord[]>(INITIAL_ABSEN);
   const [kasusRecords, setKasusRecords] = useState<KasusRecord[]>(INITIAL_KASUS);
   const [catatanRecords, setCatatanRecords] = useState<CatatanRecord[]>(INITIAL_CATATAN);
@@ -77,7 +110,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addAbsenRecords = useCallback((records: AbsenRecord[]) => {
     setAbsenRecords(prev => {
-      const filtered = prev.filter(p => 
+      const filtered = prev.filter(p =>
         !records.some(r => r.studentId === p.studentId && r.date === p.date && r.kelasId === p.kelasId)
       );
       return [...filtered, ...records];
@@ -96,6 +129,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider value={{
       activeTab, setActiveTab,
       activeKelas, setActiveKelas,
+      activeStudentId, setActiveStudentId,
       kelasList: MOCK_KELAS,
       absenRecords, addAbsenRecords,
       kasusRecords, addKasusRecord,

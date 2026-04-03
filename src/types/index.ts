@@ -38,4 +38,4 @@ export interface CatatanRecord {
   kelasId: string;
 }
 
-export type TabId = 'home' | 'absen' | 'kasus' | 'laporan' | 'catatan' | 'setelan';
+export type TabId = 'home' | 'absen' | 'kasus' | 'laporan' | 'catatan' | 'siswa' | 'setelan';

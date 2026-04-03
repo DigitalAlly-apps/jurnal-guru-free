@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { AlertTriangle, BookOpen } from 'lucide-react';
 
 export function KasusPage() {
   const { kelasList, activeKelas, addKasusRecord, addCatatanRecord, showToast } = useApp();
@@ -44,16 +45,21 @@ export function KasusPage() {
   };
 
   return (
-    <div className="flex flex-col gap-[16px]">
+    <div className="flex flex-col gap-5 max-w-2xl">
       {/* Kasus Form */}
-      <div className="bg-surface border border-border rounded-lg border-l-[3px] border-l-semantic-red p-[16px]">
-        <h3 className="text-[14px] font-semibold text-foreground mb-[12px]">Log Kasus</h3>
-        <div className="flex flex-col gap-[12px]">
-          <select value={kasusStudent} onChange={e => setKasusStudent(e.target.value)} className="px-[12px] py-[9px] bg-surface border border-border rounded-md text-[14px] text-foreground outline-none focus:border-primary transition-colors">
+      <div className="bg-surface rounded-2xl shadow-soft p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-semantic-red-light flex items-center justify-center">
+            <AlertTriangle className="w-4 h-4 text-semantic-red" />
+          </div>
+          <h3 className="text-sm font-semibold text-foreground">Log Kasus</h3>
+        </div>
+        <div className="flex flex-col gap-3">
+          <select value={kasusStudent} onChange={e => setKasusStudent(e.target.value)} className="input-soft">
             <option value="">Pilih siswa...</option>
             {kelas?.students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
-          <select value={kasusCategory} onChange={e => setKasusCategory(e.target.value)} className="px-[12px] py-[9px] bg-surface border border-border rounded-md text-[14px] text-foreground outline-none focus:border-primary transition-colors">
+          <select value={kasusCategory} onChange={e => setKasusCategory(e.target.value)} className="input-soft">
             <option value="">Kategori...</option>
             <option value="Akademik">Akademik</option>
             <option value="Perilaku">Perilaku</option>
@@ -65,19 +71,24 @@ export function KasusPage() {
             onChange={e => setKasusDesc(e.target.value)}
             placeholder="Deskripsi kasus..."
             rows={3}
-            className="px-[12px] py-[9px] bg-surface border border-border rounded-md text-[14px] text-foreground outline-none focus:border-primary transition-colors resize-none"
+            className="input-soft resize-none"
           />
-          <button onClick={handleSaveKasus} className="w-full py-[9px] bg-primary text-primary-foreground rounded-md text-[13px] font-medium hover:bg-accent-hover transition-colors">
+          <button onClick={handleSaveKasus} className="btn-soft btn-primary-soft w-full py-3">
             Simpan Kasus
           </button>
         </div>
       </div>
 
       {/* Catatan Anekdot Form */}
-      <div className="bg-surface border border-border rounded-lg border-l-[3px] border-l-primary p-[16px]">
-        <h3 className="text-[14px] font-semibold text-foreground mb-[12px]">Catatan Anekdot</h3>
-        <div className="flex flex-col gap-[12px]">
-          <select value={catatanStudent} onChange={e => setCatatanStudent(e.target.value)} className="px-[12px] py-[9px] bg-surface border border-border rounded-md text-[14px] text-foreground outline-none focus:border-primary transition-colors">
+      <div className="bg-surface rounded-2xl shadow-soft p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 rounded-lg bg-accent-light flex items-center justify-center">
+            <BookOpen className="w-4 h-4 text-primary" />
+          </div>
+          <h3 className="text-sm font-semibold text-foreground">Catatan Anekdot</h3>
+        </div>
+        <div className="flex flex-col gap-3">
+          <select value={catatanStudent} onChange={e => setCatatanStudent(e.target.value)} className="input-soft">
             <option value="">Pilih siswa...</option>
             {kelas?.students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
@@ -86,9 +97,9 @@ export function KasusPage() {
             onChange={e => setCatatanContent(e.target.value)}
             placeholder="Tulis catatan anekdot..."
             rows={4}
-            className="px-[12px] py-[9px] bg-surface border border-border rounded-md text-[14px] text-foreground outline-none focus:border-primary transition-colors resize-none"
+            className="input-soft resize-none"
           />
-          <button onClick={handleSaveCatatan} className="w-full py-[9px] bg-primary text-primary-foreground rounded-md text-[13px] font-medium hover:bg-accent-hover transition-colors">
+          <button onClick={handleSaveCatatan} className="btn-soft btn-primary-soft w-full py-3">
             Simpan Catatan
           </button>
         </div>
