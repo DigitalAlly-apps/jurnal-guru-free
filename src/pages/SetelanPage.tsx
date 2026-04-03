@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Switch } from '@/components/ui/switch';
 
 export function SetelanPage() {
   const [startDate, setStartDate] = useState('2024-07-15');
   const [endDate, setEndDate] = useState('2024-12-20');
   const [saved, setSaved] = useState(false);
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
 
   const handleSave = () => {
     setSaved(true);
