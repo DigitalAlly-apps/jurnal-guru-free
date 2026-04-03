@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Switch } from '@/components/ui/switch';
 
 export function SetelanPage() {
@@ -7,6 +7,12 @@ export function SetelanPage() {
   const [saved, setSaved] = useState(false);
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
 
+  const toggleDark = (checked: boolean) => {
+    setIsDark(checked);
+    document.documentElement.classList.toggle('dark', checked);
+    localStorage.setItem('theme', checked ? 'dark' : 'light');
+  };
+
   const handleSave = () => {
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -14,6 +20,16 @@ export function SetelanPage() {
 
   return (
     <div className="flex flex-col gap-[16px]">
+      <div className="bg-surface border border-border rounded-lg p-[16px]">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-[14px] font-semibold text-foreground">Mode Gelap</h3>
+            <p className="text-[13px] text-text-secondary">Tampilan gelap untuk mata nyaman</p>
+          </div>
+          <Switch checked={isDark} onCheckedChange={toggleDark} />
+        </div>
+      </div>
+
       <div className="bg-surface border border-border rounded-lg p-[16px]">
         <h3 className="text-[14px] font-semibold text-foreground mb-[12px]">Periode Semester</h3>
         <div className="flex flex-col gap-[12px]">
