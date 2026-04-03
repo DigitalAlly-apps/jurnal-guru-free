@@ -1,25 +1,16 @@
 import { useApp } from '@/context/AppContext';
-import { BottomNav } from './BottomNav';
 import { AppHeader } from './AppHeader';
-import { KelasBar } from './KelasBar';
+import { AppSidebar } from './AppSidebar';
+import { FAB } from './FAB';
 import { ToastContainer } from './ToastContainer';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { HomePage } from '@/pages/HomePage';
 import { AbsenPage } from '@/pages/AbsenPage';
 import { KasusPage } from '@/pages/KasusPage';
 import { LaporanPage } from '@/pages/LaporanPage';
 import { CatatanPage } from '@/pages/CatatanPage';
+import { SiswaPage } from '@/pages/SiswaPage';
 import { SetelanPage } from '@/pages/SetelanPage';
-
-const TAB_TITLES: Record<string, string> = {
-  home: 'Beranda',
-  absen: 'Absensi',
-  kasus: 'Kasus',
-  laporan: 'Laporan',
-  catatan: 'Catatan',
-  setelan: 'Setelan',
-};
-
-const TABS_WITH_KELAS = ['home', 'absen', 'kasus', 'laporan', 'catatan'];
 
 export function AppLayout() {
   const { activeTab } = useApp();
@@ -31,19 +22,24 @@ export function AppLayout() {
       case 'kasus': return <KasusPage />;
       case 'laporan': return <LaporanPage />;
       case 'catatan': return <CatatanPage />;
+      case 'siswa': return <SiswaPage />;
       case 'setelan': return <SetelanPage />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-background pb-[68px]">
-      <AppHeader title={TAB_TITLES[activeTab]} />
-      {TABS_WITH_KELAS.includes(activeTab) && <KelasBar />}
-      <main className="p-[16px]">
-        {renderPage()}
-      </main>
-      <BottomNav />
-      <ToastContainer />
-    </div>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AppSidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <AppHeader />
+          <main className="flex-1 p-4 md:p-6 overflow-y-auto">
+            {renderPage()}
+          </main>
+        </div>
+        <FAB />
+        <ToastContainer />
+      </div>
+    </SidebarProvider>
   );
 }

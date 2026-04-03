@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
+import { Download, BarChart3, AlertTriangle, BookOpen } from 'lucide-react';
 
 export function LaporanPage() {
   const { kelasList, activeKelas, absenRecords, kasusRecords, catatanRecords } = useApp();
@@ -21,14 +22,6 @@ export function LaporanPage() {
     return true;
   };
 
-  const filteredAbsen = useMemo(() => {
-    return absenRecords.filter(a =>
-      a.kelasId === activeKelas &&
-      (!selectedStudent || a.studentId === selectedStudent) &&
-      filterByPeriod(a.date)
-    );
-  }, [absenRecords, activeKelas, selectedStudent, period]);
-
   const filteredKasus = useMemo(() => {
     return kasusRecords.filter(k =>
       k.kelasId === activeKelas &&
@@ -45,7 +38,6 @@ export function LaporanPage() {
     );
   }, [catatanRecords, activeKelas, selectedStudent, period]);
 
-  // Recap
   const recap = useMemo(() => {
     const students = kelas?.students || [];
     return students.map(s => {
@@ -74,26 +66,28 @@ export function LaporanPage() {
   };
 
   const periods: { id: 'minggu' | 'bulan' | 'semua'; label: string }[] = [
-    { id: 'minggu', label: 'Minggu Ini' },
-    { id: 'bulan', label: 'Bulan Ini' },
+    { id: 'minggu', label: 'Minggu' },
+    { id: 'bulan', label: 'Bulan' },
     { id: 'semua', label: 'Semua' },
   ];
 
   return (
-    <div className="flex flex-col gap-[16px]">
+    <div className="flex flex-col gap-5 max-w-2xl">
       {/* Filters */}
-      <div className="flex flex-col gap-[8px]">
-        <select value={selectedStudent} onChange={e => setSelectedStudent(e.target.value)} className="px-[12px] py-[9px] bg-surface border border-border rounded-md text-[14px] text-foreground outline-none focus:border-primary transition-colors">
+      <div className="flex flex-col gap-3">
+        <select value={selectedStudent} onChange={e => setSelectedStudent(e.target.value)} className="input-soft">
           <option value="">Semua Siswa</option>
           {kelas?.students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
-        <div className="flex border border-border rounded-md overflow-hidden">
+        <div className="flex bg-bg-2 rounded-xl p-1 gap-1">
           {periods.map(p => (
             <button
               key={p.id}
               onClick={() => setPeriod(p.id)}
-              className={`flex-1 py-[8px] text-[12px] font-medium transition-colors ${
-                period === p.id ? 'bg-primary text-primary-foreground' : 'bg-surface text-text-secondary hover:bg-bg-2'
+              className={`flex-1 py-2 text-[12px] font-semibold rounded-lg transition-all ${
+                period === p.id
+                  ? 'bg-surface shadow-soft text-foreground'
+                  : 'text-text-tertiary hover:text-text-secondary'
               }`}
             >
               {p.label}
@@ -103,27 +97,30 @@ export function LaporanPage() {
       </div>
 
       {/* Recap Table */}
-      <div>
-        <h3 className="label-upper mb-[8px]">Rekap Kehadiran</h3>
-        <div className="bg-surface border border-border rounded-lg overflow-x-auto">
+      <div className="bg-surface rounded-2xl shadow-soft overflow-hidden">
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
+          <BarChart3 className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Rekap Kehadiran</h3>
+        </div>
+        <div className="overflow-x-auto">
           <table className="w-full border-collapse text-[13px]">
             <thead>
-              <tr>
-                <th className="text-left text-[11px] font-medium tracking-[.05em] uppercase text-text-tertiary px-[10px] py-[8px] border-b border-border">Nama</th>
-                <th className="text-left text-[11px] font-medium tracking-[.05em] uppercase text-text-tertiary px-[10px] py-[8px] border-b border-border">H</th>
-                <th className="text-left text-[11px] font-medium tracking-[.05em] uppercase text-text-tertiary px-[10px] py-[8px] border-b border-border">S</th>
-                <th className="text-left text-[11px] font-medium tracking-[.05em] uppercase text-text-tertiary px-[10px] py-[8px] border-b border-border">I</th>
-                <th className="text-left text-[11px] font-medium tracking-[.05em] uppercase text-text-tertiary px-[10px] py-[8px] border-b border-border">A</th>
+              <tr className="bg-bg-2">
+                <th className="text-left text-[11px] font-semibold tracking-wider uppercase text-text-tertiary px-4 py-2.5">Nama</th>
+                <th className="text-center text-[11px] font-semibold tracking-wider uppercase text-text-tertiary px-3 py-2.5">H</th>
+                <th className="text-center text-[11px] font-semibold tracking-wider uppercase text-text-tertiary px-3 py-2.5">S</th>
+                <th className="text-center text-[11px] font-semibold tracking-wider uppercase text-text-tertiary px-3 py-2.5">I</th>
+                <th className="text-center text-[11px] font-semibold tracking-wider uppercase text-text-tertiary px-3 py-2.5">A</th>
               </tr>
             </thead>
             <tbody>
               {recap.map((r, i) => (
-                <tr key={i} className="hover:bg-bg-2">
-                  <td className="px-[10px] py-[10px] border-b border-border text-foreground">{r.name}</td>
-                  <td className="px-[10px] py-[10px] border-b border-border">{r.hadir}</td>
-                  <td className="px-[10px] py-[10px] border-b border-border">{r.sakit}</td>
-                  <td className="px-[10px] py-[10px] border-b border-border">{r.izin}</td>
-                  <td className="px-[10px] py-[10px] border-b border-border">{r.alpha}</td>
+                <tr key={i} className="hover:bg-bg-2 transition-colors">
+                  <td className="px-4 py-3 border-b border-border text-foreground font-medium">{r.name}</td>
+                  <td className="px-3 py-3 border-b border-border text-center text-primary font-semibold">{r.hadir}</td>
+                  <td className="px-3 py-3 border-b border-border text-center text-semantic-blue">{r.sakit}</td>
+                  <td className="px-3 py-3 border-b border-border text-center text-semantic-yellow">{r.izin}</td>
+                  <td className="px-3 py-3 border-b border-border text-center text-semantic-red">{r.alpha}</td>
                 </tr>
               ))}
             </tbody>
@@ -133,17 +130,20 @@ export function LaporanPage() {
 
       {/* Kasus Log */}
       {filteredKasus.length > 0 && (
-        <div>
-          <h3 className="label-upper mb-[8px]">Log Kasus</h3>
-          <div className="bg-surface border border-border rounded-lg">
-            {filteredKasus.map((k, i) => (
-              <div key={k.id} className={`px-[16px] py-[10px] ${i < filteredKasus.length - 1 ? 'border-b border-border' : ''}`}>
-                <div className="flex justify-between items-center mb-[2px]">
+        <div className="bg-surface rounded-2xl shadow-soft p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle className="w-4 h-4 text-semantic-red" />
+            <h3 className="text-sm font-semibold text-foreground">Log Kasus</h3>
+          </div>
+          <div className="flex flex-col gap-2">
+            {filteredKasus.map(k => (
+              <div key={k.id} className="bg-bg-2 rounded-xl p-3">
+                <div className="flex justify-between items-center mb-1">
                   <span className="text-[13px] font-medium text-foreground">{k.studentName}</span>
                   <span className="text-[11px] text-text-tertiary">{k.date}</span>
                 </div>
                 <p className="text-[12px] text-text-secondary">{k.description}</p>
-                <span className="inline-flex items-center px-[8px] py-[2px] rounded-sm text-[11px] font-medium bg-bg-3 text-text-secondary mt-[4px]">{k.category}</span>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-bg-3 text-text-secondary mt-1.5">{k.category}</span>
               </div>
             ))}
           </div>
@@ -152,12 +152,15 @@ export function LaporanPage() {
 
       {/* Catatan */}
       {filteredCatatan.length > 0 && (
-        <div>
-          <h3 className="label-upper mb-[8px]">Catatan Anekdot</h3>
-          <div className="bg-surface border border-border rounded-lg">
-            {filteredCatatan.map((c, i) => (
-              <div key={c.id} className={`px-[16px] py-[10px] ${i < filteredCatatan.length - 1 ? 'border-b border-border' : ''}`}>
-                <div className="flex justify-between items-center mb-[2px]">
+        <div className="bg-surface rounded-2xl shadow-soft p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <BookOpen className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Catatan Anekdot</h3>
+          </div>
+          <div className="flex flex-col gap-2">
+            {filteredCatatan.map(c => (
+              <div key={c.id} className="bg-bg-2 rounded-xl p-3">
+                <div className="flex justify-between items-center mb-1">
                   <span className="text-[13px] font-medium text-foreground">{c.studentName}</span>
                   <span className="text-[11px] text-text-tertiary">{c.date}</span>
                 </div>
@@ -168,8 +171,8 @@ export function LaporanPage() {
         </div>
       )}
 
-      <button onClick={exportCSV} className="w-full py-[9px] bg-transparent border border-border-2 text-text-secondary rounded-md text-[13px] font-medium hover:bg-bg-2 transition-colors">
-        Export CSV
+      <button onClick={exportCSV} className="btn-soft btn-secondary-soft w-full py-3 gap-2">
+        <Download className="w-4 h-4" /> Export CSV
       </button>
     </div>
   );

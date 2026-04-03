@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
+import { Search, BookOpen } from 'lucide-react';
 
 export function CatatanPage() {
-  const { activeKelas, catatanRecords } = useApp();
+  const { activeKelas, catatanRecords, setActiveStudentId, setActiveTab } = useApp();
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
@@ -14,28 +15,43 @@ export function CatatanPage() {
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [catatanRecords, activeKelas, search]);
 
+  const handleStudentClick = (studentId: string) => {
+    setActiveStudentId(studentId);
+    setActiveTab('siswa');
+  };
+
   return (
-    <div className="flex flex-col gap-[12px]">
-      <input
-        type="text"
-        placeholder="Cari catatan..."
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-        className="px-[12px] py-[9px] bg-surface border border-border rounded-md text-[14px] text-foreground outline-none focus:border-primary transition-colors"
-      />
+    <div className="flex flex-col gap-4 max-w-2xl">
+      <div className="relative">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
+        <input
+          type="text"
+          placeholder="Cari catatan..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="input-soft pl-10"
+        />
+      </div>
 
       {filtered.length === 0 ? (
-        <p className="text-[13px] text-text-tertiary text-center py-[32px]">Belum ada catatan</p>
+        <div className="flex flex-col items-center justify-center py-16 text-text-tertiary">
+          <BookOpen className="w-10 h-10 mb-3 opacity-40" />
+          <p className="text-sm">Belum ada catatan</p>
+        </div>
       ) : (
-        <div className="bg-surface border border-border rounded-lg">
-          {filtered.map((c, i) => (
-            <div key={c.id} className={`px-[16px] py-[12px] ${i < filtered.length - 1 ? 'border-b border-border' : ''}`}>
-              <div className="flex justify-between items-center mb-[4px]">
-                <span className="text-[13px] font-medium text-foreground">{c.studentName}</span>
+        <div className="flex flex-col gap-3">
+          {filtered.map(c => (
+            <button
+              key={c.id}
+              onClick={() => handleStudentClick(c.studentId)}
+              className="bg-surface rounded-2xl shadow-soft p-4 text-left hover:shadow-soft-md transition-all"
+            >
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-[13px] font-semibold text-foreground">{c.studentName}</span>
                 <span className="text-[11px] text-text-tertiary">{c.date}</span>
               </div>
-              <p className="text-[13px] text-text-secondary leading-[1.5]">{c.content}</p>
-            </div>
+              <p className="text-[13px] text-text-secondary leading-relaxed">{c.content}</p>
+            </button>
           ))}
         </div>
       )}

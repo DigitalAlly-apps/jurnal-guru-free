@@ -2,35 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    --bg: 40 6% 96%;
-    --bg-2: 40 4% 93%;
-    --bg-3: 40 4% 90%;
-    --surface: 0 0% 100%;
-    --border: 40 4% 88%;
-    --border-2: 40 3% 81%;
+    /* Warm & Soft — cream base, friendly tones */
+    --bg: 30 30% 97%;
+    --bg-2: 30 20% 94%;
+    --bg-3: 30 15% 90%;
+    --surface: 30 25% 99%;
+    --border: 30 15% 91%;
+    --border-2: 30 10% 84%;
 
-    --text: 50 6% 10%;
-    --text-2: 40 2% 41%;
-    --text-3: 40 2% 65%;
+    --text: 25 30% 14%;
+    --text-2: 25 10% 46%;
+    --text-3: 25 8% 66%;
 
-    --accent: 152 60% 26%;
-    --accent-light: 150 40% 93%;
-    --accent-hover: 152 60% 21%;
+    --accent: 152 32% 42%;
+    --accent-light: 148 30% 94%;
+    --accent-hover: 152 36% 35%;
 
-    --red: 6 64% 46%;
-    --red-light: 6 60% 95%;
-    --yellow: 36 72% 42%;
-    --yellow-light: 42 94% 90%;
-    --blue: 226 72% 48%;
-    --blue-light: 216 100% 97%;
+    --red: 4 52% 58%;
+    --red-light: 4 65% 96%;
+    --yellow: 38 55% 50%;
+    --yellow-light: 42 70% 94%;
+    --blue: 215 50% 55%;
+    --blue-light: 215 60% 96%;
+    --purple: 270 40% 55%;
+    --purple-light: 270 50% 96%;
 
-    --radius: 6px;
-    --radius-sm: 4px;
-    --radius-lg: 10px;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+
+    --shadow-soft: 0 2px 8px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.03);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.06), 0 2px 6px rgba(0,0,0,.04);
+    --shadow-lg: 0 8px 30px rgba(0,0,0,.08), 0 4px 10px rgba(0,0,0,.04);
 
     --background: var(--bg);
     --foreground: var(--text);
@@ -48,30 +55,54 @@
     --destructive-foreground: 0 0% 100%;
     --input: var(--border);
     --ring: var(--accent);
+
+    --sidebar-background: var(--surface);
+    --sidebar-foreground: var(--text);
+    --sidebar-primary: var(--accent);
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: var(--bg-2);
+    --sidebar-accent-foreground: var(--text);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--accent);
   }
 
   .dark {
-    --bg: 50 7% 8%;
-    --bg-2: 50 5% 10%;
-    --bg-3: 50 4% 13%;
-    --surface: 50 5% 10%;
-    --border: 50 3% 16%;
-    --border-2: 50 2% 21%;
+    --bg: 25 15% 9%;
+    --bg-2: 25 12% 12%;
+    --bg-3: 25 10% 16%;
+    --surface: 25 12% 12%;
+    --border: 25 8% 20%;
+    --border-2: 25 6% 26%;
 
-    --text: 44 10% 92%;
-    --text-2: 40 2% 53%;
-    --text-3: 40 1% 32%;
+    --text: 25 15% 92%;
+    --text-2: 25 5% 55%;
+    --text-3: 25 3% 38%;
 
-    --accent: 152 55% 39%;
-    --accent-light: 155 47% 11%;
-    --accent-hover: 152 52% 45%;
+    --accent: 152 35% 50%;
+    --accent-light: 152 25% 14%;
+    --accent-hover: 152 38% 58%;
 
-    --red: 5 68% 59%;
-    --red-light: 5 50% 11%;
-    --yellow: 32 62% 52%;
-    --yellow-light: 36 60% 10%;
-    --blue: 222 72% 60%;
-    --blue-light: 224 60% 14%;
+    --red: 4 55% 60%;
+    --red-light: 4 45% 13%;
+    --yellow: 38 50% 55%;
+    --yellow-light: 42 45% 12%;
+    --blue: 215 55% 60%;
+    --blue-light: 215 45% 13%;
+    --purple: 270 40% 60%;
+    --purple-light: 270 35% 14%;
+
+    --shadow-soft: 0 2px 8px rgba(0,0,0,.15), 0 1px 3px rgba(0,0,0,.1);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.2), 0 2px 6px rgba(0,0,0,.12);
+    --shadow-lg: 0 8px 30px rgba(0,0,0,.25), 0 4px 10px rgba(0,0,0,.15);
+
+    --sidebar-background: var(--bg-2);
+    --sidebar-foreground: var(--text);
+    --sidebar-primary: var(--accent);
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: var(--bg-3);
+    --sidebar-accent-foreground: var(--text);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--accent);
   }
 
   * {
@@ -89,24 +120,29 @@
   }
 }
 
-/* Utility classes matching design spec */
 @layer components {
   .label-upper {
     font-size: 11px;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: .06em;
     text-transform: uppercase;
     color: hsl(var(--text-3));
   }
 
+  .card-soft {
+    background: hsl(var(--surface));
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    padding: 20px;
+  }
+
   .toast-notification {
     background: hsl(var(--surface));
-    border: 1px solid hsl(var(--border));
     border-radius: var(--radius);
-    padding: 10px 14px;
+    padding: 12px 16px;
     font-size: 13px;
     color: hsl(var(--text));
-    box-shadow: 0 4px 6px rgba(0,0,0,.05), 0 2px 4px rgba(0,0,0,.04);
+    box-shadow: var(--shadow-md);
   }
 
   .offline-bar {
@@ -116,5 +152,58 @@
     font-weight: 500;
     text-align: center;
     padding: 4px 0;
+  }
+
+  .input-soft {
+    width: 100%;
+    padding: 10px 14px;
+    background: hsl(var(--surface));
+    border: 1.5px solid hsl(var(--border));
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-family: inherit;
+    color: hsl(var(--text));
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+
+  .input-soft:focus {
+    border-color: hsl(var(--accent));
+    box-shadow: 0 0 0 3px hsl(var(--accent) / 0.1);
+  }
+
+  .btn-soft {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all .2s;
+    white-space: nowrap;
+  }
+
+  .btn-primary-soft {
+    background: hsl(var(--accent));
+    color: #fff;
+    box-shadow: 0 2px 6px hsl(var(--accent) / 0.25);
+  }
+  .btn-primary-soft:hover {
+    background: hsl(var(--accent-hover));
+    box-shadow: 0 4px 12px hsl(var(--accent) / 0.3);
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary-soft {
+    background: hsl(var(--bg-2));
+    color: hsl(var(--text-2));
+    border: 1.5px solid hsl(var(--border));
+  }
+  .btn-secondary-soft:hover {
+    background: hsl(var(--bg-3));
   }
 }
