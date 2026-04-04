@@ -6,7 +6,6 @@ import {
   BarChart3,
   Users,
   Settings,
-  GraduationCap,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import type { TabId } from '@/types';
@@ -22,6 +21,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { JurnalGuruLogo } from '@/components/JurnalGuruLogo';
 
 const NAV_ITEMS: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'home', label: 'Beranda', icon: LayoutDashboard },
@@ -45,16 +45,12 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
-        {/* Brand */}
-        <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
-            <GraduationCap className="w-4 h-4 text-primary-foreground" />
-          </div>
-          {!collapsed && (
-            <div>
-              <h1 className="text-sm font-bold text-foreground leading-tight">Jurnal Guru</h1>
-              <p className="text-[11px] text-text-tertiary">Pro Edition</p>
-            </div>
+        {/* ── Brand / Logo ── */}
+        <div className="flex items-center justify-center border-b border-sidebar-border py-4 px-3">
+          {collapsed ? (
+            <JurnalGuruLogo size={32} showText={false} />
+          ) : (
+            <JurnalGuruLogo size={100} showText={true} className="my-1" />
           )}
         </div>
 
