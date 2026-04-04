@@ -46,14 +46,24 @@ export type TabId = 'home' | 'absen' | 'kasus' | 'riwayat' | 'laporan' | 'siswa'
 
 export type SemesterPeriod = 'ganjil' | 'genap';
 
+export interface UjianSchedule {
+  utsStart: string;
+  utsEnd: string;
+  uasStart: string;
+  uasEnd: string;
+}
+
 export interface SemesterConfig {
   tahunAjaran: string;
   semester: SemesterPeriod;
+  ganjil: UjianSchedule;
+  genap: UjianSchedule;
 }
 
 export interface BackupData {
   version: string;
   exportedAt: string;
+  namaGuru: string;
   semester: SemesterConfig;
   kelasList: Kelas[];
   absenRecords: AbsenRecord[];

@@ -9,9 +9,13 @@ const currentYear = new Date().getFullYear();
 const DEFAULT_SEMESTER: SemesterConfig = {
   tahunAjaran: `${currentYear}/${currentYear + 1}`,
   semester: new Date().getMonth() < 6 ? 'genap' : 'ganjil',
+  ganjil: { utsStart: '', utsEnd: '', uasStart: '', uasEnd: '' },
+  genap:  { utsStart: '', utsEnd: '', uasStart: '', uasEnd: '' },
 };
 
 interface AppState {
+  namaGuru: string;
+  setNamaGuru: (name: string) => void;
   activeTab: TabId;
   setActiveTab: (tab: TabId) => void;
   activeKelas: string;
@@ -45,6 +49,7 @@ interface AppState {
 const AppContext = createContext<AppState | null>(null);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [namaGuru, setNamaGuru] = useState('');
   const [activeTab, setActiveTab] = useState<TabId>('home');
   const [activeKelas, setActiveKelas] = useState('k1');
   const [activeStudentId, setActiveStudentId] = useState<string | null>(null);
@@ -128,6 +133,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const data: BackupData = {
       version: '2.0',
       exportedAt: new Date().toISOString(),
+      namaGuru,
       semester,
       kelasList,
       absenRecords,
@@ -142,10 +148,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     a.click();
     URL.revokeObjectURL(url);
     showToast('Backup berhasil diunduh');
-  }, [semester, kelasList, absenRecords, kasusRecords, catatanRecords, showToast]);
+  }, [namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, showToast]);
 
   const importBackup = useCallback((data: BackupData) => {
     if (data.version && data.kelasList) {
+      if (data.namaGuru) setNamaGuru(data.namaGuru);
       setKelasList(data.kelasList);
       setAbsenRecords(data.absenRecords || []);
       setKasusRecords(data.kasusRecords || []);
@@ -160,6 +167,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContext.Provider value={{
+      namaGuru, setNamaGuru,
       activeTab, setActiveTab,
       activeKelas, setActiveKelas,
       activeStudentId, setActiveStudentId,
