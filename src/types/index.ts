@@ -10,6 +10,8 @@ export interface Kelas {
   students: Student[];
 }
 
+export type PeriodeUjian = 'UTS' | 'UAS' | 'Harian';
+
 export interface AbsenRecord {
   id: string;
   studentId: string;
@@ -17,6 +19,7 @@ export interface AbsenRecord {
   date: string;
   status: 'H' | 'S' | 'I' | 'A';
   kelasId: string;
+  periodeUjian?: PeriodeUjian;
 }
 
 export interface KasusRecord {
@@ -27,6 +30,7 @@ export interface KasusRecord {
   description: string;
   category: string;
   kelasId: string;
+  periodeUjian?: PeriodeUjian;
 }
 
 export interface CatatanRecord {
@@ -38,12 +42,12 @@ export interface CatatanRecord {
   kelasId: string;
 }
 
-export type TabId = 'home' | 'absen' | 'kasus' | 'laporan' | 'catatan' | 'siswa' | 'setelan';
+export type TabId = 'home' | 'absen' | 'kasus' | 'riwayat' | 'laporan' | 'siswa' | 'informasi' | 'setelan';
 
 export type SemesterPeriod = 'ganjil' | 'genap';
 
 export interface SemesterConfig {
-  tahunAjaran: string; // e.g. "2024/2025"
+  tahunAjaran: string;
   semester: SemesterPeriod;
 }
 

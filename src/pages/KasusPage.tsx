@@ -1,108 +1,117 @@
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import { AlertTriangle, BookOpen } from 'lucide-react';
+import type { KasusRecord, PeriodeUjian } from '@/types';
+
+const KATEGORI = ['Akademik', 'Kedisiplinan', 'Perilaku', 'Kehadiran', 'Lainnya'];
+const PERIODE_OPTIONS: PeriodeUjian[] = ['Harian', 'UTS', 'UAS'];
 
 export function KasusPage() {
-  const { kelasList, activeKelas, addKasusRecord, addCatatanRecord, showToast } = useApp();
+  const { kelasList, activeKelas, addKasusRecord, showToast } = useApp();
   const kelas = kelasList.find(k => k.id === activeKelas);
 
-  const [kasusStudent, setKasusStudent] = useState('');
-  const [kasusCategory, setKasusCategory] = useState('');
-  const [kasusDesc, setKasusDesc] = useState('');
+  const [studentId, setStudentId] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [periode, setPeriode] = useState<PeriodeUjian>('Harian');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState(KATEGORI[0]);
 
-  const [catatanStudent, setCatatanStudent] = useState('');
-  const [catatanContent, setCatatanContent] = useState('');
-
-  const handleSaveKasus = () => {
-    if (!kasusStudent || !kasusDesc) return;
-    const student = kelas?.students.find(s => s.id === kasusStudent);
-    addKasusRecord({
-      id: Date.now().toString(),
-      studentId: kasusStudent,
-      studentName: student?.name || '',
-      date: new Date().toISOString().split('T')[0],
-      description: kasusDesc,
-      category: kasusCategory || 'Umum',
+  const handleSave = () => {
+    if (!studentId || !description.trim()) {
+      showToast('Pilih siswa dan isi deskripsi kasus');
+      return;
+    }
+    const student = kelas?.students.find(s => s.id === studentId);
+    if (!student) return;
+    const record: KasusRecord = {
+      id: `k_${Date.now()}`,
+      studentId,
+      studentName: student.name,
+      date,
+      description: description.trim(),
+      category,
       kelasId: activeKelas,
-    });
-    setKasusStudent(''); setKasusCategory(''); setKasusDesc('');
+      periodeUjian: periode,
+    };
+    addKasusRecord(record);
+    setDescription('');
+    setStudentId('');
     showToast('Kasus berhasil disimpan');
   };
 
-  const handleSaveCatatan = () => {
-    if (!catatanStudent || !catatanContent) return;
-    const student = kelas?.students.find(s => s.id === catatanStudent);
-    addCatatanRecord({
-      id: Date.now().toString(),
-      studentId: catatanStudent,
-      studentName: student?.name || '',
-      date: new Date().toISOString().split('T')[0],
-      content: catatanContent,
-      kelasId: activeKelas,
-    });
-    setCatatanStudent(''); setCatatanContent('');
-    showToast('Catatan anekdot berhasil disimpan');
-  };
+  if (!kelas || kelas.students.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
+        <p className="text-text-secondary text-sm">Belum ada siswa di kelas ini.</p>
+        <p className="text-text-tertiary text-xs">Tambahkan siswa di menu <strong>Profil Siswa</strong> terlebih dahulu.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-5 max-w-2xl">
-      {/* Kasus Form */}
-      <div className="bg-surface rounded-2xl shadow-soft p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-semantic-red-light flex items-center justify-center">
-            <AlertTriangle className="w-4 h-4 text-semantic-red" />
-          </div>
-          <h3 className="text-sm font-semibold text-foreground">Log Kasus</h3>
-        </div>
-        <div className="flex flex-col gap-3">
-          <select value={kasusStudent} onChange={e => setKasusStudent(e.target.value)} className="input-soft">
-            <option value="">Pilih siswa...</option>
-            {kelas?.students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+    <div className="flex flex-col gap-4 max-w-2xl">
+      <div className="bg-surface rounded-2xl shadow-soft p-5 flex flex-col gap-4">
+        {/* Siswa */}
+        <div>
+          <label className="label-upper block mb-1.5">Siswa</label>
+          <select value={studentId} onChange={e => setStudentId(e.target.value)} className="input-soft">
+            <option value="">-- Pilih Siswa --</option>
+            {kelas.students.map(s => (
+              <option key={s.id} value={s.id}>{s.name} ({s.nis})</option>
+            ))}
           </select>
-          <select value={kasusCategory} onChange={e => setKasusCategory(e.target.value)} className="input-soft">
-            <option value="">Kategori...</option>
-            <option value="Akademik">Akademik</option>
-            <option value="Perilaku">Perilaku</option>
-            <option value="Kedisiplinan">Kedisiplinan</option>
-            <option value="Lainnya">Lainnya</option>
-          </select>
-          <textarea
-            value={kasusDesc}
-            onChange={e => setKasusDesc(e.target.value)}
-            placeholder="Deskripsi kasus..."
-            rows={3}
-            className="input-soft resize-none"
-          />
-          <button onClick={handleSaveKasus} className="btn-soft btn-primary-soft w-full py-3">
-            Simpan Kasus
-          </button>
         </div>
-      </div>
 
-      {/* Catatan Anekdot Form */}
-      <div className="bg-surface rounded-2xl shadow-soft p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-accent-light flex items-center justify-center">
-            <BookOpen className="w-4 h-4 text-primary" />
+        {/* Tanggal & Periode */}
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label className="label-upper block mb-1.5">Tanggal</label>
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} className="input-soft" />
           </div>
-          <h3 className="text-sm font-semibold text-foreground">Catatan Anekdot</h3>
+          <div className="flex-1">
+            <label className="label-upper block mb-1.5">Periode</label>
+            <div className="flex bg-bg-2 rounded-xl p-1 gap-1">
+              {PERIODE_OPTIONS.map(p => (
+                <button key={p} onClick={() => setPeriode(p)}
+                  className={`flex-1 py-2 text-[11px] font-semibold rounded-lg transition-all ${
+                    periode === p ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary'
+                  }`}>
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-3">
-          <select value={catatanStudent} onChange={e => setCatatanStudent(e.target.value)} className="input-soft">
-            <option value="">Pilih siswa...</option>
-            {kelas?.students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+
+        {/* Kategori */}
+        <div>
+          <label className="label-upper block mb-1.5">Kategori</label>
+          <div className="flex flex-wrap gap-2">
+            {KATEGORI.map(k => (
+              <button key={k} onClick={() => setCategory(k)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  category === k ? 'bg-primary text-white' : 'bg-bg-2 text-text-secondary hover:bg-bg-3'
+                }`}>
+                {k}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Deskripsi */}
+        <div>
+          <label className="label-upper block mb-1.5">Deskripsi Kasus</label>
           <textarea
-            value={catatanContent}
-            onChange={e => setCatatanContent(e.target.value)}
-            placeholder="Tulis catatan anekdot..."
+            value={description}
+            onChange={e => setDescription(e.target.value)}
+            placeholder="Tuliskan deskripsi kejadian atau catatan perilaku..."
             rows={4}
             className="input-soft resize-none"
           />
-          <button onClick={handleSaveCatatan} className="btn-soft btn-primary-soft w-full py-3">
-            Simpan Catatan
-          </button>
         </div>
+
+        <button onClick={handleSave} className="btn-soft btn-primary-soft w-full py-3">
+          Simpan Kasus
+        </button>
       </div>
     </div>
   );

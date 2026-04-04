@@ -2,9 +2,10 @@ import {
   LayoutDashboard,
   ClipboardCheck,
   AlertTriangle,
-  BookOpen,
+  History,
   BarChart3,
   Users,
+  Info,
   Settings,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
@@ -24,12 +25,13 @@ import {
 import { JurnalGuruLogo } from '@/components/JurnalGuruLogo';
 
 const NAV_ITEMS: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = [
-  { id: 'home', label: 'Beranda', icon: LayoutDashboard },
-  { id: 'absen', label: 'Absensi', icon: ClipboardCheck },
-  { id: 'kasus', label: 'Kasus', icon: AlertTriangle },
-  { id: 'catatan', label: 'Catatan', icon: BookOpen },
-  { id: 'laporan', label: 'Laporan', icon: BarChart3 },
-  { id: 'siswa', label: 'Profil Siswa', icon: Users },
+  { id: 'home',      label: 'Beranda',      icon: LayoutDashboard },
+  { id: 'absen',     label: 'Absensi',      icon: ClipboardCheck },
+  { id: 'kasus',     label: 'Input Kasus',  icon: AlertTriangle },
+  { id: 'riwayat',   label: 'Riwayat',      icon: History },
+  { id: 'laporan',   label: 'Laporan',      icon: BarChart3 },
+  { id: 'siswa',     label: 'Data Siswa',   icon: Users },
+  { id: 'informasi', label: 'Informasi',    icon: Info },
 ];
 
 export function AppSidebar() {
@@ -45,7 +47,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
-        {/* ── Brand / Logo ── */}
+        {/* Brand / Logo */}
         <div className="flex items-center justify-center border-b border-sidebar-border py-4 px-3">
           {collapsed ? (
             <JurnalGuruLogo size={32} showText={false} />

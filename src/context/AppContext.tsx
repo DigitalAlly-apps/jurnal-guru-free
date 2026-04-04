@@ -1,74 +1,8 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import type { Kelas, AbsenRecord, KasusRecord, CatatanRecord, TabId, SemesterConfig, BackupData } from '@/types';
 
-const MOCK_STUDENTS_7A = [
-  { id: '1', name: 'Ahmad Rizki', nis: '2024001' },
-  { id: '2', name: 'Siti Nurhaliza', nis: '2024002' },
-  { id: '3', name: 'Budi Santoso', nis: '2024003' },
-  { id: '4', name: 'Dewi Lestari', nis: '2024004' },
-  { id: '5', name: 'Eko Prasetyo', nis: '2024005' },
-  { id: '6', name: 'Fitri Handayani', nis: '2024006' },
-  { id: '7', name: 'Gunawan Wibowo', nis: '2024007' },
-  { id: '8', name: 'Hana Permata', nis: '2024008' },
-];
-
-const MOCK_STUDENTS_7B = [
-  { id: '9', name: 'Indra Kurniawan', nis: '2024009' },
-  { id: '10', name: 'Joko Widodo', nis: '2024010' },
-  { id: '11', name: 'Kartika Sari', nis: '2024011' },
-  { id: '12', name: 'Lina Marlina', nis: '2024012' },
-  { id: '13', name: 'Muhamad Faisal', nis: '2024013' },
-  { id: '14', name: 'Nadia Putri', nis: '2024014' },
-];
-
 const DEFAULT_KELAS: Kelas[] = [
-  { id: 'k1', name: '7A', students: MOCK_STUDENTS_7A },
-  { id: 'k2', name: '7B', students: MOCK_STUDENTS_7B },
-  { id: 'k3', name: '8A', students: MOCK_STUDENTS_7A.map(s => ({ ...s, id: 'k3_' + s.id })) },
-];
-
-const today = new Date().toISOString().split('T')[0];
-
-function generateWeeklyAbsen(): AbsenRecord[] {
-  const records: AbsenRecord[] = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
-    const absent = Math.floor(Math.random() * 3);
-    for (let j = 0; j < absent; j++) {
-      const studentIdx = Math.floor(Math.random() * MOCK_STUDENTS_7A.length);
-      const s = MOCK_STUDENTS_7A[studentIdx];
-      const statuses: ('S' | 'I' | 'A')[] = ['S', 'I', 'A'];
-      records.push({
-        id: `wa_${i}_${j}`,
-        studentId: s.id,
-        studentName: s.name,
-        date: dateStr,
-        status: statuses[Math.floor(Math.random() * 3)],
-        kelasId: 'k1',
-      });
-    }
-  }
-  return records;
-}
-
-const INITIAL_ABSEN: AbsenRecord[] = [
-  { id: 'a1', studentId: '3', studentName: 'Budi Santoso', date: today, status: 'S', kelasId: 'k1' },
-  { id: 'a2', studentId: '5', studentName: 'Eko Prasetyo', date: today, status: 'A', kelasId: 'k1' },
-  ...generateWeeklyAbsen(),
-];
-
-const INITIAL_KASUS: KasusRecord[] = [
-  { id: 'ks1', studentId: '2', studentName: 'Siti Nurhaliza', date: today, description: 'Tidak mengerjakan PR Matematika', category: 'Akademik', kelasId: 'k1' },
-  { id: 'ks2', studentId: '5', studentName: 'Eko Prasetyo', date: today, description: 'Terlambat masuk kelas 15 menit', category: 'Kedisiplinan', kelasId: 'k1' },
-  { id: 'ks3', studentId: '7', studentName: 'Gunawan Wibowo', date: today, description: 'Mengganggu teman saat pelajaran berlangsung', category: 'Perilaku', kelasId: 'k1' },
-];
-
-const INITIAL_CATATAN: CatatanRecord[] = [
-  { id: 'c1', studentId: '1', studentName: 'Ahmad Rizki', date: today, content: 'Menunjukkan peningkatan dalam diskusi kelas.', kelasId: 'k1' },
-  { id: 'c2', studentId: '4', studentName: 'Dewi Lestari', date: today, content: 'Membantu teman yang kesulitan memahami materi.', kelasId: 'k1' },
-  { id: 'c3', studentId: '6', studentName: 'Fitri Handayani', date: today, content: 'Presentasi kelompok sangat baik.', kelasId: 'k1' },
+  { id: 'k1', name: '7A', students: [] },
 ];
 
 const currentYear = new Date().getFullYear();
@@ -92,8 +26,12 @@ interface AppState {
   removeStudentFromKelas: (kelasId: string, studentId: string) => void;
   absenRecords: AbsenRecord[];
   addAbsenRecords: (records: AbsenRecord[]) => void;
+  updateAbsenRecord: (id: string, updates: Partial<AbsenRecord>) => void;
+  deleteAbsenRecord: (id: string) => void;
   kasusRecords: KasusRecord[];
   addKasusRecord: (record: KasusRecord) => void;
+  updateKasusRecord: (id: string, updates: Partial<KasusRecord>) => void;
+  deleteKasusRecord: (id: string) => void;
   catatanRecords: CatatanRecord[];
   addCatatanRecord: (record: CatatanRecord) => void;
   toasts: { id: string; message: string }[];
@@ -111,9 +49,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [activeKelas, setActiveKelas] = useState('k1');
   const [activeStudentId, setActiveStudentId] = useState<string | null>(null);
   const [kelasList, setKelasList] = useState<Kelas[]>(DEFAULT_KELAS);
-  const [absenRecords, setAbsenRecords] = useState<AbsenRecord[]>(INITIAL_ABSEN);
-  const [kasusRecords, setKasusRecords] = useState<KasusRecord[]>(INITIAL_KASUS);
-  const [catatanRecords, setCatatanRecords] = useState<CatatanRecord[]>(INITIAL_CATATAN);
+  const [absenRecords, setAbsenRecords] = useState<AbsenRecord[]>([]);
+  const [kasusRecords, setKasusRecords] = useState<KasusRecord[]>([]);
+  const [catatanRecords, setCatatanRecords] = useState<CatatanRecord[]>([]);
   const [toasts, setToasts] = useState<{ id: string; message: string }[]>([]);
   const [semester, setSemester] = useState<SemesterConfig>(DEFAULT_SEMESTER);
 
@@ -132,8 +70,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const updateAbsenRecord = useCallback((id: string, updates: Partial<AbsenRecord>) => {
+    setAbsenRecords(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+  }, []);
+
+  const deleteAbsenRecord = useCallback((id: string) => {
+    setAbsenRecords(prev => prev.filter(r => r.id !== id));
+  }, []);
+
   const addKasusRecord = useCallback((record: KasusRecord) => {
     setKasusRecords(prev => [...prev, record]);
+  }, []);
+
+  const updateKasusRecord = useCallback((id: string, updates: Partial<KasusRecord>) => {
+    setKasusRecords(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+  }, []);
+
+  const deleteKasusRecord = useCallback((id: string) => {
+    setKasusRecords(prev => prev.filter(r => r.id !== id));
   }, []);
 
   const addCatatanRecord = useCallback((record: CatatanRecord) => {
@@ -212,8 +166,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       kelasList, setKelasList,
       addKelas, deleteKelas,
       addStudentsToKelas, removeStudentFromKelas,
-      absenRecords, addAbsenRecords,
-      kasusRecords, addKasusRecord,
+      absenRecords, addAbsenRecords, updateAbsenRecord, deleteAbsenRecord,
+      kasusRecords, addKasusRecord, updateKasusRecord, deleteKasusRecord,
       catatanRecords, addCatatanRecord,
       toasts, showToast,
       semester, setSemester,

@@ -7,9 +7,10 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { HomePage } from '@/pages/HomePage';
 import { AbsenPage } from '@/pages/AbsenPage';
 import { KasusPage } from '@/pages/KasusPage';
+import { RiwayatPage } from '@/pages/RiwayatPage';
 import { LaporanPage } from '@/pages/LaporanPage';
-import { CatatanPage } from '@/pages/CatatanPage';
 import { SiswaPage } from '@/pages/SiswaPage';
+import { InformasiPage } from '@/pages/InformasiPage';
 import { SetelanPage } from '@/pages/SetelanPage';
 
 export function AppLayout() {
@@ -17,13 +18,14 @@ export function AppLayout() {
 
   const renderPage = () => {
     switch (activeTab) {
-      case 'home': return <HomePage />;
-      case 'absen': return <AbsenPage />;
-      case 'kasus': return <KasusPage />;
-      case 'laporan': return <LaporanPage />;
-      case 'catatan': return <CatatanPage />;
-      case 'siswa': return <SiswaPage />;
-      case 'setelan': return <SetelanPage />;
+      case 'home':       return <HomePage />;
+      case 'absen':      return <AbsenPage />;
+      case 'kasus':      return <KasusPage />;
+      case 'riwayat':    return <RiwayatPage />;
+      case 'laporan':    return <LaporanPage />;
+      case 'siswa':      return <SiswaPage />;
+      case 'informasi':  return <InformasiPage />;
+      case 'setelan':    return <SetelanPage />;
     }
   };
 

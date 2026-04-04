@@ -5,13 +5,14 @@ import { JurnalGuruLogo } from '@/components/JurnalGuruLogo';
 import type { TabId } from '@/types';
 
 const TAB_TITLES: Record<TabId, string> = {
-  home: 'Beranda',
-  absen: 'Absensi',
-  kasus: 'Kasus',
-  laporan: 'Laporan',
-  catatan: 'Catatan',
-  siswa: 'Profil Siswa',
-  setelan: 'Setelan',
+  home:       'Beranda',
+  absen:      'Absensi',
+  kasus:      'Input Kasus',
+  riwayat:    'Riwayat',
+  laporan:    'Laporan',
+  siswa:      'Data Siswa',
+  informasi:  'Informasi',
+  setelan:    'Setelan',
 };
 
 export function AppHeader() {
@@ -25,17 +26,15 @@ export function AppHeader() {
           <Menu className="w-5 h-5" />
         </SidebarTrigger>
 
-        {/* On home screen show compact logo; on other tabs show page title */}
         {isHome ? (
           <JurnalGuruLogo size={36} showText={false} className="md:hidden" />
         ) : (
-          <div>
+          <div className="md:hidden">
             <h2 className="text-sm font-semibold text-foreground leading-tight">{TAB_TITLES[activeTab]}</h2>
             <p className="text-[11px] text-text-tertiary">Kelas {kelasList.find(k => k.id === activeKelas)?.name}</p>
           </div>
         )}
 
-        {/* Always show title on desktop */}
         <div className="hidden md:block">
           <h2 className="text-sm font-semibold text-foreground leading-tight">{TAB_TITLES[activeTab]}</h2>
           <p className="text-[11px] text-text-tertiary">Kelas {kelasList.find(k => k.id === activeKelas)?.name}</p>
