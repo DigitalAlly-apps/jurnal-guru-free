@@ -39,3 +39,20 @@ export interface CatatanRecord {
 }
 
 export type TabId = 'home' | 'absen' | 'kasus' | 'laporan' | 'catatan' | 'siswa' | 'setelan';
+
+export type SemesterPeriod = 'ganjil' | 'genap';
+
+export interface SemesterConfig {
+  tahunAjaran: string; // e.g. "2024/2025"
+  semester: SemesterPeriod;
+}
+
+export interface BackupData {
+  version: string;
+  exportedAt: string;
+  semester: SemesterConfig;
+  kelasList: Kelas[];
+  absenRecords: AbsenRecord[];
+  kasusRecords: KasusRecord[];
+  catatanRecords: CatatanRecord[];
+}

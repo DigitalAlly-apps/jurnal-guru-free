@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
-import { Download, BarChart3, AlertTriangle, BookOpen } from 'lucide-react';
+import { Download, BarChart3, AlertTriangle, BookOpen, FileSpreadsheet } from 'lucide-react';
 
 export function LaporanPage() {
-  const { kelasList, activeKelas, absenRecords, kasusRecords, catatanRecords } = useApp();
+  const { kelasList, activeKelas, absenRecords, kasusRecords, catatanRecords, semester } = useApp();
   const kelas = kelasList.find(k => k.id === activeKelas);
   const [selectedStudent, setSelectedStudent] = useState('');
   const [period, setPeriod] = useState<'minggu' | 'bulan' | 'semua'>('semua');
@@ -44,6 +44,7 @@ export function LaporanPage() {
       const absen = absenRecords.filter(a => a.kelasId === activeKelas && a.studentId === s.id && filterByPeriod(a.date));
       return {
         name: s.name,
+        nis: s.nis,
         hadir: absen.filter(a => a.status === 'H').length,
         sakit: absen.filter(a => a.status === 'S').length,
         izin: absen.filter(a => a.status === 'I').length,
@@ -53,14 +54,39 @@ export function LaporanPage() {
     }).filter(r => !selectedStudent || kelas?.students.find(s => s.id === selectedStudent)?.name === r.name);
   }, [kelas, absenRecords, kasusRecords, activeKelas, selectedStudent, period]);
 
+  const generateCSV = () => {
+    const headers = ['No', 'Nama', 'NIS', 'Hadir', 'Sakit', 'Izin', 'Alpha', 'Kasus'];
+    const rows = recap.map((r, i) => [i + 1, r.name, r.nis, r.hadir, r.sakit, r.izin, r.alpha, r.kasus].join(','));
+    return [headers.join(','), ...rows].join('\n');
+  };
+
   const exportCSV = () => {
-    const headers = ['Nama', 'Hadir', 'Sakit', 'Izin', 'Alpha', 'Kasus'];
-    const rows = recap.map(r => [r.name, r.hadir, r.sakit, r.izin, r.alpha, r.kasus].join(','));
-    const csv = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const csv = generateCSV();
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `laporan_${activeKelas}_${period}.csv`;
+    a.href = url;
+    a.download = `laporan_${kelas?.name}_${semester.tahunAjaran.replace('/', '-')}_${semester.semester}_${period}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportExcel = () => {
+    // Generate Excel-compatible HTML table
+    const html = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+      <head><meta charset="utf-8">
+      <style>td,th{border:1px solid #ccc;padding:4px 8px;font-family:Arial;font-size:11pt}th{background:#f0f0f0;font-weight:bold}</style>
+      </head><body>
+      <h3>Laporan Kelas ${kelas?.name} — ${semester.tahunAjaran} Semester ${semester.semester === 'ganjil' ? '1 (Ganjil)' : '2 (Genap)'}</h3>
+      <table><thead><tr><th>No</th><th>Nama</th><th>NIS</th><th>Hadir</th><th>Sakit</th><th>Izin</th><th>Alpha</th><th>Kasus</th></tr></thead>
+      <tbody>${recap.map((r, i) => `<tr><td>${i + 1}</td><td>${r.name}</td><td>${r.nis}</td><td>${r.hadir}</td><td>${r.sakit}</td><td>${r.izin}</td><td>${r.alpha}</td><td>${r.kasus}</td></tr>`).join('')}</tbody></table>
+      </body></html>`;
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `laporan_${kelas?.name}_${semester.tahunAjaran.replace('/', '-')}_${semester.semester}.xls`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -73,6 +99,11 @@ export function LaporanPage() {
 
   return (
     <div className="flex flex-col gap-5 max-w-2xl">
+      {/* Semester info */}
+      <div className="bg-accent-light rounded-xl px-4 py-3 text-[13px] text-primary font-medium">
+        📅 {semester.tahunAjaran} — Semester {semester.semester === 'ganjil' ? '1 (Ganjil)' : '2 (Genap)'}
+      </div>
+
       {/* Filters */}
       <div className="flex flex-col gap-3">
         <select value={selectedStudent} onChange={e => setSelectedStudent(e.target.value)} className="input-soft">
@@ -171,9 +202,15 @@ export function LaporanPage() {
         </div>
       )}
 
-      <button onClick={exportCSV} className="btn-soft btn-secondary-soft w-full py-3 gap-2">
-        <Download className="w-4 h-4" /> Export CSV
-      </button>
+      {/* Export buttons */}
+      <div className="flex gap-3">
+        <button onClick={exportCSV} className="btn-soft btn-secondary-soft flex-1 py-3 gap-2">
+          <Download className="w-4 h-4" /> Export CSV
+        </button>
+        <button onClick={exportExcel} className="btn-soft btn-primary-soft flex-1 py-3 gap-2">
+          <FileSpreadsheet className="w-4 h-4" /> Export Excel
+        </button>
+      </div>
     </div>
   );
 }
