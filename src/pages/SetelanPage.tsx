@@ -1,14 +1,16 @@
 import { useState, useRef } from 'react';
 import { Switch } from '@/components/ui/switch';
-import { Moon, Calendar, Download, Upload, Smartphone, User, Clock } from 'lucide-react';
+import { Moon, Calendar, Download, Upload, Smartphone, User, Clock, Trash2 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import type { BackupData, SemesterConfig, UjianSchedule } from '@/types';
 
 export function SetelanPage() {
-  const { namaGuru, setNamaGuru, semester, setSemester, exportBackup, importBackup, showToast } = useApp();
+  const { namaGuru, setNamaGuru, semester, setSemester, exportBackup, importBackup, resetAll, showToast } = useApp();
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
   const [showInstall, setShowInstall] = useState(false);
   const [namaInput, setNamaInput] = useState(namaGuru);
+  const [showResetDialog, setShowResetDialog] = useState(false);
+  const [resetInput, setResetInput] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const toggleDark = (checked: boolean) => {
@@ -191,6 +193,75 @@ export function SetelanPage() {
           </div>
         )}
       </div>
+
+      {/* Reset Data */}
+      <div className="bg-surface rounded-2xl shadow-soft p-5 border border-red-200 dark:border-red-900/50">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="w-9 h-9 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+            <Trash2 className="w-4 h-4 text-red-500" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Reset Semua Data</h3>
+            <p className="text-[12px] text-text-tertiary">Hapus seluruh data jurnal secara permanen</p>
+          </div>
+        </div>
+        <p className="text-[12px] text-red-500/80 dark:text-red-400/80 mb-3 mt-2 leading-relaxed">
+          ⚠️ Tindakan ini tidak dapat dibatalkan. Pastikan sudah backup sebelum melanjutkan.
+        </p>
+        <button
+          onClick={() => { setResetInput(''); setShowResetDialog(true); }}
+          className="w-full py-2.5 rounded-xl text-sm font-semibold text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+        >
+          Reset Data...
+        </button>
+      </div>
+
+      {/* Reset Confirmation Dialog */}
+      {showResetDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="bg-surface rounded-2xl shadow-xl w-full max-w-sm p-6 flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                <Trash2 className="w-5 h-5 text-red-500" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-foreground">Konfirmasi Reset</h3>
+                <p className="text-[12px] text-text-tertiary">Semua data akan dihapus permanen</p>
+              </div>
+            </div>
+            <p className="text-[13px] text-text-secondary leading-relaxed">
+              Ketik <span className="font-bold text-red-500 font-mono">RESET</span> di bawah untuk mengkonfirmasi.
+            </p>
+            <input
+              type="text"
+              value={resetInput}
+              onChange={e => setResetInput(e.target.value)}
+              placeholder="Ketik RESET"
+              className="px-4 py-2.5 rounded-xl border-2 border-border focus:border-red-400 outline-none bg-bg-2 text-sm font-mono tracking-widest text-center transition-colors"
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowResetDialog(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-border bg-bg-2 text-text-secondary hover:bg-border transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                disabled={resetInput !== 'RESET'}
+                onClick={() => {
+                  resetAll();
+                  setShowResetDialog(false);
+                  setResetInput('');
+                }}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Hapus Semua
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <p className="text-[11px] text-text-tertiary text-center mt-2">Jurnal Guru Pro v5.1</p>
     </div>

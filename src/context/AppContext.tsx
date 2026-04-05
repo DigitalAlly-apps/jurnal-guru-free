@@ -46,6 +46,7 @@ interface AppState {
   setSemester: React.Dispatch<React.SetStateAction<SemesterConfig>>;
   exportBackup: () => void;
   importBackup: (data: BackupData) => void;
+  resetAll: () => void;
 }
 
 const AppContext = createContext<AppState | null>(null);
@@ -138,6 +139,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     ));
   }, []);
 
+  const resetAll = useCallback(() => {
+    setNamaGuru('');
+    setKelasList([]);
+    setAbsenRecords([]);
+    setKasusRecords([]);
+    setCatatanRecords([]);
+    setJadwalList([]);
+    setLastBackupDate(null);
+    setActiveKelas('');
+    setSemester(DEFAULT_SEMESTER);
+    showToast('Semua data berhasil direset');
+  }, [showToast]);
+
   const exportBackup = useCallback(() => {
     const data: BackupData = {
       version: '3.0', exportedAt: new Date().toISOString(),
@@ -186,7 +200,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       jadwalList, addJadwal, deleteJadwal,
       toasts, showToast,
       semester, setSemester,
-      exportBackup, importBackup,
+      exportBackup, importBackup, resetAll,
     }}>
       {children}
     </AppContext.Provider>
