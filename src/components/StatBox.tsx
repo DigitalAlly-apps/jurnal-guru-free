@@ -1,38 +1,34 @@
 interface StatBoxProps {
   value: number;
   label: string;
-  accentColor: 'accent' | 'red' | 'yellow' | 'blue' | 'purple';
+  accentColor: 'accent' | 'red' | 'yellow' | 'blue' | 'purple' | 'green';
   icon?: React.ReactNode;
+  trend?: number; // optional % change
 }
 
-const BG_MAP: Record<string, string> = {
-  accent: 'bg-accent-light',
-  red: 'bg-semantic-red-light',
-  yellow: 'bg-semantic-yellow-light',
-  blue: 'bg-semantic-blue-light',
-  purple: 'bg-semantic-purple-light',
-};
-
-const TEXT_MAP: Record<string, string> = {
-  accent: 'text-primary',
-  red: 'text-semantic-red',
-  yellow: 'text-semantic-yellow',
-  blue: 'text-semantic-blue',
-  purple: 'text-semantic-purple',
+const COLOR_MAP: Record<string, { text: string; iconBg: string; glow: string }> = {
+  accent: { text: 'text-primary',          iconBg: 'bg-accent-light',             glow: 'accent-glow' },
+  red:    { text: 'text-semantic-red',      iconBg: 'bg-semantic-red-light',       glow: 'red-glow' },
+  yellow: { text: 'text-semantic-yellow',   iconBg: 'bg-semantic-yellow-light',    glow: 'yellow-glow' },
+  blue:   { text: 'text-semantic-blue',     iconBg: 'bg-semantic-blue-light',      glow: 'blue-glow' },
+  green:  { text: 'text-semantic-green',    iconBg: 'bg-semantic-green-light',     glow: 'green-glow' },
+  purple: { text: 'text-semantic-purple',   iconBg: 'bg-semantic-purple-light',    glow: 'purple-glow' },
 };
 
 export function StatBox({ value, label, accentColor, icon }: StatBoxProps) {
+  const { text, iconBg } = COLOR_MAP[accentColor] || COLOR_MAP.accent;
+
   return (
-    <div className="bg-surface rounded-2xl shadow-soft p-4 flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <span className={`text-2xl font-bold ${TEXT_MAP[accentColor]}`}>{value}</span>
+    <div className="stat-box-rich flex flex-col gap-0">
+      <div className="flex items-start justify-between gap-2">
+        <span className={`stat-num-rich ${text}`}>{value}</span>
         {icon && (
-          <div className={`w-9 h-9 rounded-xl ${BG_MAP[accentColor]} flex items-center justify-center`}>
+          <div className={`stat-icon-badge ${iconBg} flex-shrink-0`}>
             {icon}
           </div>
         )}
       </div>
-      <span className="text-[11px] font-medium text-text-tertiary tracking-wide uppercase">{label}</span>
+      <span className="stat-label-rich">{label}</span>
     </div>
   );
 }
