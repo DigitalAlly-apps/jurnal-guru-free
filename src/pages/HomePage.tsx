@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { StatBox } from '@/components/StatBox';
 import {
-  CheckCircle, UserX, Clock, AlertCircle,
+  UserX, Clock, AlertCircle, FileWarning, PhoneCall,
   TrendingUp, AlertTriangle, Calendar, Bell, ArrowRight
 } from 'lucide-react';
 import {
@@ -21,11 +21,11 @@ export function HomePage() {
 
   const todayAbsen   = absenRecords.filter(a => a.date === today && a.kelasId === activeKelas);
   const totalStudents = kelas?.students.length || 0;
-  const sakit  = todayAbsen.filter(a => a.status === 'S').length;
-  const izin   = todayAbsen.filter(a => a.status === 'I').length;
-  const alpha  = todayAbsen.filter(a => a.status === 'A').length;
-  // Fix 2 consequence: hadir = totalStudents - exceptions recorded today
-  const hadir  = totalStudents > 0 ? Math.max(0, totalStudents - sakit - izin - alpha) : 0;
+  const sakit      = todayAbsen.filter(a => a.status === 'S').length;
+  const izin       = todayAbsen.filter(a => a.status === 'I').length;
+  const alpha      = todayAbsen.filter(a => a.status === 'A').length;
+  const todayKasus = kasusRecords.filter(k => k.date === today && k.kelasId === activeKelas).length;
+  const todayPemanggilan = kasusRecords.filter(k => k.date === today && k.kelasId === activeKelas && !!k.waktuPemanggilan);
 
   const showBackupAlert = useMemo(() => {
     if (!lastBackupDate) return true;
@@ -77,7 +77,6 @@ export function HomePage() {
   }, [absenRecords, activeKelas, totalStudents]);
 
   const pieData = [
-    { name: 'Hadir', value: hadir,  color: 'hsl(243, 75%, 59%)' },
     { name: 'Sakit', value: sakit,  color: 'hsl(211, 86%, 53%)' },
     { name: 'Izin',  value: izin,   color: 'hsl(36, 90%, 46%)'  },
     { name: 'Alpha', value: alpha,  color: 'hsl(0, 72%, 51%)'   },
@@ -125,6 +124,41 @@ export function HomePage() {
         </div>
       )}
 
+      {/* Pemanggilan hari ini */}
+      {todayPemanggilan.length > 0 && (
+        <div className="alert-rich alert-rich-red flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <PhoneCall className="w-4 h-4 flex-shrink-0" />
+            <p className="text-[13px] font-semibold flex-1">
+              {todayPemanggilan.length} pemanggilan dijadwalkan hari ini
+            </p>
+            <button
+              onClick={() => setActiveTab('kasus')}
+              className="text-[12px] font-semibold flex items-center gap-1 flex-shrink-0 hover:opacity-80 transition-opacity"
+            >
+              Lihat <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="flex flex-col gap-1.5 pl-6">
+            {todayPemanggilan
+              .sort((a, b) => (a.waktuPemanggilan! > b.waktuPemanggilan! ? 1 : -1))
+              .map(k => (
+                <button
+                  key={k.id}
+                  onClick={() => { setActiveStudentId(k.studentId); setActiveTab('siswa'); }}
+                  className="flex items-center gap-2 text-left hover:opacity-70 transition-opacity"
+                >
+                  <span className="text-[11px] font-mono font-semibold opacity-80 w-10 flex-shrink-0">
+                    {k.waktuPemanggilan}
+                  </span>
+                  <span className="text-[12px] font-semibold truncate">{k.studentName}</span>
+                  <span className="text-[11px] opacity-60 truncate">— {k.description}</span>
+                </button>
+              ))}
+          </div>
+        </div>
+      )}
+
       {/* UTS/UAS schedule pills */}
       {(schedule.utsStart || schedule.uasStart) && (
         <div className="flex flex-wrap gap-2">
@@ -143,10 +177,10 @@ export function HomePage() {
 
       {/* Stat grid */}
       <div className="grid grid-cols-2 gap-3">
-        <StatBox value={hadir} label="Hadir"  accentColor="accent" icon={<CheckCircle className="w-4 h-4 text-primary" />} />
-        <StatBox value={sakit} label="Sakit"  accentColor="blue"   icon={<Clock className="w-4 h-4 text-semantic-blue" />} />
-        <StatBox value={izin}  label="Izin"   accentColor="yellow" icon={<AlertCircle className="w-4 h-4 text-semantic-yellow" />} />
-        <StatBox value={alpha} label="Alpha"  accentColor="red"    icon={<UserX className="w-4 h-4 text-semantic-red" />} />
+        <StatBox value={todayKasus} label="Kasus"  accentColor="accent" icon={<FileWarning className="w-4 h-4 text-primary" />} />
+        <StatBox value={sakit}      label="Sakit"  accentColor="blue"   icon={<Clock className="w-4 h-4 text-semantic-blue" />} />
+        <StatBox value={izin}       label="Izin"   accentColor="yellow" icon={<AlertCircle className="w-4 h-4 text-semantic-yellow" />} />
+        <StatBox value={alpha}      label="Alpha"  accentColor="red"    icon={<UserX className="w-4 h-4 text-semantic-red" />} />
       </div>
 
       {/* Semester stats */}
@@ -275,7 +309,7 @@ export function HomePage() {
       </div>
 
       {/* Today distribution pie */}
-      {totalStudents > 0 && todayAbsen.length > 0 && (
+      {pieData.length > 0 && (
         <div className="card-soft">
           <h3 className="text-[13px] font-semibold text-foreground mb-3">Distribusi Hari Ini</h3>
           <div className="flex items-center gap-5">

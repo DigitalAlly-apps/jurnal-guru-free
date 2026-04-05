@@ -36,8 +36,9 @@ export function KasusPage() {
   const [category, setCategory] = useState(KATEGORI[0]);
   const [tipeCatatan, setTipeCatatan] = useState<'prestasi' | 'perkembangan' | 'umum'>('umum');
   const [showTemplates, setShowTemplates] = useState(false);
+  const [waktuPemanggilan, setWaktuPemanggilan] = useState('');
 
-  const reset = () => { setDescription(''); setStudentId(''); setShowTemplates(false); };
+  const reset = () => { setDescription(''); setStudentId(''); setShowTemplates(false); setWaktuPemanggilan(''); };
 
   const handleSave = () => {
     if (!studentId || !description.trim()) {
@@ -53,6 +54,7 @@ export function KasusPage() {
         studentId, studentName: student.name,
         date, description: description.trim(),
         category, kelasId: activeKelas, periodeUjian: periode,
+        waktuPemanggilan: waktuPemanggilan || undefined,
       };
       addKasusRecord(record);
       showToast('Kasus berhasil disimpan');
@@ -150,6 +152,22 @@ export function KasusPage() {
                   }`}>{k}</button>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Waktu Pemanggilan (kasus saja, opsional) */}
+        {mode === 'kasus' && (
+          <div>
+            <label className="label-upper block mb-1.5">
+              Waktu Pemanggilan
+              <span className="ml-1.5 text-[10px] text-text-tertiary normal-case font-normal">(opsional)</span>
+            </label>
+            <input
+              type="time"
+              value={waktuPemanggilan}
+              onChange={e => setWaktuPemanggilan(e.target.value)}
+              className="input-soft w-40"
+            />
           </div>
         )}
 

@@ -117,7 +117,7 @@ export function InformasiPage() {
         </div>
       </div>
 
-      <p className="text-[11px] text-text-tertiary text-center pb-2">Jurnal Guru Pro V6.0 — Digital Ally Project</p>
+      <p className="text-[11px] text-text-tertiary text-center pb-2">Jurnal Guru Pro v5.1 — Digital Ally Project</p>
     </div>
   );
 }

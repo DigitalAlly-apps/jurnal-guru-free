@@ -32,6 +32,7 @@ export interface KasusRecord {
   category: string;
   kelasId: string;
   periodeUjian?: PeriodeUjian;
+  waktuPemanggilan?: string; // format HH:MM, opsional
 }
 
 export interface CatatanRecord {
