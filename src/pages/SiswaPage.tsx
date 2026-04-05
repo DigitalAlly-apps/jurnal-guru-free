@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef } from 'react';
 import { useApp } from '@/context/AppContext';
-import { User, ArrowLeft, CheckCircle, AlertTriangle, BookOpen, Clock, Plus, Trash2, Upload, X } from 'lucide-react';
+import { User, ArrowLeft, CheckCircle, AlertTriangle, BookOpen, Clock, Plus, Trash2, Upload, X, Star, TrendingUp } from 'lucide-react';
 
 export function SiswaPage() {
   const { kelasList, activeKelas, activeStudentId, setActiveStudentId, absenRecords, kasusRecords, catatanRecords, addKelas, deleteKelas, addStudentsToKelas, removeStudentFromKelas, showToast } = useApp();
@@ -291,10 +291,41 @@ function StudentDetail() {
           <div className="flex flex-col gap-2">
             {catatan.map(c => (
               <div key={c.id} className="bg-bg-2 rounded-xl p-3">
-                <span className="text-[11px] text-text-tertiary block mb-1">{c.date}</span>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] text-text-tertiary">{c.date}</span>
+                  {c.tipe && c.tipe !== 'umum' && (
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      c.tipe === 'prestasi' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                    }`}>
+                      {c.tipe === 'prestasi' ? '🏆 Prestasi' : '📈 Perkembangan'}
+                    </span>
+                  )}
+                </div>
                 <p className="text-[13px] text-text-secondary leading-relaxed">{c.content}</p>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-surface rounded-2xl shadow-soft p-5">
+        <div className="flex items-center gap-2 mb-3">
+          <TrendingUp className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Rekap Kehadiran Semester</h3>
+        </div>
+        {absen.length > 0 && (
+          <div className="mb-4">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-xs text-text-secondary">Persentase Hadir</span>
+              <span className="text-xs font-bold text-primary">
+                {Math.round((hadirCount / absen.length) * 100)}%
+              </span>
+            </div>
+            <div className="w-full bg-bg-2 rounded-full h-2">
+              <div className="bg-primary h-2 rounded-full transition-all"
+                style={{ width: `${Math.round((hadirCount / absen.length) * 100)}%` }} />
+            </div>
+            <p className="text-[11px] text-text-tertiary mt-1">{absen.length} hari tercatat</p>
           </div>
         )}
       </div>
@@ -308,7 +339,7 @@ function StudentDetail() {
           <p className="text-sm text-text-tertiary">Belum ada data kehadiran</p>
         ) : (
           <div className="flex flex-col">
-            {absen.slice(0, 10).map(a => (
+            {absen.slice(0, 30).map(a => (
               <div key={a.id} className="flex justify-between items-center py-2.5 border-b border-border last:border-b-0">
                 <span className="text-[13px] text-text-secondary">{a.date}</span>
                 <StatusPill status={a.status} />

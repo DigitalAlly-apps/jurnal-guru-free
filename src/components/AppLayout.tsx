@@ -7,6 +7,7 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { HomePage } from '@/pages/HomePage';
 import { AbsenPage } from '@/pages/AbsenPage';
 import { KasusPage } from '@/pages/KasusPage';
+import { JadwalPage } from '@/pages/JadwalPage';
 import { RiwayatPage } from '@/pages/RiwayatPage';
 import { LaporanPage } from '@/pages/LaporanPage';
 import { SiswaPage } from '@/pages/SiswaPage';
@@ -21,6 +22,7 @@ export function AppLayout() {
       case 'home':       return <HomePage />;
       case 'absen':      return <AbsenPage />;
       case 'kasus':      return <KasusPage />;
+      case 'jadwal':     return <JadwalPage />;
       case 'riwayat':    return <RiwayatPage />;
       case 'laporan':    return <LaporanPage />;
       case 'siswa':      return <SiswaPage />;

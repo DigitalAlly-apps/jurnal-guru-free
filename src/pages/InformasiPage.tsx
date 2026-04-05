@@ -24,7 +24,15 @@ const tutorials = [
   },
   {
     icon: BookOpen,
-    title: 'Cara Cari & Edit di Riwayat',
+    title: 'Cara Input Catatan Anekdot',
+    steps: [
+      'Buka tab "Catatan Anekdot" di menu navigasi.',
+      'Tap tombol "Tambah Catatan Anekdot" di bagian atas.',
+      'Pilih siswa, tanggal, lalu tulis catatan perkembangan atau anekdot.',
+      'Catatan anekdot adalah observasi singkat tentang kejadian bermakna pada siswa — bisa positif maupun negatif.',
+      'Klik "Simpan Catatan". Catatan juga bisa dilihat di tab Riwayat dan di profil siswa.',
+    ],
+  },
     steps: [
       'Buka tab "Riwayat" untuk melihat semua catatan.',
       'Gunakan kotak pencarian untuk mencari nama siswa atau tanggal.',

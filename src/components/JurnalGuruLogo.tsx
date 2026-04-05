@@ -1,12 +1,3 @@
-/**
- * JurnalGuruLogo — Adaptive isometric book logo
- * Light mode  → dark slate / black fills
- * Dark mode   → light silver / white fills
- *
- * Reads isDark prop from parent (which checks Tailwind dark class on <html>)
- * so it always stays in sync with the app's theme toggle.
- */
-
 import { useEffect, useState } from 'react';
 
 interface JurnalGuruLogoProps {
@@ -32,17 +23,17 @@ function useIsDark() {
 export function JurnalGuruLogo({ size = 120, showText = true, className = '' }: JurnalGuruLogoProps) {
   const dark = useIsDark();
 
-  const fill      = dark ? '#e2e2e2' : '#1a1a1a';
-  const fillMid   = dark ? '#b8b8b8' : '#3a3a3a';
-  const stripe    = dark ? '#1a1a1a' : '#ffffff';
+  const fill    = dark ? '#e2e2e2' : '#1a1a1a';
+  const fillMid = dark ? '#b8b8b8' : '#3a3a3a';
+  const stripe  = dark ? '#1a1a1a' : '#ffffff';
 
   const width  = size;
-  const height = showText ? Math.round(size * 1.55) : Math.round(size * 0.85);
+  const height = showText ? Math.round(size * 1.65) : Math.round(size * 0.95);
 
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox={showText ? '0 0 200 310' : '0 0 200 170'}
+      viewBox={showText ? '-10 0 220 330' : '-10 0 220 175'}
       width={width}
       height={height}
       className={className}
@@ -50,26 +41,26 @@ export function JurnalGuruLogo({ size = 120, showText = true, className = '' }: 
       role="img"
     >
       {/* Top face */}
-      <polygon points="100,20 185,62 100,104 15,62" fill={fillMid} />
+      <polygon points="100,18 186,61 100,104 14,61" fill={fillMid} />
       {/* Left face */}
-      <polygon points="15,62 15,130 100,172 100,104" fill={fill} />
+      <polygon points="14,61 14,132 100,175 100,104" fill={fill} />
       {/* Right face */}
-      <polygon points="100,104 185,62 185,130 100,172" fill={fillMid} />
+      <polygon points="100,104 186,61 186,132 100,175" fill={fillMid} />
       {/* Page stripes */}
-      <line x1="107" y1="112" x2="178" y2="75"  stroke={stripe} strokeWidth="5" strokeLinecap="round" />
-      <line x1="107" y1="126" x2="178" y2="89"  stroke={stripe} strokeWidth="5" strokeLinecap="round" />
-      <line x1="107" y1="140" x2="178" y2="103" stroke={stripe} strokeWidth="5" strokeLinecap="round" />
+      <line x1="108" y1="113" x2="179" y2="76"  stroke={stripe} strokeWidth="5.5" strokeLinecap="round" />
+      <line x1="108" y1="127" x2="179" y2="90"  stroke={stripe} strokeWidth="5.5" strokeLinecap="round" />
+      <line x1="108" y1="141" x2="179" y2="104" stroke={stripe} strokeWidth="5.5" strokeLinecap="round" />
 
       {showText && (
         <>
-          <text x="100" y="210" textAnchor="middle"
+          <text x="100" y="215" textAnchor="middle"
             fontFamily="'Inter','Segoe UI','Helvetica Neue',Arial,sans-serif"
-            fontWeight="700" fontSize="34" letterSpacing="3" fill={fill}>
+            fontWeight="700" fontSize="33" letterSpacing="2.5" fill={fill}>
             JURNAL GURU
           </text>
-          <text x="100" y="247" textAnchor="middle"
+          <text x="100" y="250" textAnchor="middle"
             fontFamily="'Inter','Segoe UI','Helvetica Neue',Arial,sans-serif"
-            fontWeight="400" fontSize="15" letterSpacing="4" fill={fill} opacity="0.65">
+            fontWeight="400" fontSize="13.5" letterSpacing="3.5" fill={fill} opacity="0.65">
             ADMINISTRASI MODERN
           </text>
         </>
