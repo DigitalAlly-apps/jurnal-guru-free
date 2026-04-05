@@ -24,7 +24,8 @@ export function HomePage() {
   const sakit  = todayAbsen.filter(a => a.status === 'S').length;
   const izin   = todayAbsen.filter(a => a.status === 'I').length;
   const alpha  = todayAbsen.filter(a => a.status === 'A').length;
-  const hadir  = totalStudents > 0 && todayAbsen.length > 0 ? totalStudents - sakit - izin - alpha : 0;
+  // Fix 2 consequence: hadir = totalStudents - exceptions recorded today
+  const hadir  = totalStudents > 0 ? Math.max(0, totalStudents - sakit - izin - alpha) : 0;
 
   const showBackupAlert = useMemo(() => {
     if (!lastBackupDate) return true;
@@ -36,11 +37,16 @@ export function HomePage() {
     [absenRecords, activeKelas]
   );
 
+  // Fix 5: pctHadir = (totalHariSekolah × totalSiswa - totalAbsen) / total
+  // Since we only store exceptions (S/I/A), total possible = totalStudents × uniqueDates
   const pctHadir = useMemo(() => {
-    const total = semesterAbsen.length;
-    if (!total) return 0;
-    return Math.round((semesterAbsen.filter(a => a.status === 'H').length / total) * 100);
-  }, [semesterAbsen]);
+    if (!totalStudents || !semesterAbsen.length) return 0;
+    const uniqueDates = new Set(semesterAbsen.map(a => a.date)).size;
+    const totalPossible = uniqueDates * totalStudents;
+    if (!totalPossible) return 0;
+    const totalAbsen = semesterAbsen.filter(a => a.status !== 'H').length;
+    return Math.round(((totalPossible - totalAbsen) / totalPossible) * 100);
+  }, [semesterAbsen, totalStudents]);
 
   const siswaAlert = useMemo(() => {
     if (!kelas) return [];
@@ -54,13 +60,14 @@ export function HomePage() {
     .slice(0, 5);
   }, [kelas, absenRecords, kasusRecords, activeKelas]);
 
+  // Fix 5: weeklyData also uses exception-based count
   const weeklyData = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
       const dateStr = d.toISOString().split('T')[0];
-      const dayAbsen  = absenRecords.filter(a => a.date === dateStr && a.kelasId === activeKelas);
-      const dayAbsent = dayAbsen.filter(a => a.status !== 'H').length;
+      const dayExceptions = absenRecords.filter(a => a.date === dateStr && a.kelasId === activeKelas && a.status !== 'H');
+      const dayAbsent = dayExceptions.length;
       return {
         day: d.toLocaleDateString('id-ID', { weekday: 'short' }),
         hadir: Math.max(0, totalStudents - dayAbsent),

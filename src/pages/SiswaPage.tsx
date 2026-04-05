@@ -1,9 +1,34 @@
-import { useMemo, useState, useRef } from 'react';
+import { useMemo, useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import { User, ArrowLeft, CheckCircle, AlertTriangle, BookOpen, Clock, Plus, Trash2, Upload, X, Star, TrendingUp } from 'lucide-react';
+import { User, ArrowLeft, CheckCircle, AlertTriangle, BookOpen, Clock, Plus, Trash2, Upload, X, TrendingUp } from 'lucide-react';
+
+// ── Reusable confirm dialog (ganti window.confirm) ───────────────────────────
+function ConfirmDialog({
+  message, onConfirm, onCancel,
+}: { message: string; onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+      <div className="bg-surface rounded-2xl shadow-xl w-full max-w-xs p-5 flex flex-col gap-4">
+        <p className="text-sm text-foreground">{message}</p>
+        <div className="flex gap-2">
+          <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-border bg-bg-2 text-text-secondary hover:bg-bg-3 transition-colors">
+            Batal
+          </button>
+          <button onClick={onConfirm} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors">
+            Hapus
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function SiswaPage() {
-  const { kelasList, activeKelas, activeStudentId, setActiveStudentId, absenRecords, kasusRecords, catatanRecords, addKelas, deleteKelas, addStudentsToKelas, removeStudentFromKelas, showToast } = useApp();
+  const {
+    kelasList, activeKelas, activeStudentId, setActiveStudentId,
+    absenRecords, kasusRecords, catatanRecords,
+    addKelas, deleteKelas, addStudentsToKelas, removeStudentFromKelas, showToast,
+  } = useApp();
   const kelas = kelasList.find(k => k.id === activeKelas);
   const [showAddKelas, setShowAddKelas] = useState(false);
   const [newKelasName, setNewKelasName] = useState('');
@@ -12,10 +37,14 @@ export function SiswaPage() {
   const [manualName, setManualName] = useState('');
   const [manualNis, setManualNis] = useState('');
   const [pasteText, setPasteText] = useState('');
+  // Confirm dialog state (replaces window.confirm)
+  const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => void } | null>(null);
 
-  if (activeStudentId) {
-    return <StudentDetail />;
-  }
+  if (activeStudentId) return <StudentDetail />;
+
+  const askConfirm = (message: string, onConfirm: () => void) => {
+    setConfirmDialog({ message, onConfirm });
+  };
 
   const handleAddKelas = () => {
     if (!newKelasName.trim()) return;
@@ -27,10 +56,10 @@ export function SiswaPage() {
 
   const handleDeleteKelas = () => {
     if (!kelas || kelasList.length <= 1) return;
-    if (confirm(`Hapus kelas ${kelas.name}?`)) {
+    askConfirm(`Hapus kelas ${kelas.name}? Semua data absensi kelas ini akan ikut terhapus.`, () => {
       deleteKelas(kelas.id);
       showToast('Kelas berhasil dihapus');
-    }
+    });
   };
 
   const handleAddManual = () => {
@@ -46,21 +75,12 @@ export function SiswaPage() {
     const lines = pasteText.trim().split('\n').filter(l => l.trim());
     const students = lines.map(line => {
       const parts = line.split('\t').length > 1 ? line.split('\t') : line.split(',');
-      // Try: No | Name | NIS or Name | NIS or just Name
-      if (parts.length >= 3) {
-        // Assume: No, Name, NIS
-        return { name: parts[1].trim(), nis: parts[2].trim() };
-      } else if (parts.length === 2) {
-        // Assume: Name, NIS
-        return { name: parts[0].trim(), nis: parts[1].trim() };
-      }
+      if (parts.length >= 3) return { name: parts[1].trim(), nis: parts[2].trim() };
+      if (parts.length === 2) return { name: parts[0].trim(), nis: parts[1].trim() };
       return { name: parts[0].trim(), nis: '-' };
     }).filter(s => s.name && !/^(no|nama|nis|name|number)$/i.test(s.name));
-    
-    if (students.length === 0) {
-      showToast('Tidak ada data siswa yang valid');
-      return;
-    }
+
+    if (students.length === 0) { showToast('Tidak ada data siswa yang valid'); return; }
     addStudentsToKelas(activeKelas, students);
     setPasteText('');
     setShowAddSiswa(false);
@@ -68,30 +88,39 @@ export function SiswaPage() {
   };
 
   const handleRemoveStudent = (studentId: string, studentName: string) => {
-    if (confirm(`Hapus ${studentName} dari kelas?`)) {
+    askConfirm(`Hapus ${studentName} dari kelas?`, () => {
       removeStudentFromKelas(activeKelas, studentId);
       showToast('Siswa berhasil dihapus');
-    }
+    });
   };
 
   return (
     <div className="flex flex-col gap-4 max-w-2xl">
-      {/* Class management */}
+      {/* Confirm Dialog */}
+      {confirmDialog && (
+        <ConfirmDialog
+          message={confirmDialog.message}
+          onConfirm={() => { confirmDialog.onConfirm(); setConfirmDialog(null); }}
+          onCancel={() => setConfirmDialog(null)}
+        />
+      )}
+
+      {/* Header */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-text-secondary">{kelas?.students.length || 0} siswa terdaftar</p>
         <div className="flex gap-2">
-          <button onClick={() => setShowAddKelas(true)} className="btn-soft btn-secondary-soft text-[12px] py-1.5 px-3 gap-1">
+          <button onClick={() => setShowAddKelas(true)} className="btn-soft btn-secondary-soft text-[12px] py-1.5 px-3 gap-1 flex items-center">
             <Plus className="w-3 h-3" /> Kelas
           </button>
           {kelasList.length > 1 && (
-            <button onClick={handleDeleteKelas} className="btn-soft text-[12px] py-1.5 px-3 bg-semantic-red-light text-semantic-red gap-1">
+            <button onClick={handleDeleteKelas} className="btn-soft text-[12px] py-1.5 px-3 bg-semantic-red-light text-semantic-red gap-1 flex items-center">
               <Trash2 className="w-3 h-3" />
             </button>
           )}
         </div>
       </div>
 
-      {/* Add Kelas Modal */}
+      {/* Add Kelas */}
       {showAddKelas && (
         <div className="bg-surface rounded-2xl shadow-soft p-4">
           <div className="flex items-center justify-between mb-3">
@@ -99,14 +128,16 @@ export function SiswaPage() {
             <button onClick={() => setShowAddKelas(false)} className="text-text-tertiary"><X className="w-4 h-4" /></button>
           </div>
           <div className="flex gap-2">
-            <input value={newKelasName} onChange={e => setNewKelasName(e.target.value)} placeholder="Nama kelas (misal: 9A)" className="input-soft flex-1" onKeyDown={e => e.key === 'Enter' && handleAddKelas()} />
+            <input value={newKelasName} onChange={e => setNewKelasName(e.target.value)}
+              placeholder="Nama kelas (misal: 9A)" className="input-soft flex-1"
+              onKeyDown={e => e.key === 'Enter' && handleAddKelas()} />
             <button onClick={handleAddKelas} className="btn-soft btn-primary-soft">Tambah</button>
           </div>
         </div>
       )}
 
       {/* Add Student */}
-      <button onClick={() => setShowAddSiswa(!showAddSiswa)} className="btn-soft btn-primary-soft w-full py-3 gap-2">
+      <button onClick={() => setShowAddSiswa(!showAddSiswa)} className="btn-soft btn-primary-soft w-full py-3 gap-2 flex items-center justify-center">
         <Plus className="w-4 h-4" /> Tambah Siswa
       </button>
 
@@ -116,34 +147,28 @@ export function SiswaPage() {
             <h3 className="text-sm font-semibold text-foreground">Tambah Siswa</h3>
             <button onClick={() => setShowAddSiswa(false)} className="text-text-tertiary"><X className="w-4 h-4" /></button>
           </div>
-
-          {/* Mode toggle */}
           <div className="flex bg-bg-2 rounded-xl p-1 gap-1 mb-3">
-            <button onClick={() => setAddMode('manual')} className={`flex-1 py-2 text-[12px] font-semibold rounded-lg transition-all ${addMode === 'manual' ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary'}`}>
-              Manual
-            </button>
-            <button onClick={() => setAddMode('paste')} className={`flex-1 py-2 text-[12px] font-semibold rounded-lg transition-all ${addMode === 'paste' ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary'}`}>
-              Paste dari Excel
-            </button>
+            {(['manual', 'paste'] as const).map(m => (
+              <button key={m} onClick={() => setAddMode(m)}
+                className={`flex-1 py-2 text-[12px] font-semibold rounded-lg transition-all ${addMode === m ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary'}`}>
+                {m === 'manual' ? 'Manual' : 'Paste dari Excel'}
+              </button>
+            ))}
           </div>
-
           {addMode === 'manual' ? (
             <div className="flex flex-col gap-2">
-              <input value={manualName} onChange={e => setManualName(e.target.value)} placeholder="Nama siswa" className="input-soft" />
+              <input value={manualName} onChange={e => setManualName(e.target.value)} placeholder="Nama siswa" className="input-soft"
+                onKeyDown={e => e.key === 'Enter' && handleAddManual()} />
               <input value={manualNis} onChange={e => setManualNis(e.target.value)} placeholder="NIS (opsional)" className="input-soft" />
               <button onClick={handleAddManual} className="btn-soft btn-primary-soft w-full py-2.5">Tambah</button>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
-              <p className="text-[11px] text-text-tertiary">Copy dari Excel lalu paste di sini. Format: Nama, NIS (satu baris per siswa). Kolom Nomor otomatis dilewati.</p>
-              <textarea
-                value={pasteText}
-                onChange={e => setPasteText(e.target.value)}
-                placeholder={"1\tAhmad Rizki\t2024001\n2\tSiti Nurhaliza\t2024002\n\natau:\n\nAhmad Rizki, 2024001\nSiti Nurhaliza, 2024002"}
-                rows={6}
-                className="input-soft resize-none font-mono text-[12px]"
-              />
-              <button onClick={handlePaste} className="btn-soft btn-primary-soft w-full py-2.5 gap-2">
+              <p className="text-[11px] text-text-tertiary">Copy dari Excel lalu paste di sini. Format: Nama, NIS (satu baris per siswa).</p>
+              <textarea value={pasteText} onChange={e => setPasteText(e.target.value)}
+                placeholder={"1\tAhmad Rizki\t2024001\n2\tSiti Nurhaliza\t2024002"}
+                rows={6} className="input-soft resize-none font-mono text-[12px]" />
+              <button onClick={handlePaste} className="btn-soft btn-primary-soft w-full py-2.5 gap-2 flex items-center justify-center">
                 <Upload className="w-4 h-4" /> Import {pasteText.trim().split('\n').filter(l => l.trim()).length} Siswa
               </button>
             </div>
@@ -158,9 +183,8 @@ export function SiswaPage() {
           const kasusCount = kasusRecords.filter(k => k.kelasId === activeKelas && k.studentId === s.id).length;
           const catatanCount = catatanRecords.filter(c => c.kelasId === activeKelas && c.studentId === s.id).length;
           const alphaCount = absen.filter(a => a.status === 'A').length;
-
           return (
-            <div key={s.id} className="bg-surface rounded-2xl shadow-soft p-4 hover:shadow-soft-md transition-all group relative">
+            <div key={s.id} className="bg-surface rounded-2xl shadow-soft p-4 hover:shadow-md transition-all group relative">
               <button onClick={() => setActiveStudentId(s.id)} className="text-left w-full">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-xl bg-accent-light flex items-center justify-center">
@@ -172,17 +196,9 @@ export function SiswaPage() {
                   </div>
                 </div>
                 <div className="flex gap-3 text-[11px]">
-                  <span className="flex items-center gap-1 text-semantic-red">
-                    <AlertTriangle className="w-3 h-3" /> {kasusCount} kasus
-                  </span>
-                  <span className="flex items-center gap-1 text-primary">
-                    <BookOpen className="w-3 h-3" /> {catatanCount} catatan
-                  </span>
-                  {alphaCount > 0 && (
-                    <span className="flex items-center gap-1 text-semantic-yellow">
-                      <Clock className="w-3 h-3" /> {alphaCount} alpha
-                    </span>
-                  )}
+                  <span className="flex items-center gap-1 text-semantic-red"><AlertTriangle className="w-3 h-3" /> {kasusCount} kasus</span>
+                  <span className="flex items-center gap-1 text-primary"><BookOpen className="w-3 h-3" /> {catatanCount} catatan</span>
+                  {alphaCount > 0 && <span className="flex items-center gap-1 text-semantic-yellow"><Clock className="w-3 h-3" /> {alphaCount} alpha</span>}
                 </div>
               </button>
               <button
@@ -199,6 +215,7 @@ export function SiswaPage() {
   );
 }
 
+// ── Student Detail ──────────────────────────────────────────────────────────
 function StudentDetail() {
   const { kelasList, activeKelas, activeStudentId, setActiveStudentId, absenRecords, kasusRecords, catatanRecords } = useApp();
   const kelas = kelasList.find(k => k.id === activeKelas);
@@ -208,12 +225,10 @@ function StudentDetail() {
     absenRecords.filter(a => a.kelasId === activeKelas && a.studentId === activeStudentId).sort((a, b) => b.date.localeCompare(a.date)),
     [absenRecords, activeKelas, activeStudentId]
   );
-
   const kasus = useMemo(() =>
     kasusRecords.filter(k => k.kelasId === activeKelas && k.studentId === activeStudentId).sort((a, b) => b.date.localeCompare(a.date)),
     [kasusRecords, activeKelas, activeStudentId]
   );
-
   const catatan = useMemo(() =>
     catatanRecords.filter(c => c.kelasId === activeKelas && c.studentId === activeStudentId).sort((a, b) => b.date.localeCompare(a.date)),
     [catatanRecords, activeKelas, activeStudentId]
@@ -221,10 +236,13 @@ function StudentDetail() {
 
   if (!student) return null;
 
-  const hadirCount = absen.filter(a => a.status === 'H').length;
+  // Fix 5 consequence: hadir = uniqueDates - exceptions
+  const uniqueDates = new Set(absen.map(a => a.date)).size;
   const sakitCount = absen.filter(a => a.status === 'S').length;
-  const izinCount = absen.filter(a => a.status === 'I').length;
+  const izinCount  = absen.filter(a => a.status === 'I').length;
   const alphaCount = absen.filter(a => a.status === 'A').length;
+  const hadirCount = Math.max(0, uniqueDates - sakitCount - izinCount - alphaCount);
+  const pctHadir   = uniqueDates > 0 ? Math.round((hadirCount / uniqueDates) * 100) : 0;
 
   return (
     <div className="flex flex-col gap-4 max-w-2xl">
@@ -248,7 +266,7 @@ function StudentDetail() {
         {[
           { label: 'Hadir', val: hadirCount, cls: 'text-primary bg-accent-light' },
           { label: 'Sakit', val: sakitCount, cls: 'text-semantic-blue bg-semantic-blue-light' },
-          { label: 'Izin', val: izinCount, cls: 'text-semantic-yellow bg-semantic-yellow-light' },
+          { label: 'Izin',  val: izinCount,  cls: 'text-semantic-yellow bg-semantic-yellow-light' },
           { label: 'Alpha', val: alphaCount, cls: 'text-semantic-red bg-semantic-red-light' },
         ].map(s => (
           <div key={s.label} className={`rounded-xl p-3 text-center ${s.cls}`}>
@@ -313,19 +331,16 @@ function StudentDetail() {
           <TrendingUp className="w-4 h-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Rekap Kehadiran Semester</h3>
         </div>
-        {absen.length > 0 && (
+        {uniqueDates > 0 && (
           <div className="mb-4">
             <div className="flex justify-between items-center mb-1">
               <span className="text-xs text-text-secondary">Persentase Hadir</span>
-              <span className="text-xs font-bold text-primary">
-                {Math.round((hadirCount / absen.length) * 100)}%
-              </span>
+              <span className="text-xs font-bold text-primary">{pctHadir}%</span>
             </div>
-            <div className="w-full bg-bg-2 rounded-full h-2">
-              <div className="bg-primary h-2 rounded-full transition-all"
-                style={{ width: `${Math.round((hadirCount / absen.length) * 100)}%` }} />
+            <div className="progress-bar">
+              <div className="progress-fill" style={{ width: `${pctHadir}%` }} />
             </div>
-            <p className="text-[11px] text-text-tertiary mt-1">{absen.length} hari tercatat</p>
+            <p className="text-[11px] text-text-tertiary mt-1">{uniqueDates} hari tercatat</p>
           </div>
         )}
       </div>

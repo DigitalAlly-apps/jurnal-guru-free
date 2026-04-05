@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useApp } from '@/context/AppContext';
 import { Download, BarChart3, AlertTriangle, BookOpen, FileSpreadsheet } from 'lucide-react';
 
@@ -8,7 +8,8 @@ export function LaporanPage() {
   const [selectedStudent, setSelectedStudent] = useState('');
   const [period, setPeriod] = useState<'minggu' | 'bulan' | 'semua'>('semua');
 
-  const filterByPeriod = (date: string) => {
+  // Fix 6: filterByPeriod as useCallback so it's stable for useMemo deps
+  const filterByPeriod = useCallback((date: string) => {
     if (period === 'semua') return true;
     const d = new Date(date);
     const now = new Date();
@@ -20,7 +21,7 @@ export function LaporanPage() {
       return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     }
     return true;
-  };
+  }, [period]); // period in dependency array — reactive!
 
   const filteredKasus = useMemo(() => {
     return kasusRecords.filter(k =>
@@ -28,7 +29,7 @@ export function LaporanPage() {
       (!selectedStudent || k.studentId === selectedStudent) &&
       filterByPeriod(k.date)
     );
-  }, [kasusRecords, activeKelas, selectedStudent, period]);
+  }, [kasusRecords, activeKelas, selectedStudent, filterByPeriod]);
 
   const filteredCatatan = useMemo(() => {
     return catatanRecords.filter(c =>
@@ -36,27 +37,41 @@ export function LaporanPage() {
       (!selectedStudent || c.studentId === selectedStudent) &&
       filterByPeriod(c.date)
     );
-  }, [catatanRecords, activeKelas, selectedStudent, period]);
+  }, [catatanRecords, activeKelas, selectedStudent, filterByPeriod]);
 
   const recap = useMemo(() => {
     const students = kelas?.students || [];
     return students.map(s => {
       const absen = absenRecords.filter(a => a.kelasId === activeKelas && a.studentId === s.id && filterByPeriod(a.date));
+      const totalSakit = absen.filter(a => a.status === 'S').length;
+      const totalIzin  = absen.filter(a => a.status === 'I').length;
+      const totalAlpha = absen.filter(a => a.status === 'A').length;
+
+      // Fix 6: Kolom Hadir = totalHariSekolah - S - I - A
+      // Total unique school days this student was recorded for in the period
+      const uniqueDates = new Set(
+        absenRecords.filter(a => a.kelasId === activeKelas && filterByPeriod(a.date)).map(a => a.date)
+      ).size;
+      const totalHadir = Math.max(0, uniqueDates - totalSakit - totalIzin - totalAlpha);
+
       return {
         name: s.name,
         nis: s.nis,
-        hadir: absen.filter(a => a.status === 'H').length,
-        sakit: absen.filter(a => a.status === 'S').length,
-        izin: absen.filter(a => a.status === 'I').length,
-        alpha: absen.filter(a => a.status === 'A').length,
+        studentId: s.id,
+        hadir: totalHadir,
+        sakit: totalSakit,
+        izin: totalIzin,
+        alpha: totalAlpha,
         kasus: kasusRecords.filter(k => k.kelasId === activeKelas && k.studentId === s.id && filterByPeriod(k.date)).length,
+        totalHari: uniqueDates,
       };
-    }).filter(r => !selectedStudent || kelas?.students.find(s => s.id === selectedStudent)?.name === r.name);
-  }, [kelas, absenRecords, kasusRecords, activeKelas, selectedStudent, period]);
+    }).filter(r => !selectedStudent || r.studentId === selectedStudent);
+  }, [kelas, absenRecords, kasusRecords, activeKelas, selectedStudent, filterByPeriod]);
 
   const generateCSV = () => {
-    const headers = ['No', 'Nama', 'NIS', 'Hadir', 'Sakit', 'Izin', 'Alpha', 'Kasus'];
-    const rows = recap.map((r, i) => [i + 1, r.name, r.nis, r.hadir, r.sakit, r.izin, r.alpha, r.kasus].join(','));
+    // Fix 6: Export CSV/Excel now includes "Total Hari" column
+    const headers = ['No', 'Nama', 'NIS', 'Total Hari', 'Hadir', 'Sakit', 'Izin', 'Alpha', 'Kasus'];
+    const rows = recap.map((r, i) => [i + 1, r.name, r.nis, r.totalHari, r.hadir, r.sakit, r.izin, r.alpha, r.kasus].join(','));
     return [headers.join(','), ...rows].join('\n');
   };
 
@@ -72,15 +87,15 @@ export function LaporanPage() {
   };
 
   const exportExcel = () => {
-    // Generate Excel-compatible HTML table
+    // Fix 6: Excel also includes "Total Hari" column
     const html = `
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
       <head><meta charset="utf-8">
       <style>td,th{border:1px solid #ccc;padding:4px 8px;font-family:Arial;font-size:11pt}th{background:#f0f0f0;font-weight:bold}</style>
       </head><body>
       <h3>Laporan Kelas ${kelas?.name} — ${semester.tahunAjaran} Semester ${semester.semester === 'ganjil' ? '1 (Ganjil)' : '2 (Genap)'}</h3>
-      <table><thead><tr><th>No</th><th>Nama</th><th>NIS</th><th>Hadir</th><th>Sakit</th><th>Izin</th><th>Alpha</th><th>Kasus</th></tr></thead>
-      <tbody>${recap.map((r, i) => `<tr><td>${i + 1}</td><td>${r.name}</td><td>${r.nis}</td><td>${r.hadir}</td><td>${r.sakit}</td><td>${r.izin}</td><td>${r.alpha}</td><td>${r.kasus}</td></tr>`).join('')}</tbody></table>
+      <table><thead><tr><th>No</th><th>Nama</th><th>NIS</th><th>Total Hari</th><th>Hadir</th><th>Sakit</th><th>Izin</th><th>Alpha</th><th>Kasus</th></tr></thead>
+      <tbody>${recap.map((r, i) => `<tr><td>${i + 1}</td><td>${r.name}</td><td>${r.nis}</td><td>${r.totalHari}</td><td>${r.hadir}</td><td>${r.sakit}</td><td>${r.izin}</td><td>${r.alpha}</td><td>${r.kasus}</td></tr>`).join('')}</tbody></table>
       </body></html>`;
     const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
     const url = URL.createObjectURL(blob);
@@ -127,7 +142,7 @@ export function LaporanPage() {
         </div>
       </div>
 
-      {/* Recap Table */}
+      {/* Recap Table — includes Total Hari and correct Hadir */}
       <div className="bg-surface rounded-2xl shadow-soft overflow-hidden">
         <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
           <BarChart3 className="w-4 h-4 text-primary" />
@@ -138,6 +153,7 @@ export function LaporanPage() {
             <thead>
               <tr className="bg-bg-2">
                 <th className="text-left text-[11px] font-semibold tracking-wider uppercase text-text-tertiary px-4 py-2.5">Nama</th>
+                <th className="text-center text-[11px] font-semibold tracking-wider uppercase text-text-tertiary px-2 py-2.5">Hari</th>
                 <th className="text-center text-[11px] font-semibold tracking-wider uppercase text-text-tertiary px-3 py-2.5">H</th>
                 <th className="text-center text-[11px] font-semibold tracking-wider uppercase text-text-tertiary px-3 py-2.5">S</th>
                 <th className="text-center text-[11px] font-semibold tracking-wider uppercase text-text-tertiary px-3 py-2.5">I</th>
@@ -148,6 +164,7 @@ export function LaporanPage() {
               {recap.map((r, i) => (
                 <tr key={i} className="hover:bg-bg-2 transition-colors">
                   <td className="px-4 py-3 border-b border-border text-foreground font-medium">{r.name}</td>
+                  <td className="px-2 py-3 border-b border-border text-center text-text-secondary">{r.totalHari}</td>
                   <td className="px-3 py-3 border-b border-border text-center text-primary font-semibold">{r.hadir}</td>
                   <td className="px-3 py-3 border-b border-border text-center text-semantic-blue">{r.sakit}</td>
                   <td className="px-3 py-3 border-b border-border text-center text-semantic-yellow">{r.izin}</td>

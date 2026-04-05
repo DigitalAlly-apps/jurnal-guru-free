@@ -2,22 +2,17 @@ import { useState, useRef } from 'react';
 import { Switch } from '@/components/ui/switch';
 import { Moon, Calendar, Download, Upload, Smartphone, User, Clock, Trash2 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { useDarkMode } from '@/hooks/use-dark-mode';
 import type { BackupData, SemesterConfig, UjianSchedule } from '@/types';
 
 export function SetelanPage() {
   const { namaGuru, setNamaGuru, semester, setSemester, exportBackup, importBackup, resetAll, showToast } = useApp();
-  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
+  const { isDark, toggle: toggleDark } = useDarkMode();
   const [showInstall, setShowInstall] = useState(false);
   const [namaInput, setNamaInput] = useState(namaGuru);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [resetInput, setResetInput] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
-
-  const toggleDark = (checked: boolean) => {
-    setIsDark(checked);
-    document.documentElement.classList.toggle('dark', checked);
-    localStorage.setItem('theme', checked ? 'dark' : 'light');
-  };
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -25,8 +20,8 @@ export function SetelanPage() {
     const reader = new FileReader();
     reader.onload = (ev) => {
       try {
-        const data = JSON.parse(ev.target?.result as string) as BackupData;
-        importBackup(data);
+        const data = JSON.parse(ev.target?.result as string);
+        importBackup(data as BackupData);
       } catch {
         showToast('File backup tidak valid');
       }
@@ -60,9 +55,6 @@ export function SetelanPage() {
     showToast('Nama guru disimpan');
   };
 
-  const activeSched = semester.semester === 'ganjil' ? semester.ganjil : semester.genap;
-  const activeKey   = semester.semester as 'ganjil' | 'genap';
-
   return (
     <div className="flex flex-col gap-4 max-w-2xl">
 
@@ -79,6 +71,7 @@ export function SetelanPage() {
           <input
             value={namaInput}
             onChange={e => setNamaInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && saveNama()}
             placeholder="Contoh: Pak Budi / Bu Sari"
             className="input-soft flex-1"
           />
@@ -100,7 +93,7 @@ export function SetelanPage() {
               <p className="text-[12px] text-text-tertiary">Tampilan nyaman untuk mata</p>
             </div>
           </div>
-          <Switch checked={isDark} onCheckedChange={toggleDark} />
+          <Switch checked={isDark} onCheckedChange={val => toggleDark(val)} />
         </div>
       </div>
 
@@ -113,7 +106,6 @@ export function SetelanPage() {
           <h3 className="text-sm font-semibold text-foreground">Semester</h3>
         </div>
 
-        {/* Tahun Ajaran */}
         <div className="mb-3">
           <label className="label-upper block mb-1.5">Tahun Ajaran</label>
           <select value={semester.tahunAjaran} onChange={e => handleSemesterChange({ tahunAjaran: e.target.value })} className="input-soft">
@@ -121,7 +113,6 @@ export function SetelanPage() {
           </select>
         </div>
 
-        {/* Aktif Semester */}
         <div>
           <label className="label-upper block mb-1.5">Periode Aktif</label>
           <div className="flex bg-bg-2 rounded-xl p-1 gap-1">
@@ -137,15 +128,12 @@ export function SetelanPage() {
         </div>
       </div>
 
-      {/* Jadwal UTS & UAS — Semester 1 (Ganjil) */}
       <UjianScheduleCard
         label="Jadwal UTS & UAS — Semester 1 (Ganjil)"
         schedule={semester.ganjil}
         isActive={semester.semester === 'ganjil'}
         onChange={u => handleScheduleChange('ganjil', u)}
       />
-
-      {/* Jadwal UTS & UAS — Semester 2 (Genap) */}
       <UjianScheduleCard
         label="Jadwal UTS & UAS — Semester 2 (Genap)"
         schedule={semester.genap}
@@ -216,7 +204,7 @@ export function SetelanPage() {
         </button>
       </div>
 
-      {/* Reset Confirmation Dialog */}
+      {/* Reset Confirmation Dialog — mengganti window.confirm() */}
       {showResetDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div className="bg-surface rounded-2xl shadow-xl w-full max-w-sm p-6 flex flex-col gap-4">
@@ -249,11 +237,7 @@ export function SetelanPage() {
               </button>
               <button
                 disabled={resetInput !== 'RESET'}
-                onClick={() => {
-                  resetAll();
-                  setShowResetDialog(false);
-                  setResetInput('');
-                }}
+                onClick={() => { resetAll(); setShowResetDialog(false); setResetInput(''); }}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 Hapus Semua
@@ -263,12 +247,11 @@ export function SetelanPage() {
         </div>
       )}
 
-      <p className="text-[11px] text-text-tertiary text-center mt-2">Jurnal Guru Pro V6.0</p>
+      <p className="text-[11px] text-text-tertiary text-center mt-2">Jurnal Guru Pro v6</p>
     </div>
   );
 }
 
-// Sub-component: Ujian schedule card
 function UjianScheduleCard({
   label, schedule, isActive, onChange,
 }: {
@@ -288,7 +271,6 @@ function UjianScheduleCard({
           {isActive && <span className="text-[11px] text-primary font-semibold">● Aktif</span>}
         </div>
       </div>
-
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="label-upper block mb-1.5">UTS Mulai</label>

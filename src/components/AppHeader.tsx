@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Moon, Sun, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Moon, Sun } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { JurnalGuruLogo } from '@/components/JurnalGuruLogo';
+import { useDarkMode } from '@/hooks/use-dark-mode';
 import type { TabId } from '@/types';
 
 const TAB_TITLES: Record<TabId, string> = {
@@ -19,35 +19,22 @@ const TAB_TITLES: Record<TabId, string> = {
 
 const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 
-function useNow() {
-  const [now, setNow] = useState(new Date());
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(t);
-  }, []);
-  return now;
-}
+// Fix: tanggal tidak berubah selama sesi — tidak perlu interval
+const today = new Date();
+const tanggalStr = `${HARI[today.getDay()]}, ${today.getDate()} ${today.toLocaleString('id-ID', { month: 'short' })}`;
 
 export function AppHeader() {
   const { activeTab, kelasList, activeKelas, setActiveKelas, namaGuru, lastBackupDate } = useApp();
+  const { isDark, toggle: toggleDark } = useDarkMode();
+
   const isHome = activeTab === 'home';
   const kelasName = kelasList.find(k => k.id === activeKelas)?.name;
-  const now = useNow();
-
-  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
-  const toggleDark = () => {
-    const next = !isDark;
-    setIsDark(next);
-    document.documentElement.classList.toggle('dark', next);
-    localStorage.setItem('theme', next ? 'dark' : 'light');
-  };
 
   const backupOk = (() => {
     if (!lastBackupDate) return false;
     return (Date.now() - new Date(lastBackupDate).getTime()) / 86400000 <= 7;
   })();
 
-  const tanggal = `${HARI[now.getDay()]}, ${now.getDate()} ${now.toLocaleString('id-ID', { month: 'short' })}`;
   const firstName = namaGuru ? namaGuru.split(' ')[0] : null;
 
   return (
@@ -77,7 +64,6 @@ export function AppHeader() {
 
       {/* Right */}
       <div className="flex items-center gap-1.5">
-
         {/* Kelas selector — mobile */}
         {kelasList.length > 1 && (
           <select
@@ -92,11 +78,9 @@ export function AppHeader() {
         {/* Date + greeting */}
         <div className="hidden sm:flex flex-col items-end gap-0 mr-1">
           {firstName && (
-            <span className="text-[12px] font-semibold text-foreground leading-tight">
-              {firstName}
-            </span>
+            <span className="text-[12px] font-semibold text-foreground leading-tight">{firstName}</span>
           )}
-          <span className="text-[11px] text-text-tertiary leading-tight font-mono-rich">{tanggal}</span>
+          <span className="text-[11px] text-text-tertiary leading-tight font-mono-rich">{tanggalStr}</span>
         </div>
 
         {/* Backup indicator */}
@@ -115,11 +99,8 @@ export function AppHeader() {
         </button>
 
         {/* Theme toggle */}
-        <button onClick={toggleDark} className="icon-btn-rich" title={isDark ? 'Mode Terang' : 'Mode Gelap'}>
-          {isDark
-            ? <Sun className="w-3.5 h-3.5" />
-            : <Moon className="w-3.5 h-3.5" />
-          }
+        <button onClick={() => toggleDark()} className="icon-btn-rich" title={isDark ? 'Mode Terang' : 'Mode Gelap'}>
+          {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
         </button>
       </div>
     </header>
