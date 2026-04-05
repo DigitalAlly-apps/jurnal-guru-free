@@ -33,6 +33,9 @@ const tutorials = [
       'Klik "Simpan Catatan". Catatan juga bisa dilihat di tab Riwayat dan di profil siswa.',
     ],
   },
+  {
+    icon: ClipboardCheck,
+    title: 'Cara Melihat Riwayat & Edit Data',
     steps: [
       'Buka tab "Riwayat" untuk melihat semua catatan.',
       'Gunakan kotak pencarian untuk mencari nama siswa atau tanggal.',

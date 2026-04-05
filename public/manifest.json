@@ -1,7 +1,7 @@
 {
-  "name": "Jurnal Guru",
+  "name": "Jurnal Guru Pro",
   "short_name": "Jurnal Guru",
-  "description": "Aplikasi jurnal kelas berbasis modern",
+  "description": "Aplikasi jurnal kelas untuk guru Indonesia",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#faf8f5",
