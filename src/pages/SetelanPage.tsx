@@ -192,7 +192,7 @@ export function SetelanPage() {
         )}
       </div>
 
-      <p className="text-[11px] text-text-tertiary text-center mt-2">Jurnal Guru Pro v2.0</p>
+      <p className="text-[11px] text-text-tertiary text-center mt-2">Jurnal Guru Pro v5.1</p>
     </div>
   );
 }

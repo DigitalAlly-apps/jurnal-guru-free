@@ -33,7 +33,7 @@ export function JurnalGuruLogo({ size = 120, showText = true, className = '' }: 
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox={showText ? '-10 0 220 330' : '-10 0 220 175'}
+      viewBox={showText ? '-15 0 230 335' : '-15 0 230 180'}
       width={width}
       height={height}
       className={className}
