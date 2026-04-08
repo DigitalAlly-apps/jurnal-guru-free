@@ -27,13 +27,11 @@ import { JurnalGuruLogo } from '@/components/JurnalGuruLogo';
 
 const NAV_ITEMS: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'home',      label: 'Beranda',          icon: LayoutDashboard },
-  { id: 'absen',     label: 'Absensi',          icon: ClipboardCheck },
-  { id: 'kasus',     label: 'Input Kasus',      icon: AlertTriangle },
-  { id: 'jadwal',    label: 'Jadwal',           icon: CalendarDays },
-  { id: 'riwayat',   label: 'Riwayat',          icon: History },
-  { id: 'laporan',   label: 'Laporan',          icon: BarChart3 },
-  { id: 'siswa',     label: 'Data Siswa',       icon: Users },
-  { id: 'informasi', label: 'Informasi',        icon: Info },
+  { id: 'siswa',     label: 'Data Kelas',       icon: Users },
+  { id: 'absen',     label: 'Absensi Harian',   icon: ClipboardCheck },
+  { id: 'jurnal',    label: 'Buku Jurnal Guru', icon: AlertTriangle },
+  { id: 'jadwal',    label: 'Jadwal Pelajaran', icon: CalendarDays },
+  { id: 'laporan',   label: 'Buku Induk',       icon: BarChart3 },
 ];
 
 export function AppSidebar() {

@@ -117,6 +117,15 @@ export function SiswaPage() {
   const [editingStudent, setEditingStudent] = useState<{ id: string; name: string; nis: string } | null>(null);
   const [confirmDialog,  setConfirmDialog]  = useState<{ message: string; onConfirm: () => void } | null>(null);
 
+  // ── Filter search (hook harus dipanggil sebelum early return) ──
+  const filteredStudents = useMemo(() =>
+    (kelas?.students || []).filter(s =>
+      s.name.toLowerCase().includes(search.toLowerCase()) ||
+      s.nis.includes(search)
+    ),
+    [kelas, search]
+  );
+
   // Cari siswa yang aktif. Jika activeStudentId ada tapi tidak ditemukan (kelas ganti/berubah),
   // jadikan null supaya tidak blank hitam.
   const selSiswa = activeStudentId ? kelas?.students.find(s => s.id === activeStudentId) ?? null : null;
@@ -194,14 +203,6 @@ export function SiswaPage() {
     showToast('Data siswa diperbarui');
   };
 
-  // ── Filter search ──
-  const filteredStudents = useMemo(() =>
-    (kelas?.students || []).filter(s =>
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.nis.includes(search)
-    ),
-    [kelas, search]
-  );
 
   return (
     <div className="flex flex-col gap-4 max-w-2xl">

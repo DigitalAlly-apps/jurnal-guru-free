@@ -6,14 +6,11 @@ import { ToastContainer } from './ToastContainer';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { HomePage } from '@/pages/HomePage';
 import { AbsenPage } from '@/pages/AbsenPage';
-import { KasusPage } from '@/pages/KasusPage';
 import { JadwalPage } from '@/pages/JadwalPage';
-import { RiwayatPage } from '@/pages/RiwayatPage';
-import { LaporanPage } from '@/pages/LaporanPage';
 import { SiswaPage } from '@/pages/SiswaPage';
-import { CatatanPage } from '@/pages/CatatanPage';
-import { InformasiPage } from '@/pages/InformasiPage';
 import { SetelanPage } from '@/pages/SetelanPage';
+import { JurnalPage } from '@/pages/JurnalPage';
+import { LaporanRiwayatPage } from '@/pages/LaporanRiwayatPage';
 
 export function AppLayout() {
   const { activeTab } = useApp();
@@ -21,15 +18,13 @@ export function AppLayout() {
   const renderPage = () => {
     switch (activeTab) {
       case 'home':       return <HomePage />;
-      case 'absen':      return <AbsenPage />;
-      case 'kasus':      return <KasusPage />;
-      case 'jadwal':     return <JadwalPage />;
-      case 'riwayat':    return <RiwayatPage />;
-      case 'laporan':    return <LaporanPage />;
-      case 'catatan':    return <CatatanPage />;
       case 'siswa':      return <SiswaPage />;
-      case 'informasi':  return <InformasiPage />;
+      case 'absen':      return <AbsenPage />;
+      case 'jurnal':     return <JurnalPage />;
+      case 'jadwal':     return <JadwalPage />;
+      case 'laporan':    return <LaporanRiwayatPage />;
       case 'setelan':    return <SetelanPage />;
+      default:           return <HomePage />;
     }
   };
 

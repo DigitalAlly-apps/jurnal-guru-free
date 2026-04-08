@@ -4,6 +4,7 @@ import { Moon, Calendar, Download, Upload, Smartphone, User, Clock, Trash2 } fro
 import { useApp } from '@/context/AppContext';
 import { useDarkMode } from '@/hooks/use-dark-mode';
 import type { BackupData, SemesterConfig, UjianSchedule } from '@/types';
+import { InformasiPage } from './InformasiPage';
 
 export function SetelanPage() {
   const { namaGuru, setNamaGuru, semester, setSemester, exportBackup, importBackup, resetAll, showToast } = useApp();
@@ -247,7 +248,12 @@ export function SetelanPage() {
         </div>
       )}
 
-      <p className="text-[11px] text-text-tertiary text-center mt-2">Jurnal Guru Pro v6</p>
+      <div className="mt-8 border-t-2 border-border pt-6">
+        <h3 className="text-sm font-bold text-foreground mb-4">Pusat Informasi & Bantuan</h3>
+        <InformasiPage />
+      </div>
+
+      <p className="text-[14px] text-text-tertiary text-center mt-2 font-bold">Jurnal Guru Pro v6</p>
     </div>
   );
 }

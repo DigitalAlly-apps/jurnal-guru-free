@@ -46,7 +46,7 @@ export interface CatatanRecord {
   tipe?: 'prestasi' | 'perkembangan' | 'umum';
 }
 
-export type TabId = 'home' | 'absen' | 'kasus' | 'catatan' | 'jadwal' | 'riwayat' | 'laporan' | 'siswa' | 'informasi' | 'setelan';
+export type TabId = 'home' | 'siswa' | 'absen' | 'jurnal' | 'jadwal' | 'laporan' | 'setelan';
 
 export type SemesterPeriod = 'ganjil' | 'genap';
 

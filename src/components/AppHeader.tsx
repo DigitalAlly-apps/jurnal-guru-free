@@ -7,14 +7,12 @@ import type { TabId } from '@/types';
 
 const TAB_TITLES: Record<TabId, string> = {
   home:      'Beranda',
-  absen:     'Absensi',
-  kasus:     'Kasus',
-  jadwal:    'Jadwal',
-  riwayat:   'Riwayat',
-  laporan:   'Laporan',
-  siswa:     'Data Siswa',
-  informasi: 'Informasi',
-  setelan:   'Setelan',
+  siswa:     'Data Kelas & Siswa',
+  absen:     'Absensi Harian',
+  jurnal:    'Buku Jurnal Guru',
+  jadwal:    'Jadwal Pelajaran',
+  laporan:   'Buku Induk & Laporan',
+  setelan:   'Setelan & Informasi',
 };
 
 const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
