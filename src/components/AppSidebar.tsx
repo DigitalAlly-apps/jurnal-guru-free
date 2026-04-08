@@ -37,13 +37,15 @@ const NAV_ITEMS: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = 
 ];
 
 export function AppSidebar() {
-  const { activeTab, setActiveTab, kelasList, activeKelas, setActiveKelas } = useApp();
+  const { activeTab, setActiveTab, setActiveStudentId, kelasList, activeKelas, setActiveKelas } = useApp();
   const { state, setOpenMobile } = useSidebar();
   const collapsed = state === 'collapsed';
 
   const handleNav = (tab: TabId) => {
     setActiveTab(tab);
     setOpenMobile(false);
+    // Reset student detail view whenever navigating (including away from siswa)
+    setActiveStudentId(null);
   };
 
   return (

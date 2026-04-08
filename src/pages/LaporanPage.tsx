@@ -47,31 +47,22 @@ export function LaporanPage() {
       const totalIzin  = absen.filter(a => a.status === 'I').length;
       const totalAlpha = absen.filter(a => a.status === 'A').length;
 
-      // Fix 6: Kolom Hadir = totalHariSekolah - S - I - A
-      // Total unique school days this student was recorded for in the period
-      const uniqueDates = new Set(
-        absenRecords.filter(a => a.kelasId === activeKelas && filterByPeriod(a.date)).map(a => a.date)
-      ).size;
-      const totalHadir = Math.max(0, uniqueDates - totalSakit - totalIzin - totalAlpha);
-
-      return {
+return {
         name: s.name,
         nis: s.nis,
         studentId: s.id,
-        hadir: totalHadir,
         sakit: totalSakit,
         izin: totalIzin,
         alpha: totalAlpha,
         kasus: kasusRecords.filter(k => k.kelasId === activeKelas && k.studentId === s.id && filterByPeriod(k.date)).length,
-        totalHari: uniqueDates,
       };
     }).filter(r => !selectedStudent || r.studentId === selectedStudent);
   }, [kelas, absenRecords, kasusRecords, activeKelas, selectedStudent, filterByPeriod]);
 
   const generateCSV = () => {
     // Fix 6: Export CSV/Excel now includes "Total Hari" column
-    const headers = ['No', 'Nama', 'NIS', 'Total Hari', 'Hadir', 'Sakit', 'Izin', 'Alpha', 'Kasus'];
-    const rows = recap.map((r, i) => [i + 1, r.name, r.nis, r.totalHari, r.hadir, r.sakit, r.izin, r.alpha, r.kasus].join(','));
+    const headers = ['No', 'Nama', 'NIS', 'Sakit', 'Izin', 'Alpha', 'Kasus'];
+    const rows = recap.map((r, i) => [i + 1, r.name, r.nis, r.sakit, r.izin, r.alpha, r.kasus].join(','));
     return [headers.join(','), ...rows].join('\n');
   };
 
@@ -94,8 +85,8 @@ export function LaporanPage() {
       <style>td,th{border:1px solid #ccc;padding:4px 8px;font-family:Arial;font-size:11pt}th{background:#f0f0f0;font-weight:bold}</style>
       </head><body>
       <h3>Laporan Kelas ${kelas?.name} — ${semester.tahunAjaran} Semester ${semester.semester === 'ganjil' ? '1 (Ganjil)' : '2 (Genap)'}</h3>
-      <table><thead><tr><th>No</th><th>Nama</th><th>NIS</th><th>Total Hari</th><th>Hadir</th><th>Sakit</th><th>Izin</th><th>Alpha</th><th>Kasus</th></tr></thead>
-      <tbody>${recap.map((r, i) => `<tr><td>${i + 1}</td><td>${r.name}</td><td>${r.nis}</td><td>${r.totalHari}</td><td>${r.hadir}</td><td>${r.sakit}</td><td>${r.izin}</td><td>${r.alpha}</td><td>${r.kasus}</td></tr>`).join('')}</tbody></table>
+      <table><thead><tr><th>No</th><th>Nama</th><th>NIS</th><th>Sakit</th><th>Izin</th><th>Alpha</th><th>Kasus</th></tr></thead>
+      <tbody>${recap.map((r, i) => `<tr><td>${i + 1}</td><td>${r.name}</td><td>${r.nis}</td><td>${r.sakit}</td><td>${r.izin}</td><td>${r.alpha}</td><td>${r.kasus}</td></tr>`).join('')}</tbody></table>
       </body></html>`;
     const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
     const url = URL.createObjectURL(blob);
@@ -153,8 +144,6 @@ export function LaporanPage() {
             <thead>
               <tr className="bg-bg-2">
                 <th className="text-left text-[11px] font-semibold tracking-wider uppercase text-text-tertiary px-4 py-2.5">Nama</th>
-                <th className="text-center text-[11px] font-semibold tracking-wider uppercase text-text-tertiary px-2 py-2.5">Hari</th>
-                <th className="text-center text-[11px] font-semibold tracking-wider uppercase text-text-tertiary px-3 py-2.5">H</th>
                 <th className="text-center text-[11px] font-semibold tracking-wider uppercase text-text-tertiary px-3 py-2.5">S</th>
                 <th className="text-center text-[11px] font-semibold tracking-wider uppercase text-text-tertiary px-3 py-2.5">I</th>
                 <th className="text-center text-[11px] font-semibold tracking-wider uppercase text-text-tertiary px-3 py-2.5">A</th>
@@ -164,8 +153,6 @@ export function LaporanPage() {
               {recap.map((r, i) => (
                 <tr key={i} className="hover:bg-bg-2 transition-colors">
                   <td className="px-4 py-3 border-b border-border text-foreground font-medium">{r.name}</td>
-                  <td className="px-2 py-3 border-b border-border text-center text-text-secondary">{r.totalHari}</td>
-                  <td className="px-3 py-3 border-b border-border text-center text-primary font-semibold">{r.hadir}</td>
                   <td className="px-3 py-3 border-b border-border text-center text-semantic-blue">{r.sakit}</td>
                   <td className="px-3 py-3 border-b border-border text-center text-semantic-yellow">{r.izin}</td>
                   <td className="px-3 py-3 border-b border-border text-center text-semantic-red">{r.alpha}</td>

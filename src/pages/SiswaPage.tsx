@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import {
   User, ArrowLeft, CheckCircle, AlertTriangle, BookOpen,
-  Clock, Plus, Trash2, Upload, X, TrendingUp, Pencil, Check,
+  Clock, Plus, Trash2, Upload, X, Pencil, Check,
 } from 'lucide-react';
 
 // ── Confirm dialog ────────────────────────────────────────────────────────────
@@ -117,7 +117,18 @@ export function SiswaPage() {
   const [editingStudent, setEditingStudent] = useState<{ id: string; name: string; nis: string } | null>(null);
   const [confirmDialog,  setConfirmDialog]  = useState<{ message: string; onConfirm: () => void } | null>(null);
 
-  if (activeStudentId) return <StudentDetail />;
+  // Cari siswa yang aktif. Jika activeStudentId ada tapi tidak ditemukan (kelas ganti/berubah),
+  // jadikan null supaya tidak blank hitam.
+  const selSiswa = activeStudentId ? kelas?.students.find(s => s.id === activeStudentId) ?? null : null;
+
+  if (selSiswa && kelas) {
+    return <StudentDetail student={selSiswa} kelasId={activeKelas} kelasName={kelas.name} />;
+  }
+
+  // Jika activeStudentId ada tapi siswa sudah tidak ada, reset dengan useEffect-safe timeout
+  if (activeStudentId && !selSiswa) {
+    setTimeout(() => setActiveStudentId(null), 0);
+  }
 
   const askConfirm = (message: string, onConfirm: () => void) =>
     setConfirmDialog({ message, onConfirm });
@@ -404,44 +415,39 @@ export function SiswaPage() {
 }
 
 // ── Student Detail ────────────────────────────────────────────────────────────
-function StudentDetail() {
+function StudentDetail({ student, kelasId, kelasName }: {
+  student: { id: string; name: string; nis: string };
+  kelasId: string;
+  kelasName: string;
+}) {
   const {
-    kelasList, activeKelas, activeStudentId, setActiveStudentId,
     absenRecords, kasusRecords, catatanRecords,
-    updateStudent, showToast,
+    setActiveStudentId, updateStudent, showToast,
   } = useApp();
-
-  const kelas   = kelasList.find(k => k.id === activeKelas);
-  const student = kelas?.students.find(s => s.id === activeStudentId);
 
   const [isEditing,  setIsEditing]  = useState(false);
   const [editName,   setEditName]   = useState('');
   const [editNis,    setEditNis]    = useState('');
 
   const absen   = useMemo(() =>
-    absenRecords.filter(a => a.kelasId === activeKelas && a.studentId === activeStudentId)
+    absenRecords.filter(a => a.kelasId === kelasId && a.studentId === student.id)
       .sort((a, b) => b.date.localeCompare(a.date)),
-    [absenRecords, activeKelas, activeStudentId]
+    [absenRecords, kelasId, student.id]
   );
   const kasus   = useMemo(() =>
-    kasusRecords.filter(k => k.kelasId === activeKelas && k.studentId === activeStudentId)
+    kasusRecords.filter(k => k.kelasId === kelasId && k.studentId === student.id)
       .sort((a, b) => b.date.localeCompare(a.date)),
-    [kasusRecords, activeKelas, activeStudentId]
+    [kasusRecords, kelasId, student.id]
   );
   const catatan = useMemo(() =>
-    catatanRecords.filter(c => c.kelasId === activeKelas && c.studentId === activeStudentId)
+    catatanRecords.filter(c => c.kelasId === kelasId && c.studentId === student.id)
       .sort((a, b) => b.date.localeCompare(a.date)),
-    [catatanRecords, activeKelas, activeStudentId]
+    [catatanRecords, kelasId, student.id]
   );
 
-  if (!student) return null;
-
-  const uniqueDates = new Set(absen.map(a => a.date)).size;
   const sakitCount  = absen.filter(a => a.status === 'S').length;
   const izinCount   = absen.filter(a => a.status === 'I').length;
   const alphaCount  = absen.filter(a => a.status === 'A').length;
-  const hadirCount  = Math.max(0, uniqueDates - sakitCount - izinCount - alphaCount);
-  const pctHadir    = uniqueDates > 0 ? Math.round((hadirCount / uniqueDates) * 100) : 0;
 
   const startEdit = () => {
     setEditName(student.name);
@@ -451,7 +457,7 @@ function StudentDetail() {
 
   const saveEdit = () => {
     if (!editName.trim()) return;
-    updateStudent(activeKelas, student.id, {
+    updateStudent(kelasId, student.id, {
       name: editName.trim(),
       nis:  editNis.trim() || '-',
     });
@@ -513,16 +519,15 @@ function StudentDetail() {
               <p className="text-sm text-text-secondary">
                 NISN: <span className="font-mono">{student.nis === '-' ? '—' : student.nis}</span>
               </p>
-              <p className="text-xs text-text-tertiary">Kelas {kelas?.name}</p>
+              <p className="text-xs text-text-tertiary">Kelas {kelasName}</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {[
-          { label: 'Hadir', val: hadirCount, cls: 'text-primary bg-accent-light' },
           { label: 'Sakit', val: sakitCount, cls: 'text-semantic-blue bg-semantic-blue-light' },
           { label: 'Izin',  val: izinCount,  cls: 'text-semantic-yellow bg-semantic-yellow-light' },
           { label: 'Alpha', val: alphaCount, cls: 'text-semantic-red bg-semantic-red-light' },
@@ -534,23 +539,7 @@ function StudentDetail() {
         ))}
       </div>
 
-      {/* Attendance rate */}
-      {uniqueDates > 0 && (
-        <div className="bg-surface rounded-2xl shadow-soft p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Rekap Kehadiran</h3>
-          </div>
-          <div className="flex justify-between items-center mb-1.5">
-            <span className="text-xs text-text-secondary">Persentase Hadir</span>
-            <span className="text-xs font-bold text-primary">{pctHadir}%</span>
-          </div>
-          <div className="progress-bar">
-            <div className="progress-fill" style={{ width: `${pctHadir}%` }} />
-          </div>
-          <p className="text-[11px] text-text-tertiary mt-1">{uniqueDates} hari tercatat</p>
-        </div>
-      )}
+
 
       {/* Kasus */}
       <div className="bg-surface rounded-2xl shadow-soft p-5">
