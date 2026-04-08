@@ -111,8 +111,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
   const setActiveKelas = useCallback((v: string) => {
     setActiveKelasRaw(v); save('jg_activeKelas', v);
+<<<<<<< HEAD
     // Reset student detail view when kelas changes
     setActiveStudentId(null);
+=======
+>>>>>>> 6ac2e35e7f5848e6370ad1d220fd2929a6cbde28
   }, []);
   const setSemester: React.Dispatch<React.SetStateAction<SemesterConfig>> = useCallback((v) => {
     setSemesterRaw(prev => {
