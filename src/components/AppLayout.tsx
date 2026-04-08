@@ -11,6 +11,7 @@ import { JadwalPage } from '@/pages/JadwalPage';
 import { RiwayatPage } from '@/pages/RiwayatPage';
 import { LaporanPage } from '@/pages/LaporanPage';
 import { SiswaPage } from '@/pages/SiswaPage';
+import { CatatanPage } from '@/pages/CatatanPage';
 import { InformasiPage } from '@/pages/InformasiPage';
 import { SetelanPage } from '@/pages/SetelanPage';
 
@@ -25,6 +26,7 @@ export function AppLayout() {
       case 'jadwal':     return <JadwalPage />;
       case 'riwayat':    return <RiwayatPage />;
       case 'laporan':    return <LaporanPage />;
+      case 'catatan':    return <CatatanPage />;
       case 'siswa':      return <SiswaPage />;
       case 'informasi':  return <InformasiPage />;
       case 'setelan':    return <SetelanPage />;
