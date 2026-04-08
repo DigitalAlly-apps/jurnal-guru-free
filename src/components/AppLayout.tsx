@@ -11,6 +11,7 @@ import { SiswaPage } from '@/pages/SiswaPage';
 import { SetelanPage } from '@/pages/SetelanPage';
 import { JurnalPage } from '@/pages/JurnalPage';
 import { LaporanRiwayatPage } from '@/pages/LaporanRiwayatPage';
+import { OnboardingWizard } from '@/components/OnboardingWizard';
 
 export function AppLayout() {
   const { activeTab } = useApp();
@@ -30,6 +31,7 @@ export function AppLayout() {
 
   return (
     <SidebarProvider>
+      <OnboardingWizard />
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
