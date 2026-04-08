@@ -37,7 +37,7 @@ function EditStudentModal({ studentId, initialName, initialNis, onSave, onClose 
   onClose: () => void;
 }) {
   const [name, setName] = useState(initialName);
-  const [nis, setNis] = useState(initialNis === '-' ? '' : initialNis);
+  const [nis,  setNis]  = useState(initialNis === '-' ? '' : initialNis);
 
   const handleSave = () => {
     if (!name.trim()) return;
@@ -106,16 +106,16 @@ export function SiswaPage() {
 
   const kelas = kelasList.find(k => k.id === activeKelas);
 
-  const [showAddKelas, setShowAddKelas] = useState(false);
-  const [newKelasName, setNewKelasName] = useState('');
-  const [showAddSiswa, setShowAddSiswa] = useState(false);
-  const [addMode, setAddMode] = useState<'manual' | 'paste'>('manual');
-  const [manualName, setManualName] = useState('');
-  const [manualNis, setManualNis] = useState('');
-  const [pasteText, setPasteText] = useState('');
-  const [search, setSearch] = useState('');
+  const [showAddKelas,   setShowAddKelas]   = useState(false);
+  const [newKelasName,   setNewKelasName]   = useState('');
+  const [showAddSiswa,   setShowAddSiswa]   = useState(false);
+  const [addMode,        setAddMode]        = useState<'manual' | 'paste'>('manual');
+  const [manualName,     setManualName]     = useState('');
+  const [manualNis,      setManualNis]      = useState('');
+  const [pasteText,      setPasteText]      = useState('');
+  const [search,         setSearch]         = useState('');
   const [editingStudent, setEditingStudent] = useState<{ id: string; name: string; nis: string } | null>(null);
-  const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => void } | null>(null);
+  const [confirmDialog,  setConfirmDialog]  = useState<{ message: string; onConfirm: () => void } | null>(null);
 
   // Cari siswa yang aktif. Jika activeStudentId ada tapi tidak ditemukan (kelas ganti/berubah),
   // jadikan null supaya tidak blank hitam.
@@ -163,7 +163,7 @@ export function SiswaPage() {
   // ── Paste ──
   const handlePaste = () => {
     if (!pasteText.trim()) return;
-    const lines = pasteText.trim().split('\n').filter(l => l.trim());
+    const lines    = pasteText.trim().split('\n').filter(l => l.trim());
     const students = lines.map(line => {
       const parts = line.split('\t').length > 1 ? line.split('\t') : line.split(',');
       if (parts.length >= 3) return { name: parts[1].trim(), nis: parts[2].trim() };
@@ -283,8 +283,9 @@ export function SiswaPage() {
           <div className="flex bg-bg-2 rounded-xl p-1 gap-1 mb-4">
             {(['manual', 'paste'] as const).map(m => (
               <button key={m} onClick={() => setAddMode(m)}
-                className={`flex-1 py-2 text-[12px] font-semibold rounded-lg transition-all ${addMode === m ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary'
-                  }`}>
+                className={`flex-1 py-2 text-[12px] font-semibold rounded-lg transition-all ${
+                  addMode === m ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary'
+                }`}>
                 {m === 'manual' ? 'Manual' : 'Paste dari Excel'}
               </button>
             ))}
@@ -366,8 +367,9 @@ export function SiswaPage() {
 
             return (
               <div key={s.id}
-                className={`flex items-center gap-3 px-4 py-3 group hover:bg-bg-2 transition-colors ${i < filteredStudents.length - 1 ? 'border-b border-border' : ''
-                  }`}>
+                className={`flex items-center gap-3 px-4 py-3 group hover:bg-bg-2 transition-colors ${
+                  i < filteredStudents.length - 1 ? 'border-b border-border' : ''
+                }`}>
 
                 {/* Avatar */}
                 <div className="w-9 h-9 rounded-xl bg-accent-light flex items-center justify-center flex-shrink-0">
@@ -423,16 +425,16 @@ function StudentDetail({ student, kelasId, kelasName }: {
     setActiveStudentId, updateStudent, showToast,
   } = useApp();
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [editNis, setEditNis] = useState('');
+  const [isEditing,  setIsEditing]  = useState(false);
+  const [editName,   setEditName]   = useState('');
+  const [editNis,    setEditNis]    = useState('');
 
-  const absen = useMemo(() =>
+  const absen   = useMemo(() =>
     absenRecords.filter(a => a.kelasId === kelasId && a.studentId === student.id)
       .sort((a, b) => b.date.localeCompare(a.date)),
     [absenRecords, kelasId, student.id]
   );
-  const kasus = useMemo(() =>
+  const kasus   = useMemo(() =>
     kasusRecords.filter(k => k.kelasId === kelasId && k.studentId === student.id)
       .sort((a, b) => b.date.localeCompare(a.date)),
     [kasusRecords, kelasId, student.id]
@@ -443,9 +445,9 @@ function StudentDetail({ student, kelasId, kelasName }: {
     [catatanRecords, kelasId, student.id]
   );
 
-  const sakitCount = absen.filter(a => a.status === 'S').length;
-  const izinCount = absen.filter(a => a.status === 'I').length;
-  const alphaCount = absen.filter(a => a.status === 'A').length;
+  const sakitCount  = absen.filter(a => a.status === 'S').length;
+  const izinCount   = absen.filter(a => a.status === 'I').length;
+  const alphaCount  = absen.filter(a => a.status === 'A').length;
 
   const startEdit = () => {
     setEditName(student.name);
@@ -457,7 +459,7 @@ function StudentDetail({ student, kelasId, kelasName }: {
     if (!editName.trim()) return;
     updateStudent(kelasId, student.id, {
       name: editName.trim(),
-      nis: editNis.trim() || '-',
+      nis:  editNis.trim() || '-',
     });
     setIsEditing(false);
     showToast('Data siswa diperbarui');
@@ -527,7 +529,7 @@ function StudentDetail({ student, kelasId, kelasName }: {
       <div className="grid grid-cols-3 gap-2">
         {[
           { label: 'Sakit', val: sakitCount, cls: 'text-semantic-blue bg-semantic-blue-light' },
-          { label: 'Izin', val: izinCount, cls: 'text-semantic-yellow bg-semantic-yellow-light' },
+          { label: 'Izin',  val: izinCount,  cls: 'text-semantic-yellow bg-semantic-yellow-light' },
           { label: 'Alpha', val: alphaCount, cls: 'text-semantic-red bg-semantic-red-light' },
         ].map(s => (
           <div key={s.label} className={`rounded-xl p-3 text-center ${s.cls}`}>
@@ -579,10 +581,11 @@ function StudentDetail({ student, kelasId, kelasName }: {
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[11px] text-text-tertiary">{c.date}</span>
                   {c.tipe && c.tipe !== 'umum' && (
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${c.tipe === 'prestasi'
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      c.tipe === 'prestasi'
                         ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
                         : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                      }`}>
+                    }`}>
                       {c.tipe === 'prestasi' ? '🏆 Prestasi' : '📈 Perkembangan'}
                     </span>
                   )}
