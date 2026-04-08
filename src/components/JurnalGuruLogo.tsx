@@ -6,65 +6,56 @@ interface JurnalGuruLogoProps {
   className?: string;
 }
 
-function useIsDark() {
-  const [dark, setDark] = useState(() =>
-    document.documentElement.classList.contains('dark')
-  );
-  useEffect(() => {
-    const obs = new MutationObserver(() => {
-      setDark(document.documentElement.classList.contains('dark'));
-    });
-    obs.observe(document.documentElement, { attributeFilter: ['class'] });
-    return () => obs.disconnect();
-  }, []);
-  return dark;
-}
-
+// The actual brand logo as inline SVG — safe zone padded so it's never clipped
 export function JurnalGuruLogo({ size = 120, showText = true, className = '' }: JurnalGuruLogoProps) {
-  const dark = useIsDark();
-
-  const fill    = dark ? '#e2e2e2' : '#1a1a1a';
-  const fillMid = dark ? '#b8b8b8' : '#3a3a3a';
-  const stripe  = dark ? '#1a1a1a' : '#ffffff';
-
-  const width  = size;
-  const height = showText ? Math.round(size * 1.65) : Math.round(size * 0.95);
+  const dim = showText ? size : Math.round(size * 0.9);
 
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox={showText ? '-15 0 230 335' : '-15 0 230 180'}
-      width={width}
-      height={height}
+    <div
       className={className}
-      aria-label="Jurnal Guru - Administrasi Modern"
-      role="img"
+      style={{
+        width: dim,
+        height: dim,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
     >
-      {/* Top face */}
-      <polygon points="100,18 186,61 100,104 14,61" fill={fillMid} />
-      {/* Left face */}
-      <polygon points="14,61 14,132 100,175 100,104" fill={fill} />
-      {/* Right face */}
-      <polygon points="100,104 186,61 186,132 100,175" fill={fillMid} />
-      {/* Page stripes */}
-      <line x1="108" y1="113" x2="179" y2="76"  stroke={stripe} strokeWidth="5.5" strokeLinecap="round" />
-      <line x1="108" y1="127" x2="179" y2="90"  stroke={stripe} strokeWidth="5.5" strokeLinecap="round" />
-      <line x1="108" y1="141" x2="179" y2="104" stroke={stripe} strokeWidth="5.5" strokeLinecap="round" />
+      {/* 
+        Using <img> with the SVG avoids React JSX issues with complex SVG paths.
+        The SVG already has its own background (#0cc0df) baked in.
+        We wrap in a rounded container to match phone icon shapes.
+      */}
+      <img
+        src="/icon.svg"
+        alt="Jurnal Guru Pro"
+        width={dim}
+        height={dim}
+        style={{
+          borderRadius: Math.round(dim * 0.22),   /* ~22% = matches Android adaptive icon */
+          display: 'block',
+          objectFit: 'contain',
+        }}
+      />
+    </div>
+  );
+}
 
-      {showText && (
-        <>
-          <text x="100" y="215" textAnchor="middle"
-            fontFamily="'Inter','Segoe UI','Helvetica Neue',Arial,sans-serif"
-            fontWeight="700" fontSize="33" letterSpacing="2.5" fill={fill}>
-            JURNAL GURU
-          </text>
-          <text x="100" y="250" textAnchor="middle"
-            fontFamily="'Inter','Segoe UI','Helvetica Neue',Arial,sans-serif"
-            fontWeight="400" fontSize="13.5" letterSpacing="3.5" fill={fill} opacity="0.65">
-            ADMINISTRASI MODERN
-          </text>
-        </>
-      )}
-    </svg>
+// Standalone icon only (no text, rounded) — for sidebar collapsed state
+export function JurnalGuruIcon({ size = 32, className = '' }: { size?: number; className?: string }) {
+  return (
+    <img
+      src="/icon.svg"
+      alt="Jurnal Guru"
+      width={size}
+      height={size}
+      className={className}
+      style={{
+        borderRadius: Math.round(size * 0.22),
+        display: 'block',
+        flexShrink: 0,
+        objectFit: 'contain',
+      }}
+    />
   );
 }

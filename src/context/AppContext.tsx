@@ -59,6 +59,7 @@ interface AppState {
   deleteKelas: (id: string) => void;
   addStudentsToKelas: (kelasId: string, students: { name: string; nis: string }[]) => void;
   removeStudentFromKelas: (kelasId: string, studentId: string) => void;
+  updateStudent: (kelasId: string, studentId: string, updates: { name?: string; nis?: string }) => void;
   absenRecords: AbsenRecord[];
   addAbsenRecords: (records: AbsenRecord[]) => void;
   updateAbsenRecord: (id: string, updates: Partial<AbsenRecord>) => void;
@@ -234,6 +235,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return { ...k, students: [...k.students, ...newStudents] };
     }));
   }, []);
+  const updateStudent = useCallback((kelasId: string, studentId: string, updates: { name?: string; nis?: string }) => {
+    setKelasList(prev => prev.map(k =>
+      k.id !== kelasId ? k : {
+        ...k,
+        students: k.students.map(s =>
+          s.id !== studentId ? s : { ...s, ...updates }
+        )
+      }
+    ));
+  }, []);
   const removeStudentFromKelas = useCallback((kelasId: string, studentId: string) => {
     setKelasList(prev => prev.map(k =>
       k.id !== kelasId ? k : { ...k, students: k.students.filter(s => s.id !== studentId) }
@@ -299,7 +310,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       activeKelas, setActiveKelas,
       activeStudentId, setActiveStudentId,
       kelasList, setKelasList,
-      addKelas, deleteKelas, addStudentsToKelas, removeStudentFromKelas,
+      addKelas, deleteKelas, addStudentsToKelas, removeStudentFromKelas, updateStudent,
       absenRecords, addAbsenRecords, updateAbsenRecord, deleteAbsenRecord,
       kasusRecords, addKasusRecord, updateKasusRecord, deleteKasusRecord,
       catatanRecords, addCatatanRecord,

@@ -18,6 +18,7 @@ export interface AbsenRecord {
   studentName: string;
   date: string;
   status: 'H' | 'S' | 'I' | 'A';
+  keterangan?: string;          // ← BARU: keterangan tidak hadir
   kelasId: string;
   periodeUjian?: PeriodeUjian;
   mataPelajaran?: string;
@@ -32,7 +33,7 @@ export interface KasusRecord {
   category: string;
   kelasId: string;
   periodeUjian?: PeriodeUjian;
-  waktuPemanggilan?: string; // format HH:MM, opsional
+  waktuPemanggilan?: string;
 }
 
 export interface CatatanRecord {

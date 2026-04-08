@@ -13,6 +13,10 @@ export function FAB() {
   const [open, setOpen] = useState(false);
   const { setActiveTab, activeTab } = useApp();
 
+<<<<<<< HEAD
+=======
+  // Sembunyikan di halaman setelan
+>>>>>>> 503f008 (input nisn dan edit nama)
   if (activeTab === 'setelan') return null;
 
   const handleAction = (tab: TabId) => {
@@ -22,6 +26,11 @@ export function FAB() {
 
   return (
     <div className="fixed bottom-6 right-4 z-50 flex flex-col-reverse items-end gap-3">
+<<<<<<< HEAD
+=======
+
+      {/* Tombol utama */}
+>>>>>>> 503f008 (input nisn dan edit nama)
       <button
         onClick={() => setOpen(!open)}
         className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-soft-lg transition-all duration-200 ${
@@ -34,6 +43,10 @@ export function FAB() {
         {open ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
       </button>
 
+<<<<<<< HEAD
+=======
+      {/* Action items — muncul saat open */}
+>>>>>>> 503f008 (input nisn dan edit nama)
       {open && (
         <div className="flex flex-col gap-2">
           {ACTIONS.map((action, i) => (
@@ -46,7 +59,11 @@ export function FAB() {
               <span className="text-xs font-medium text-text-secondary bg-surface px-3 py-1.5 rounded-lg shadow-soft whitespace-nowrap">
                 {action.label}
               </span>
+<<<<<<< HEAD
               <span className={`w-10 h-10 rounded-xl ${action.color} flex items-center justify-center shadow-soft`}>
+=======
+              <span className={`w-10 h-10 rounded-xl ${action.color} flex items-center justify-content-center shadow-soft flex items-center justify-center`}>
+>>>>>>> 503f008 (input nisn dan edit nama)
                 <action.icon className="w-4 h-4" />
               </span>
             </button>
@@ -54,6 +71,10 @@ export function FAB() {
         </div>
       )}
 
+<<<<<<< HEAD
+=======
+      {/* Backdrop — klik luar untuk tutup */}
+>>>>>>> 503f008 (input nisn dan edit nama)
       {open && (
         <div
           className="fixed inset-0 bg-foreground/10 -z-10"

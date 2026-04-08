@@ -1,20 +1,25 @@
 import { useMemo, useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import { User, ArrowLeft, CheckCircle, AlertTriangle, BookOpen, Clock, Plus, Trash2, Upload, X, TrendingUp } from 'lucide-react';
+import {
+  User, ArrowLeft, CheckCircle, AlertTriangle, BookOpen,
+  Clock, Plus, Trash2, Upload, X, TrendingUp, Pencil, Check,
+} from 'lucide-react';
 
-// ── Reusable confirm dialog (ganti window.confirm) ───────────────────────────
-function ConfirmDialog({
-  message, onConfirm, onCancel,
-}: { message: string; onConfirm: () => void; onCancel: () => void }) {
+// ── Confirm dialog ────────────────────────────────────────────────────────────
+function ConfirmDialog({ message, onConfirm, onCancel }: {
+  message: string; onConfirm: () => void; onCancel: () => void;
+}) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
       <div className="bg-surface rounded-2xl shadow-xl w-full max-w-xs p-5 flex flex-col gap-4">
         <p className="text-sm text-foreground">{message}</p>
         <div className="flex gap-2">
-          <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-border bg-bg-2 text-text-secondary hover:bg-bg-3 transition-colors">
+          <button onClick={onCancel}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-border bg-bg-2 text-text-secondary hover:bg-bg-3 transition-colors">
             Batal
           </button>
-          <button onClick={onConfirm} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors">
+          <button onClick={onConfirm}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-semantic-red hover:bg-red-600 transition-colors">
             Hapus
           </button>
         </div>
@@ -23,29 +28,101 @@ function ConfirmDialog({
   );
 }
 
+// ── Edit Student Modal ────────────────────────────────────────────────────────
+function EditStudentModal({ studentId, initialName, initialNis, onSave, onClose }: {
+  studentId: string;
+  initialName: string;
+  initialNis: string;
+  onSave: (name: string, nis: string) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(initialName);
+  const [nis,  setNis]  = useState(initialNis === '-' ? '' : initialNis);
+
+  const handleSave = () => {
+    if (!name.trim()) return;
+    onSave(name.trim(), nis.trim() || '-');
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm px-4 pb-4 sm:pb-0">
+      <div className="bg-surface rounded-2xl shadow-xl w-full max-w-sm p-5 flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground">Edit Data Siswa</h3>
+          <button onClick={onClose} className="text-text-tertiary hover:text-foreground transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div>
+            <label className="label-upper block mb-1.5">Nama Siswa</label>
+            <input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Nama lengkap siswa"
+              className="input-soft"
+              autoFocus
+              onKeyDown={e => e.key === 'Enter' && handleSave()}
+            />
+          </div>
+          <div>
+            <label className="label-upper block mb-1.5">NISN</label>
+            <input
+              value={nis}
+              onChange={e => setNis(e.target.value)}
+              placeholder="Nomor Induk Siswa Nasional"
+              className="input-soft"
+              inputMode="numeric"
+              onKeyDown={e => e.key === 'Enter' && handleSave()}
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <button onClick={onClose}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold border border-border bg-bg-2 text-text-secondary hover:bg-bg-3 transition-colors">
+            Batal
+          </button>
+          <button onClick={handleSave}
+            disabled={!name.trim()}
+            className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-primary hover:bg-primary-hover transition-colors disabled:opacity-40">
+            Simpan
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main SiswaPage ────────────────────────────────────────────────────────────
 export function SiswaPage() {
   const {
     kelasList, activeKelas, activeStudentId, setActiveStudentId,
     absenRecords, kasusRecords, catatanRecords,
-    addKelas, deleteKelas, addStudentsToKelas, removeStudentFromKelas, showToast,
+    addKelas, deleteKelas, addStudentsToKelas, removeStudentFromKelas,
+    updateStudent, showToast,
   } = useApp();
+
   const kelas = kelasList.find(k => k.id === activeKelas);
-  const [showAddKelas, setShowAddKelas] = useState(false);
-  const [newKelasName, setNewKelasName] = useState('');
-  const [showAddSiswa, setShowAddSiswa] = useState(false);
-  const [addMode, setAddMode] = useState<'manual' | 'paste'>('manual');
-  const [manualName, setManualName] = useState('');
-  const [manualNis, setManualNis] = useState('');
-  const [pasteText, setPasteText] = useState('');
-  // Confirm dialog state (replaces window.confirm)
-  const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => void } | null>(null);
+
+  const [showAddKelas,   setShowAddKelas]   = useState(false);
+  const [newKelasName,   setNewKelasName]   = useState('');
+  const [showAddSiswa,   setShowAddSiswa]   = useState(false);
+  const [addMode,        setAddMode]        = useState<'manual' | 'paste'>('manual');
+  const [manualName,     setManualName]     = useState('');
+  const [manualNis,      setManualNis]      = useState('');
+  const [pasteText,      setPasteText]      = useState('');
+  const [search,         setSearch]         = useState('');
+  const [editingStudent, setEditingStudent] = useState<{ id: string; name: string; nis: string } | null>(null);
+  const [confirmDialog,  setConfirmDialog]  = useState<{ message: string; onConfirm: () => void } | null>(null);
 
   if (activeStudentId) return <StudentDetail />;
 
-  const askConfirm = (message: string, onConfirm: () => void) => {
+  const askConfirm = (message: string, onConfirm: () => void) =>
     setConfirmDialog({ message, onConfirm });
-  };
 
+  // ── Kelas ──
   const handleAddKelas = () => {
     if (!newKelasName.trim()) return;
     addKelas(newKelasName.trim());
@@ -62,41 +139,63 @@ export function SiswaPage() {
     });
   };
 
+  // ── Siswa manual ──
   const handleAddManual = () => {
     if (!manualName.trim()) return;
-    addStudentsToKelas(activeKelas, [{ name: manualName, nis: manualNis || '-' }]);
+    addStudentsToKelas(activeKelas, [{ name: manualName.trim(), nis: manualNis.trim() || '-' }]);
     setManualName('');
     setManualNis('');
     showToast('Siswa berhasil ditambahkan');
+    // jangan close panel supaya guru bisa terus tambah
   };
 
+  // ── Paste ──
   const handlePaste = () => {
     if (!pasteText.trim()) return;
-    const lines = pasteText.trim().split('\n').filter(l => l.trim());
+    const lines    = pasteText.trim().split('\n').filter(l => l.trim());
     const students = lines.map(line => {
       const parts = line.split('\t').length > 1 ? line.split('\t') : line.split(',');
       if (parts.length >= 3) return { name: parts[1].trim(), nis: parts[2].trim() };
       if (parts.length === 2) return { name: parts[0].trim(), nis: parts[1].trim() };
       return { name: parts[0].trim(), nis: '-' };
-    }).filter(s => s.name && !/^(no|nama|nis|name|number)$/i.test(s.name));
+    }).filter(s => s.name && !/^(no|nama|nis|nisn|name|number)$/i.test(s.name));
 
-    if (students.length === 0) { showToast('Tidak ada data siswa yang valid'); return; }
+    if (!students.length) { showToast('Tidak ada data siswa yang valid'); return; }
     addStudentsToKelas(activeKelas, students);
     setPasteText('');
     setShowAddSiswa(false);
     showToast(`${students.length} siswa berhasil ditambahkan`);
   };
 
-  const handleRemoveStudent = (studentId: string, studentName: string) => {
+  // ── Remove ──
+  const handleRemove = (studentId: string, studentName: string) => {
     askConfirm(`Hapus ${studentName} dari kelas?`, () => {
       removeStudentFromKelas(activeKelas, studentId);
       showToast('Siswa berhasil dihapus');
     });
   };
 
+  // ── Edit save ──
+  const handleEditSave = (name: string, nis: string) => {
+    if (!editingStudent) return;
+    updateStudent(activeKelas, editingStudent.id, { name, nis });
+    setEditingStudent(null);
+    showToast('Data siswa diperbarui');
+  };
+
+  // ── Filter search ──
+  const filteredStudents = useMemo(() =>
+    (kelas?.students || []).filter(s =>
+      s.name.toLowerCase().includes(search.toLowerCase()) ||
+      s.nis.includes(search)
+    ),
+    [kelas, search]
+  );
+
   return (
     <div className="flex flex-col gap-4 max-w-2xl">
-      {/* Confirm Dialog */}
+
+      {/* Modals */}
       {confirmDialog && (
         <ConfirmDialog
           message={confirmDialog.message}
@@ -104,16 +203,31 @@ export function SiswaPage() {
           onCancel={() => setConfirmDialog(null)}
         />
       )}
+      {editingStudent && (
+        <EditStudentModal
+          studentId={editingStudent.id}
+          initialName={editingStudent.name}
+          initialNis={editingStudent.nis}
+          onSave={handleEditSave}
+          onClose={() => setEditingStudent(null)}
+        />
+      )}
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-text-secondary">{kelas?.students.length || 0} siswa terdaftar</p>
+        <div>
+          <p className="text-sm text-text-secondary">
+            {kelas?.students.length || 0} siswa terdaftar
+          </p>
+        </div>
         <div className="flex gap-2">
-          <button onClick={() => setShowAddKelas(true)} className="btn-soft btn-secondary-soft text-[12px] py-1.5 px-3 gap-1 flex items-center">
+          <button onClick={() => setShowAddKelas(true)}
+            className="btn-soft btn-secondary-soft text-[12px] py-1.5 px-3 gap-1 flex items-center">
             <Plus className="w-3 h-3" /> Kelas
           </button>
           {kelasList.length > 1 && (
-            <button onClick={handleDeleteKelas} className="btn-soft text-[12px] py-1.5 px-3 bg-semantic-red-light text-semantic-red gap-1 flex items-center">
+            <button onClick={handleDeleteKelas}
+              className="btn-soft text-[12px] py-1.5 px-3 bg-semantic-red-light text-semantic-red gap-1 flex items-center">
               <Trash2 className="w-3 h-3" />
             </button>
           )}
@@ -125,143 +239,287 @@ export function SiswaPage() {
         <div className="bg-surface rounded-2xl shadow-soft p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-foreground">Tambah Kelas Baru</h3>
-            <button onClick={() => setShowAddKelas(false)} className="text-text-tertiary"><X className="w-4 h-4" /></button>
+            <button onClick={() => setShowAddKelas(false)} className="text-text-tertiary">
+              <X className="w-4 h-4" />
+            </button>
           </div>
           <div className="flex gap-2">
             <input value={newKelasName} onChange={e => setNewKelasName(e.target.value)}
               placeholder="Nama kelas (misal: 9A)" className="input-soft flex-1"
-              onKeyDown={e => e.key === 'Enter' && handleAddKelas()} />
+              onKeyDown={e => e.key === 'Enter' && handleAddKelas()} autoFocus />
             <button onClick={handleAddKelas} className="btn-soft btn-primary-soft">Tambah</button>
           </div>
         </div>
       )}
 
-      {/* Add Student */}
-      <button onClick={() => setShowAddSiswa(!showAddSiswa)} className="btn-soft btn-primary-soft w-full py-3 gap-2 flex items-center justify-center">
+      {/* Tambah Siswa button */}
+      <button onClick={() => setShowAddSiswa(!showAddSiswa)}
+        className="btn-soft btn-primary-soft w-full py-3 gap-2 flex items-center justify-center">
         <Plus className="w-4 h-4" /> Tambah Siswa
       </button>
 
+      {/* Add Siswa panel */}
       {showAddSiswa && (
         <div className="bg-surface rounded-2xl shadow-soft p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold text-foreground">Tambah Siswa</h3>
-            <button onClick={() => setShowAddSiswa(false)} className="text-text-tertiary"><X className="w-4 h-4" /></button>
+            <button onClick={() => setShowAddSiswa(false)} className="text-text-tertiary">
+              <X className="w-4 h-4" />
+            </button>
           </div>
-          <div className="flex bg-bg-2 rounded-xl p-1 gap-1 mb-3">
+
+          {/* Tab mode */}
+          <div className="flex bg-bg-2 rounded-xl p-1 gap-1 mb-4">
             {(['manual', 'paste'] as const).map(m => (
               <button key={m} onClick={() => setAddMode(m)}
-                className={`flex-1 py-2 text-[12px] font-semibold rounded-lg transition-all ${addMode === m ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary'}`}>
+                className={`flex-1 py-2 text-[12px] font-semibold rounded-lg transition-all ${
+                  addMode === m ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary'
+                }`}>
                 {m === 'manual' ? 'Manual' : 'Paste dari Excel'}
               </button>
             ))}
           </div>
+
           {addMode === 'manual' ? (
-            <div className="flex flex-col gap-2">
-              <input value={manualName} onChange={e => setManualName(e.target.value)} placeholder="Nama siswa" className="input-soft"
-                onKeyDown={e => e.key === 'Enter' && handleAddManual()} />
-              <input value={manualNis} onChange={e => setManualNis(e.target.value)} placeholder="NIS (opsional)" className="input-soft" />
-              <button onClick={handleAddManual} className="btn-soft btn-primary-soft w-full py-2.5">Tambah</button>
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="label-upper block mb-1.5">Nama Siswa</label>
+                <input
+                  value={manualName}
+                  onChange={e => setManualName(e.target.value)}
+                  placeholder="Nama lengkap siswa"
+                  className="input-soft"
+                  onKeyDown={e => e.key === 'Enter' && handleAddManual()}
+                />
+              </div>
+              <div>
+                <label className="label-upper block mb-1.5">NISN <span className="normal-case text-text-tertiary font-normal">(opsional)</span></label>
+                <input
+                  value={manualNis}
+                  onChange={e => setManualNis(e.target.value)}
+                  placeholder="Nomor Induk Siswa Nasional"
+                  className="input-soft"
+                  inputMode="numeric"
+                  onKeyDown={e => e.key === 'Enter' && handleAddManual()}
+                />
+              </div>
+              <button onClick={handleAddManual} disabled={!manualName.trim()}
+                className="btn-soft btn-primary-soft w-full py-2.5 disabled:opacity-40">
+                + Tambah Siswa
+              </button>
             </div>
           ) : (
-            <div className="flex flex-col gap-2">
-              <p className="text-[11px] text-text-tertiary">Copy dari Excel lalu paste di sini. Format: Nama, NIS (satu baris per siswa).</p>
-              <textarea value={pasteText} onChange={e => setPasteText(e.target.value)}
-                placeholder={"1\tAhmad Rizki\t2024001\n2\tSiti Nurhaliza\t2024002"}
-                rows={6} className="input-soft resize-none font-mono text-[12px]" />
-              <button onClick={handlePaste} className="btn-soft btn-primary-soft w-full py-2.5 gap-2 flex items-center justify-center">
-                <Upload className="w-4 h-4" /> Import {pasteText.trim().split('\n').filter(l => l.trim()).length} Siswa
+            <div className="flex flex-col gap-3">
+              <div className="bg-bg-2 rounded-xl p-3">
+                <p className="text-[11px] text-text-secondary font-medium mb-1">Format paste dari Excel:</p>
+                <p className="text-[11px] text-text-tertiary">Kolom: <span className="font-mono">No | Nama | NISN</span></p>
+                <p className="text-[11px] text-text-tertiary">atau: <span className="font-mono">Nama | NISN</span></p>
+                <p className="text-[11px] text-text-tertiary">atau: <span className="font-mono">Nama saja</span></p>
+              </div>
+              <textarea
+                value={pasteText}
+                onChange={e => setPasteText(e.target.value)}
+                placeholder={"1\tAhmad Rizki\t0012345678\n2\tSiti Nurhaliza\t0012345679"}
+                rows={6}
+                className="input-soft resize-none font-mono text-[12px]"
+              />
+              <button onClick={handlePaste}
+                className="btn-soft btn-primary-soft w-full py-2.5 gap-2 flex items-center justify-center">
+                <Upload className="w-4 h-4" />
+                Import {pasteText.trim().split('\n').filter(l => l.trim()).length} Siswa
               </button>
             </div>
           )}
         </div>
       )}
 
-      {/* Student Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {kelas?.students.map(s => {
-          const absen = absenRecords.filter(a => a.kelasId === activeKelas && a.studentId === s.id);
-          const kasusCount = kasusRecords.filter(k => k.kelasId === activeKelas && k.studentId === s.id).length;
-          const catatanCount = catatanRecords.filter(c => c.kelasId === activeKelas && c.studentId === s.id).length;
-          const alphaCount = absen.filter(a => a.status === 'A').length;
-          return (
-            <div key={s.id} className="bg-surface rounded-2xl shadow-soft p-4 hover:shadow-md transition-all group relative">
-              <button onClick={() => setActiveStudentId(s.id)} className="text-left w-full">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-accent-light flex items-center justify-center">
-                    <User className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground">{s.name}</h3>
-                    <p className="text-[11px] text-text-tertiary">{s.nis}</p>
-                  </div>
+      {/* Search */}
+      {(kelas?.students.length || 0) > 5 && (
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Cari nama atau NISN..."
+          className="input-soft"
+        />
+      )}
+
+      {/* Daftar siswa */}
+      {filteredStudents.length === 0 ? (
+        <div className="text-center py-12 text-text-tertiary text-sm">
+          {search ? 'Siswa tidak ditemukan' : 'Belum ada siswa. Tambahkan siswa di atas.'}
+        </div>
+      ) : (
+        <div className="bg-surface rounded-2xl shadow-soft overflow-hidden">
+          {filteredStudents.map((s, i) => {
+            const alphaCount = absenRecords.filter(a => a.kelasId === activeKelas && a.studentId === s.id && a.status === 'A').length;
+            const kasusCount = kasusRecords.filter(k => k.kelasId === activeKelas && k.studentId === s.id).length;
+
+            return (
+              <div key={s.id}
+                className={`flex items-center gap-3 px-4 py-3 group hover:bg-bg-2 transition-colors ${
+                  i < filteredStudents.length - 1 ? 'border-b border-border' : ''
+                }`}>
+
+                {/* Avatar */}
+                <div className="w-9 h-9 rounded-xl bg-accent-light flex items-center justify-center flex-shrink-0">
+                  <User className="w-4.5 h-4.5 text-primary" />
                 </div>
-                <div className="flex gap-3 text-[11px]">
-                  <span className="flex items-center gap-1 text-semantic-red"><AlertTriangle className="w-3 h-3" /> {kasusCount} kasus</span>
-                  <span className="flex items-center gap-1 text-primary"><BookOpen className="w-3 h-3" /> {catatanCount} catatan</span>
-                  {alphaCount > 0 && <span className="flex items-center gap-1 text-semantic-yellow"><Clock className="w-3 h-3" /> {alphaCount} alpha</span>}
+
+                {/* Info — tap buka detail */}
+                <button className="flex-1 text-left min-w-0" onClick={() => setActiveStudentId(s.id)}>
+                  <p className="text-[13px] font-semibold text-foreground truncate">{s.name}</p>
+                  <p className="text-[11px] text-text-tertiary mt-0.5">
+                    NISN: {s.nis === '-' ? '—' : s.nis}
+                    {alphaCount > 0 && <span className="ml-2 text-semantic-red">{alphaCount}× alpha</span>}
+                    {kasusCount > 0 && <span className="ml-2 text-semantic-yellow">{kasusCount} kasus</span>}
+                  </p>
+                </button>
+
+                {/* Action buttons — muncul saat hover */}
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                  {/* Edit */}
+                  <button
+                    onClick={() => setEditingStudent({ id: s.id, name: s.name, nis: s.nis })}
+                    className="w-7 h-7 rounded-lg hover:bg-accent-light text-text-tertiary hover:text-primary flex items-center justify-center transition-colors"
+                    title="Edit"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                  {/* Hapus */}
+                  <button
+                    onClick={() => handleRemove(s.id, s.name)}
+                    className="w-7 h-7 rounded-lg hover:bg-semantic-red-light text-text-tertiary hover:text-semantic-red flex items-center justify-center transition-colors"
+                    title="Hapus"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              </button>
-              <button
-                onClick={() => handleRemoveStudent(s.id, s.name)}
-                className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-semantic-red-light text-text-tertiary hover:text-semantic-red"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          );
-        })}
-      </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-// ── Student Detail ──────────────────────────────────────────────────────────
+// ── Student Detail ────────────────────────────────────────────────────────────
 function StudentDetail() {
-  const { kelasList, activeKelas, activeStudentId, setActiveStudentId, absenRecords, kasusRecords, catatanRecords } = useApp();
-  const kelas = kelasList.find(k => k.id === activeKelas);
+  const {
+    kelasList, activeKelas, activeStudentId, setActiveStudentId,
+    absenRecords, kasusRecords, catatanRecords,
+    updateStudent, showToast,
+  } = useApp();
+
+  const kelas   = kelasList.find(k => k.id === activeKelas);
   const student = kelas?.students.find(s => s.id === activeStudentId);
 
-  const absen = useMemo(() =>
-    absenRecords.filter(a => a.kelasId === activeKelas && a.studentId === activeStudentId).sort((a, b) => b.date.localeCompare(a.date)),
+  const [isEditing,  setIsEditing]  = useState(false);
+  const [editName,   setEditName]   = useState('');
+  const [editNis,    setEditNis]    = useState('');
+
+  const absen   = useMemo(() =>
+    absenRecords.filter(a => a.kelasId === activeKelas && a.studentId === activeStudentId)
+      .sort((a, b) => b.date.localeCompare(a.date)),
     [absenRecords, activeKelas, activeStudentId]
   );
-  const kasus = useMemo(() =>
-    kasusRecords.filter(k => k.kelasId === activeKelas && k.studentId === activeStudentId).sort((a, b) => b.date.localeCompare(a.date)),
+  const kasus   = useMemo(() =>
+    kasusRecords.filter(k => k.kelasId === activeKelas && k.studentId === activeStudentId)
+      .sort((a, b) => b.date.localeCompare(a.date)),
     [kasusRecords, activeKelas, activeStudentId]
   );
   const catatan = useMemo(() =>
-    catatanRecords.filter(c => c.kelasId === activeKelas && c.studentId === activeStudentId).sort((a, b) => b.date.localeCompare(a.date)),
+    catatanRecords.filter(c => c.kelasId === activeKelas && c.studentId === activeStudentId)
+      .sort((a, b) => b.date.localeCompare(a.date)),
     [catatanRecords, activeKelas, activeStudentId]
   );
 
   if (!student) return null;
 
-  // Fix 5 consequence: hadir = uniqueDates - exceptions
   const uniqueDates = new Set(absen.map(a => a.date)).size;
-  const sakitCount = absen.filter(a => a.status === 'S').length;
-  const izinCount  = absen.filter(a => a.status === 'I').length;
-  const alphaCount = absen.filter(a => a.status === 'A').length;
-  const hadirCount = Math.max(0, uniqueDates - sakitCount - izinCount - alphaCount);
-  const pctHadir   = uniqueDates > 0 ? Math.round((hadirCount / uniqueDates) * 100) : 0;
+  const sakitCount  = absen.filter(a => a.status === 'S').length;
+  const izinCount   = absen.filter(a => a.status === 'I').length;
+  const alphaCount  = absen.filter(a => a.status === 'A').length;
+  const hadirCount  = Math.max(0, uniqueDates - sakitCount - izinCount - alphaCount);
+  const pctHadir    = uniqueDates > 0 ? Math.round((hadirCount / uniqueDates) * 100) : 0;
+
+  const startEdit = () => {
+    setEditName(student.name);
+    setEditNis(student.nis === '-' ? '' : student.nis);
+    setIsEditing(true);
+  };
+
+  const saveEdit = () => {
+    if (!editName.trim()) return;
+    updateStudent(activeKelas, student.id, {
+      name: editName.trim(),
+      nis:  editNis.trim() || '-',
+    });
+    setIsEditing(false);
+    showToast('Data siswa diperbarui');
+  };
 
   return (
     <div className="flex flex-col gap-4 max-w-2xl">
-      <button onClick={() => setActiveStudentId(null)} className="flex items-center gap-2 text-sm text-text-secondary hover:text-foreground transition-colors self-start">
+      <button onClick={() => setActiveStudentId(null)}
+        className="flex items-center gap-2 text-sm text-text-secondary hover:text-foreground transition-colors self-start">
         <ArrowLeft className="w-4 h-4" /> Kembali
       </button>
 
+      {/* Profile card */}
       <div className="bg-surface rounded-2xl shadow-soft p-5">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-accent-light flex items-center justify-center">
+          <div className="w-14 h-14 rounded-2xl bg-accent-light flex items-center justify-center flex-shrink-0">
             <User className="w-7 h-7 text-primary" />
           </div>
-          <div>
-            <h2 className="text-lg font-bold text-foreground">{student.name}</h2>
-            <p className="text-sm text-text-secondary">NIS: {student.nis} · Kelas {kelas?.name}</p>
-          </div>
+
+          {isEditing ? (
+            <div className="flex-1 flex flex-col gap-2">
+              <input
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                className="input-soft py-1.5 text-sm font-semibold"
+                placeholder="Nama siswa"
+                autoFocus
+              />
+              <input
+                value={editNis}
+                onChange={e => setEditNis(e.target.value)}
+                className="input-soft py-1.5 text-sm font-mono"
+                placeholder="NISN (opsional)"
+                inputMode="numeric"
+              />
+              <div className="flex gap-2">
+                <button onClick={saveEdit}
+                  className="flex-1 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white flex items-center justify-center gap-1">
+                  <Check className="w-3 h-3" /> Simpan
+                </button>
+                <button onClick={() => setIsEditing(false)}
+                  className="flex-1 py-1.5 rounded-lg text-xs font-semibold border border-border bg-bg-2 text-text-secondary">
+                  Batal
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-foreground truncate">{student.name}</h2>
+                <button onClick={startEdit}
+                  className="p-1.5 rounded-lg hover:bg-bg-2 text-text-tertiary hover:text-primary transition-colors flex-shrink-0"
+                  title="Edit data siswa">
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <p className="text-sm text-text-secondary">
+                NISN: <span className="font-mono">{student.nis === '-' ? '—' : student.nis}</span>
+              </p>
+              <p className="text-xs text-text-tertiary">Kelas {kelas?.name}</p>
+            </div>
+          )}
         </div>
       </div>
 
+      {/* Stats */}
       <div className="grid grid-cols-4 gap-2">
         {[
           { label: 'Hadir', val: hadirCount, cls: 'text-primary bg-accent-light' },
@@ -276,19 +534,40 @@ function StudentDetail() {
         ))}
       </div>
 
+      {/* Attendance rate */}
+      {uniqueDates > 0 && (
+        <div className="bg-surface rounded-2xl shadow-soft p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <TrendingUp className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Rekap Kehadiran</h3>
+          </div>
+          <div className="flex justify-between items-center mb-1.5">
+            <span className="text-xs text-text-secondary">Persentase Hadir</span>
+            <span className="text-xs font-bold text-primary">{pctHadir}%</span>
+          </div>
+          <div className="progress-bar">
+            <div className="progress-fill" style={{ width: `${pctHadir}%` }} />
+          </div>
+          <p className="text-[11px] text-text-tertiary mt-1">{uniqueDates} hari tercatat</p>
+        </div>
+      )}
+
+      {/* Kasus */}
       <div className="bg-surface rounded-2xl shadow-soft p-5">
         <div className="flex items-center gap-2 mb-3">
           <AlertTriangle className="w-4 h-4 text-semantic-red" />
           <h3 className="text-sm font-semibold text-foreground">Kasus ({kasus.length})</h3>
         </div>
-        {kasus.length === 0 ? (
+        {!kasus.length ? (
           <p className="text-sm text-text-tertiary">Tidak ada kasus tercatat</p>
         ) : (
           <div className="flex flex-col gap-2">
             {kasus.map(k => (
               <div key={k.id} className="bg-bg-2 rounded-xl p-3">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-semantic-red-light text-semantic-red">{k.category}</span>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-semantic-red-light text-semantic-red">
+                    {k.category}
+                  </span>
                   <span className="text-[11px] text-text-tertiary">{k.date}</span>
                 </div>
                 <p className="text-[13px] text-text-secondary">{k.description}</p>
@@ -298,12 +577,13 @@ function StudentDetail() {
         )}
       </div>
 
+      {/* Catatan */}
       <div className="bg-surface rounded-2xl shadow-soft p-5">
         <div className="flex items-center gap-2 mb-3">
           <BookOpen className="w-4 h-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Catatan Anekdot ({catatan.length})</h3>
         </div>
-        {catatan.length === 0 ? (
+        {!catatan.length ? (
           <p className="text-sm text-text-tertiary">Belum ada catatan</p>
         ) : (
           <div className="flex flex-col gap-2">
@@ -313,7 +593,9 @@ function StudentDetail() {
                   <span className="text-[11px] text-text-tertiary">{c.date}</span>
                   {c.tipe && c.tipe !== 'umum' && (
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                      c.tipe === 'prestasi' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      c.tipe === 'prestasi'
+                        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                     }`}>
                       {c.tipe === 'prestasi' ? '🏆 Prestasi' : '📈 Perkembangan'}
                     </span>
@@ -326,38 +608,25 @@ function StudentDetail() {
         )}
       </div>
 
-      <div className="bg-surface rounded-2xl shadow-soft p-5">
-        <div className="flex items-center gap-2 mb-3">
-          <TrendingUp className="w-4 h-4 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground">Rekap Kehadiran Semester</h3>
-        </div>
-        {uniqueDates > 0 && (
-          <div className="mb-4">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs text-text-secondary">Persentase Hadir</span>
-              <span className="text-xs font-bold text-primary">{pctHadir}%</span>
-            </div>
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: `${pctHadir}%` }} />
-            </div>
-            <p className="text-[11px] text-text-tertiary mt-1">{uniqueDates} hari tercatat</p>
-          </div>
-        )}
-      </div>
-
+      {/* Riwayat kehadiran */}
       <div className="bg-surface rounded-2xl shadow-soft p-5">
         <div className="flex items-center gap-2 mb-3">
           <CheckCircle className="w-4 h-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Riwayat Kehadiran</h3>
         </div>
-        {absen.length === 0 ? (
+        {!absen.length ? (
           <p className="text-sm text-text-tertiary">Belum ada data kehadiran</p>
         ) : (
           <div className="flex flex-col">
             {absen.slice(0, 30).map(a => (
-              <div key={a.id} className="flex justify-between items-center py-2.5 border-b border-border last:border-b-0">
-                <span className="text-[13px] text-text-secondary">{a.date}</span>
-                <StatusPill status={a.status} />
+              <div key={a.id} className="flex justify-between items-start py-2.5 border-b border-border last:border-b-0 gap-3">
+                <span className="text-[13px] text-text-secondary font-mono">{a.date}</span>
+                <div className="flex flex-col items-end gap-0.5">
+                  <StatusPill status={a.status} />
+                  {a.keterangan && (
+                    <span className="text-[11px] text-text-tertiary italic">"{a.keterangan}"</span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -367,6 +636,7 @@ function StudentDetail() {
   );
 }
 
+// ── Status pill ───────────────────────────────────────────────────────────────
 function StatusPill({ status }: { status: string }) {
   const styles: Record<string, string> = {
     H: 'bg-accent-light text-primary',

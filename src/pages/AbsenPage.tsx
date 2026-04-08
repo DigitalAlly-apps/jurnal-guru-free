@@ -1,22 +1,33 @@
 import { useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
-import { Search, CheckCircle, Pencil } from 'lucide-react';
+import { Search, CheckCircle, Pencil, ChevronDown } from 'lucide-react';
 import type { AbsenRecord, PeriodeUjian } from '@/types';
 
 type AbsenStatus = 'H' | 'S' | 'I' | 'A';
 const PERIODE_OPTIONS: PeriodeUjian[] = ['Harian', 'UTS', 'UAS'];
 
+// Saran keterangan per status
+const KETERANGAN_SUGGESTIONS: Record<AbsenStatus, string[]> = {
+  H: [],
+  S: ['Sakit perut', 'Demam', 'Flu / pilek', 'Sakit kepala', 'Sakit gigi', 'Rawat inap'],
+  I: ['Keperluan keluarga', 'Acara keluarga', 'Izin dokter', 'Perjalanan dinas orang tua', 'Kegiatan sekolah lain'],
+  A: [],
+};
+
 export function AbsenPage() {
   const { kelasList, activeKelas, absenRecords, addAbsenRecords, jadwalList, showToast } = useApp();
   const kelas = kelasList.find(k => k.id === activeKelas);
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [periode, setPeriode] = useState<PeriodeUjian>('Harian');
+
+  const [date, setDate]               = useState(new Date().toISOString().split('T')[0]);
+  const [periode, setPeriode]         = useState<PeriodeUjian>('Harian');
   const [mataPelajaran, setMataPelajaran] = useState('');
-  const [search, setSearch] = useState('');
+  const [search, setSearch]           = useState('');
   const [localStatus, setLocalStatus] = useState<Record<string, AbsenStatus>>({});
+  const [localKet, setLocalKet]       = useState<Record<string, string>>({});  // keterangan per siswa
+  const [expandedId, setExpandedId]   = useState<string | null>(null);         // siswa yang sedang buka keterangan
   const [showPreview, setShowPreview] = useState(false);
 
-  const hariIni = new Date(date).toLocaleDateString('id-ID', { weekday: 'long' });
+  const hariIni       = new Date(date).toLocaleDateString('id-ID', { weekday: 'long' });
   const jadwalHariIni = jadwalList.filter(j => j.kelasId === activeKelas && j.hari === hariIni);
 
   const existingForDate = useMemo(() =>
@@ -24,7 +35,6 @@ export function AbsenPage() {
     [absenRecords, date, activeKelas]
   );
 
-  // Edit mode: data sudah ada DAN user belum mulai mengedit
   const isEditMode = existingForDate.length > 0 && Object.keys(localStatus).length === 0;
 
   const students = useMemo(() => {
@@ -34,21 +44,36 @@ export function AbsenPage() {
 
   const getStatus = (studentId: string): AbsenStatus => {
     if (localStatus[studentId] !== undefined) return localStatus[studentId];
-    // Existing record — exception only (S/I/A). Default to H if no exception stored.
     return existingForDate.find(a => a.studentId === studentId)?.status || 'H';
+  };
+
+  const getKet = (studentId: string): string => {
+    if (localKet[studentId] !== undefined) return localKet[studentId];
+    return existingForDate.find(a => a.studentId === studentId)?.keterangan || '';
   };
 
   const toggleStatus = (studentId: string, status: AbsenStatus) => {
     setLocalStatus(prev => ({ ...prev, [studentId]: status }));
+    // Kalau balik ke Hadir, clear keterangan & collapse
+    if (status === 'H') {
+      setLocalKet(prev => ({ ...prev, [studentId]: '' }));
+      setExpandedId(null);
+    } else {
+      // Auto expand keterangan saat pilih S/I/A
+      setExpandedId(studentId);
+    }
   };
 
-  // Load existing data into localStatus to enter edit mode
   const startEdit = () => {
     const prefilled: Record<string, AbsenStatus> = {};
+    const prefilledKet: Record<string, string> = {};
     kelas?.students.forEach(s => {
-      prefilled[s.id] = existingForDate.find(a => a.studentId === s.id)?.status || 'H';
+      const rec = existingForDate.find(a => a.studentId === s.id);
+      prefilled[s.id]    = rec?.status      || 'H';
+      prefilledKet[s.id] = rec?.keterangan  || '';
     });
     setLocalStatus(prefilled);
+    setLocalKet(prefilledKet);
     showToast('Mode edit aktif — perubahan belum disimpan');
   };
 
@@ -56,20 +81,27 @@ export function AbsenPage() {
     const all: Record<string, AbsenStatus> = {};
     kelas?.students.forEach(s => { all[s.id] = 'H'; });
     setLocalStatus(all);
+    setLocalKet({});
+    setExpandedId(null);
   };
 
   const handleSave = () => {
     if (!kelas) return;
     const records: AbsenRecord[] = kelas.students.map(s => ({
-      id: `${date}_${s.id}_${activeKelas}`,
-      studentId: s.id, studentName: s.name,
-      date, status: getStatus(s.id),
-      kelasId: activeKelas,
-      periodeUjian: periode,
-      mataPelajaran: mataPelajaran || undefined,
+      id:             `${date}_${s.id}_${activeKelas}`,
+      studentId:      s.id,
+      studentName:    s.name,
+      date,
+      status:         getStatus(s.id),
+      keterangan:     getKet(s.id) || undefined,
+      kelasId:        activeKelas,
+      periodeUjian:   periode,
+      mataPelajaran:  mataPelajaran || undefined,
     }));
     addAbsenRecords(records);
     setLocalStatus({});
+    setLocalKet({});
+    setExpandedId(null);
     setShowPreview(false);
     showToast('Absensi berhasil disimpan');
   };
@@ -77,6 +109,8 @@ export function AbsenPage() {
   const handleDateChange = (newDate: string) => {
     setDate(newDate);
     setLocalStatus({});
+    setLocalKet({});
+    setExpandedId(null);
     setShowPreview(false);
   };
 
@@ -86,6 +120,10 @@ export function AbsenPage() {
     S: 'bg-semantic-blue text-white',
     I: 'bg-semantic-yellow text-white',
     A: 'bg-semantic-red text-white',
+  };
+
+  const statusLabel: Record<AbsenStatus, string> = {
+    H: 'Hadir', S: 'Sakit', I: 'Izin', A: 'Alpha',
   };
 
   if (!kelas || kelas.students.length === 0) {
@@ -147,16 +185,14 @@ export function AbsenPage() {
               {existingForDate.filter(a => a.status !== 'H').length} siswa tidak hadir tercatat
             </p>
           </div>
-          <button
-            onClick={startEdit}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-semantic-blue text-white rounded-lg text-[12px] font-semibold flex-shrink-0 hover:bg-blue-600 transition-colors"
-          >
+          <button onClick={startEdit}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-semantic-blue text-white rounded-lg text-[12px] font-semibold flex-shrink-0 hover:bg-blue-600 transition-colors">
             <Pencil className="w-3 h-3" /> Edit
           </button>
         </div>
       )}
 
-      {/* Hadir Semua + Search */}
+      {/* Search + Hadir Semua */}
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
@@ -170,29 +206,99 @@ export function AbsenPage() {
         </button>
       </div>
 
-      {/* Student List */}
+      {/* Daftar Siswa */}
       <div className="bg-surface rounded-2xl shadow-soft overflow-hidden">
-        {students.map((s, i) => (
-          <div key={s.id} className={`flex items-center justify-between px-4 py-3 ${i < students.length - 1 ? 'border-b border-border' : ''}`}>
-            <div>
-              <span className="text-[13px] font-medium text-foreground">{s.name}</span>
-              <span className="text-[11px] text-text-tertiary ml-2">{s.nis}</span>
+        {students.map((s, i) => {
+          const status   = getStatus(s.id);
+          const ket      = getKet(s.id);
+          const isOpen   = expandedId === s.id;
+          const needsKet = status !== 'H';
+          const suggestions = KETERANGAN_SUGGESTIONS[status] || [];
+
+          return (
+            <div key={s.id}
+              className={`${i < students.length - 1 ? 'border-b border-border' : ''}`}>
+
+              {/* Baris utama */}
+              <div className="flex items-center justify-between px-4 py-3 gap-3">
+                {/* Nama */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-medium text-foreground truncate">{s.name}</p>
+                  {/* Tampilkan keterangan singkat kalau ada */}
+                  {ket && !isOpen && (
+                    <p className="text-[11px] text-text-tertiary truncate mt-0.5 italic">"{ket}"</p>
+                  )}
+                </div>
+
+                {/* Tombol status H/S/I/A */}
+                <div className="flex rounded-xl overflow-hidden border border-border flex-shrink-0">
+                  {statuses.map(st => (
+                    <button key={st} onClick={() => toggleStatus(s.id, st)}
+                      className={`px-3 py-1.5 text-[12px] font-semibold transition-all duration-150 ${
+                        status === st ? statusColors[st] : 'bg-surface text-text-tertiary hover:bg-bg-2'
+                      } ${st !== 'A' ? 'border-r border-border' : ''}`}>
+                      {st}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Tombol expand keterangan — hanya muncul kalau S/I/A */}
+                {needsKet && (
+                  <button
+                    onClick={() => setExpandedId(isOpen ? null : s.id)}
+                    className={`flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
+                      isOpen ? 'bg-bg-3 text-text-secondary' : 'bg-bg-2 text-text-tertiary hover:bg-bg-3'
+                    }`}
+                    title="Tambah keterangan"
+                  >
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                )}
+              </div>
+
+              {/* Panel keterangan — slide down */}
+              {needsKet && isOpen && (
+                <div className="px-4 pb-3 flex flex-col gap-2 bg-bg-2 border-t border-border">
+                  <label className="label-upper pt-2 block">
+                    Keterangan {statusLabel[status]}
+                  </label>
+
+                  {/* Input teks bebas */}
+                  <input
+                    type="text"
+                    value={ket}
+                    onChange={e => setLocalKet(prev => ({ ...prev, [s.id]: e.target.value }))}
+                    placeholder={`Contoh: ${suggestions[0] || 'Tulis keterangan...'}`}
+                    className="input-soft text-[13px]"
+                    autoFocus
+                  />
+
+                  {/* Saran cepat */}
+                  {suggestions.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {suggestions.map(sug => (
+                        <button
+                          key={sug}
+                          onClick={() => setLocalKet(prev => ({ ...prev, [s.id]: sug }))}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-all ${
+                            ket === sug
+                              ? 'bg-primary text-primary-foreground border-primary'
+                              : 'bg-surface border-border text-text-secondary hover:border-primary hover:text-primary'
+                          }`}
+                        >
+                          {sug}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="flex rounded-xl overflow-hidden border border-border">
-              {statuses.map(st => (
-                <button key={st} onClick={() => toggleStatus(s.id, st)}
-                  className={`px-3 py-1.5 text-[12px] font-semibold transition-all duration-150 ${
-                    getStatus(s.id) === st ? statusColors[st] : 'bg-surface text-text-tertiary hover:bg-bg-2'
-                  } ${st !== 'A' ? 'border-r border-border' : ''}`}>
-                  {st}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      {/* Preview & Save */}
+      {/* Preview & Simpan */}
       {!showPreview ? (
         <button onClick={() => setShowPreview(true)} className="btn-soft btn-primary-soft w-full py-3">
           {isEditMode ? 'Edit & Simpan' : 'Pratinjau & Simpan'}
@@ -204,13 +310,22 @@ export function AbsenPage() {
           </h3>
           <div className="bg-surface rounded-2xl shadow-soft overflow-hidden">
             {kelas?.students.map((s, i, arr) => {
-              const st = getStatus(s.id);
+              const st  = getStatus(s.id);
+              const ket = getKet(s.id);
               if (st === 'H') return null;
               return (
-                <div key={s.id} className={`flex justify-between items-center px-4 py-3 ${i < arr.length - 1 ? 'border-b border-border' : ''}`}>
-                  <span className="text-[13px] font-medium">{s.name}</span>
-                  <span className="text-[12px] font-semibold text-text-secondary">
-                    {st === 'S' ? 'Sakit' : st === 'I' ? 'Izin' : 'Alpha'}
+                <div key={s.id}
+                  className={`flex justify-between items-start px-4 py-3 gap-3 ${i < arr.length - 1 ? 'border-b border-border' : ''}`}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium truncate">{s.name}</p>
+                    {ket && <p className="text-[11px] text-text-tertiary italic mt-0.5">"{ket}"</p>}
+                  </div>
+                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md flex-shrink-0 ${
+                    st === 'S' ? 'bg-semantic-blue-light text-semantic-blue' :
+                    st === 'I' ? 'bg-semantic-yellow-light text-semantic-yellow' :
+                    'bg-semantic-red-light text-semantic-red'
+                  }`}>
+                    {statusLabel[st]}
                   </span>
                 </div>
               );
