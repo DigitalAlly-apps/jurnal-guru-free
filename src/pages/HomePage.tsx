@@ -98,8 +98,6 @@ export function HomePage() {
             {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
           <div className="flex items-center gap-2 mt-2">
-            <span className="badge-rich badge-neutral font-mono-rich text-[11px]">{semester.tahunAjaran}</span>
-            <span className="badge-rich badge-accent">{semLabel}</span>
             {kelas && <span className="kelas-pill-rich">{kelas.name}</span>}
           </div>
         </div>
@@ -159,21 +157,7 @@ export function HomePage() {
         </div>
       )}
 
-      {/* UTS/UAS schedule pills */}
-      {(schedule.utsStart || schedule.uasStart) && (
-        <div className="flex flex-wrap gap-2">
-          {schedule.utsStart && (
-            <span className="badge-rich badge-blue font-mono-rich">
-              UTS {schedule.utsStart}{schedule.utsEnd ? ` – ${schedule.utsEnd}` : ''}
-            </span>
-          )}
-          {schedule.uasStart && (
-            <span className="badge-rich badge-purple font-mono-rich">
-              UAS {schedule.uasStart}{schedule.uasEnd ? ` – ${schedule.uasEnd}` : ''}
-            </span>
-          )}
-        </div>
-      )}
+      {/* Stat grid removed redundant schedule pills */}
 
       {/* Stat grid */}
       <div className="grid grid-cols-2 gap-3">

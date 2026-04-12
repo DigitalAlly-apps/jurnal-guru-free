@@ -290,10 +290,7 @@ export function SetelanPage() {
         </div>
       )}
 
-      <div className="mt-8 border-t-2 border-border pt-6">
-        <h3 className="text-sm font-bold text-foreground mb-4">Pusat Informasi & Bantuan</h3>
-        <InformasiPage />
-      </div>
+
 
       <p className="text-[14px] text-text-tertiary text-center mt-2 font-bold">Jurnal Guru Pro v6</p>
     </div>
