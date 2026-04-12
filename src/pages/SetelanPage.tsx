@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Switch } from '@/components/ui/switch';
-import { Moon, Calendar, Download, Upload, Smartphone, User, Clock, Trash2 } from 'lucide-react';
+import { Moon, Calendar, Download, Upload, Smartphone, User, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useDarkMode } from '@/hooks/use-dark-mode';
 import type { BackupData, SemesterConfig, UjianSchedule } from '@/types';
@@ -10,6 +10,7 @@ export function SetelanPage() {
   const { namaGuru, setNamaGuru, semester, setSemester, exportBackup, importBackup, resetAll, showToast } = useApp();
   const { isDark, toggle: toggleDark } = useDarkMode();
   const [showInstall, setShowInstall] = useState(false);
+  const [showSemesterConfig, setShowSemesterConfig] = useState(false);
   const [namaInput, setNamaInput] = useState(namaGuru);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [resetInput, setResetInput] = useState('');
@@ -98,49 +99,90 @@ export function SetelanPage() {
         </div>
       </div>
 
-      {/* Semester */}
+      {/* Semester & Jadwal (Collapsible) */}
       <div className="bg-surface rounded-2xl shadow-soft p-5">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-xl bg-accent-light flex items-center justify-center">
-            <Calendar className="w-4 h-4 text-primary" />
+        <button
+          onClick={() => setShowSemesterConfig(!showSemesterConfig)}
+          className="w-full flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-accent-light flex items-center justify-center">
+              <Calendar className="w-4 h-4 text-primary" />
+            </div>
+            <div className="text-left">
+              <h3 className="text-sm font-semibold text-foreground">Semester & Jadwal Ujian</h3>
+              <p className="text-[12px] text-text-tertiary">
+                {semester.tahunAjaran} • {semester.semester === 'ganjil' ? 'Ganjil' : 'Genap'}
+              </p>
+            </div>
           </div>
-          <h3 className="text-sm font-semibold text-foreground">Semester</h3>
-        </div>
+          <div className="w-8 h-8 rounded-full bg-bg-2 flex items-center justify-center transition-transform">
+            {showSemesterConfig ? (
+              <ChevronUp className="w-4 h-4 text-text-secondary" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-text-secondary" />
+            )}
+          </div>
+        </button>
 
-        <div className="mb-3">
-          <label className="label-upper block mb-1.5">Tahun Ajaran</label>
-          <select value={semester.tahunAjaran} onChange={e => handleSemesterChange({ tahunAjaran: e.target.value })} className="input-soft w-full">
-            {tahunOptions().map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </div>
+        {showSemesterConfig && (
+          <div className="mt-5 space-y-4 pt-4 border-t border-border/50 animate-fade-in">
+            {/* Periode & Tahun Ajaran */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="label-upper block mb-1.5">Tahun Ajaran</label>
+                <select value={semester.tahunAjaran} onChange={e => handleSemesterChange({ tahunAjaran: e.target.value })} className="input-soft w-full text-xs py-2">
+                  {tahunOptions().map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="label-upper block mb-1.5">Periode</label>
+                <div className="flex flex-col sm:flex-row bg-bg-2 rounded-xl p-1 gap-1">
+                  {(['ganjil', 'genap'] as const).map(p => (
+                    <button key={p} onClick={() => handleSemesterChange({ semester: p })}
+                      className={`flex-1 py-1.5 px-2 text-[12px] font-semibold rounded-lg transition-all capitalize ${
+                        semester.semester === p ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary hover:text-text-secondary'
+                      }`}>
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
 
-        <div>
-          <label className="label-upper block mb-1.5">Periode Aktif</label>
-          <div className="flex flex-col sm:flex-row bg-bg-2 rounded-xl p-1 gap-1">
-            {(['ganjil', 'genap'] as const).map(p => (
-              <button key={p} onClick={() => handleSemesterChange({ semester: p })}
-                className={`flex-1 py-2.5 px-2 text-[13px] font-semibold rounded-lg transition-all capitalize ${
-                  semester.semester === p ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary hover:text-text-secondary'
-                }`}>
-                {p === 'ganjil' ? 'Semester 1 (Ganjil)' : 'Semester 2 (Genap)'}
-              </button>
+            {/* Jadwal Simple */}
+            {([
+              { key: 'ganjil' as const, label: 'Jadwal Ganjil', data: semester.ganjil },
+              { key: 'genap' as const, label: 'Jadwal Genap', data: semester.genap }
+            ]).map(item => (
+              <div key={item.key} className={`p-3 rounded-xl border border-border/40 ${semester.semester === item.key ? 'bg-primary/5 border-primary/20' : 'bg-bg-2/50'}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="label-upper block !mb-0">{item.label}</label>
+                  {semester.semester === item.key && <span className="text-[10px] text-primary font-bold px-2 py-0.5 rounded-full bg-primary/10">Aktif</span>}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-[10px] text-text-tertiary mb-1 block">Mulai UTS</span>
+                    <input type="date" value={item.data.utsStart} onChange={e => handleScheduleChange(item.key, { utsStart: e.target.value })} className="input-soft text-[11px] w-full py-1.5 px-2" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-text-tertiary mb-1 block">Selesai UTS</span>
+                    <input type="date" value={item.data.utsEnd} onChange={e => handleScheduleChange(item.key, { utsEnd: e.target.value })} className="input-soft text-[11px] w-full py-1.5 px-2" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-text-tertiary mb-1 block">Mulai UAS</span>
+                    <input type="date" value={item.data.uasStart} onChange={e => handleScheduleChange(item.key, { uasStart: e.target.value })} className="input-soft text-[11px] w-full py-1.5 px-2" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-text-tertiary mb-1 block">Selesai UAS</span>
+                    <input type="date" value={item.data.uasEnd} onChange={e => handleScheduleChange(item.key, { uasEnd: e.target.value })} className="input-soft text-[11px] w-full py-1.5 px-2" />
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
-        </div>
+        )}
       </div>
-
-      <UjianScheduleCard
-        label="Jadwal UTS & UAS — Semester 1 (Ganjil)"
-        schedule={semester.ganjil}
-        isActive={semester.semester === 'ganjil'}
-        onChange={u => handleScheduleChange('ganjil', u)}
-      />
-      <UjianScheduleCard
-        label="Jadwal UTS & UAS — Semester 2 (Genap)"
-        schedule={semester.genap}
-        isActive={semester.semester === 'genap'}
-        onChange={u => handleScheduleChange('genap', u)}
-      />
 
       {/* Backup & Restore */}
       <div className="bg-surface rounded-2xl shadow-soft p-5">
@@ -258,43 +300,3 @@ export function SetelanPage() {
   );
 }
 
-function UjianScheduleCard({
-  label, schedule, isActive, onChange,
-}: {
-  label: string;
-  schedule: UjianSchedule;
-  isActive: boolean;
-  onChange: (u: Partial<UjianSchedule>) => void;
-}) {
-  return (
-    <div className={`bg-surface rounded-2xl shadow-soft p-5 ${isActive ? 'ring-2 ring-primary/30' : 'opacity-80'}`}>
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-9 h-9 rounded-xl bg-bg-2 flex items-center justify-center">
-          <Clock className="w-4 h-4 text-text-secondary" />
-        </div>
-        <div>
-          <h3 className="text-sm font-semibold text-foreground">{label}</h3>
-          {isActive && <span className="text-[11px] text-primary font-semibold">● Aktif</span>}
-        </div>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div>
-          <label className="label-upper block mb-1.5">UTS Mulai</label>
-          <input type="date" value={schedule.utsStart} onChange={e => onChange({ utsStart: e.target.value })} className="input-soft text-xs w-full" />
-        </div>
-        <div>
-          <label className="label-upper block mb-1.5">UTS Selesai</label>
-          <input type="date" value={schedule.utsEnd} onChange={e => onChange({ utsEnd: e.target.value })} className="input-soft text-xs w-full" />
-        </div>
-        <div>
-          <label className="label-upper block mb-1.5">UAS Mulai</label>
-          <input type="date" value={schedule.uasStart} onChange={e => onChange({ uasStart: e.target.value })} className="input-soft text-xs w-full" />
-        </div>
-        <div>
-          <label className="label-upper block mb-1.5">UAS Selesai</label>
-          <input type="date" value={schedule.uasEnd} onChange={e => onChange({ uasEnd: e.target.value })} className="input-soft text-xs w-full" />
-        </div>
-      </div>
-    </div>
-  );
-}
