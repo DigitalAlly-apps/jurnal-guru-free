@@ -280,7 +280,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const exportBackup = useCallback(() => {
     const data: BackupData = {
-      version: '3.0', exportedAt: new Date().toISOString(),
+      version: '5.0', exportedAt: new Date().toISOString(),
       namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList,
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
