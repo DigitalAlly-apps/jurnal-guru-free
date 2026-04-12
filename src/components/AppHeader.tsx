@@ -1,4 +1,4 @@
-import { ShieldCheck, ShieldAlert, Moon, Sun } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Moon, Sun, Menu } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { JurnalGuruLogo } from '@/components/JurnalGuruLogo';
@@ -39,10 +39,9 @@ export function AppHeader() {
     <header className="header-rich">
       {/* Left */}
       <div className="flex items-center gap-3">
-        <SidebarTrigger className="icon-btn-rich w-8 h-8 rounded-lg">
-          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-            <path d="M1.5 3h12M1.5 7.5h12M1.5 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
+        <SidebarTrigger className="icon-btn-rich w-auto h-9 px-2.5 rounded-xl border border-border/40 hover:bg-bg-2 flex items-center gap-1.5 transition-all active:scale-95 shadow-soft">
+          <Menu className="w-4 h-4 text-text-secondary" />
+          <span className="text-[12px] font-bold text-foreground pr-0.5">Menu</span>
         </SidebarTrigger>
 
         {isHome ? (

@@ -468,10 +468,24 @@ function StudentDetail({ student, kelasId, kelasName }: {
 
   return (
     <div className="flex flex-col gap-4 max-w-2xl">
-      <button onClick={() => setActiveStudentId(null)}
-        className="flex items-center gap-2 text-sm text-text-secondary hover:text-foreground transition-colors self-start">
-        <ArrowLeft className="w-4 h-4" /> Kembali
-      </button>
+      <div className="flex items-center justify-between">
+        <button onClick={() => setActiveStudentId(null)}
+          className="flex items-center gap-2 text-sm text-text-secondary hover:text-foreground transition-colors self-start">
+          <ArrowLeft className="w-4 h-4" /> Kembali
+        </button>
+        
+        {/* Quick Actions */}
+        <div className="flex gap-2">
+          <button onClick={() => { /* Wait for UX step to auto-select student, for now just navigates */ window.dispatchEvent(new CustomEvent('change-view', { detail: 'jurnal' })); }} 
+            className="btn-soft btn-secondary-soft text-[12px] py-1.5 px-3 flex items-center gap-1.5 border border-semantic-red/10 text-semantic-red hover:bg-semantic-red-light">
+            <AlertTriangle className="w-3.5 h-3.5" /> + Kasus
+          </button>
+          <button onClick={() => { window.dispatchEvent(new CustomEvent('change-view', { detail: 'jurnal' })); }} 
+            className="btn-soft btn-secondary-soft text-[12px] py-1.5 px-3 flex items-center gap-1.5 border border-primary/10 text-primary hover:bg-accent-light">
+            <BookOpen className="w-3.5 h-3.5" /> + Catatan
+          </button>
+        </div>
+      </div>
 
       {/* Profile card */}
       <div className="bg-surface rounded-2xl shadow-soft p-5">

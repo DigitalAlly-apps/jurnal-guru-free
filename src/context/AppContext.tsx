@@ -70,6 +70,8 @@ interface AppState {
   deleteKasusRecord: (id: string) => void;
   catatanRecords: CatatanRecord[];
   addCatatanRecord: (record: CatatanRecord) => void;
+  updateCatatanRecord: (id: string, updates: Partial<CatatanRecord>) => void;
+  deleteCatatanRecord: (id: string) => void;
   jadwalList: JadwalSlot[];
   addJadwal: (slot: JadwalSlot) => void;
   deleteJadwal: (id: string) => void;
@@ -211,6 +213,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addCatatanRecord = useCallback((record: CatatanRecord) => {
     setCatatanRecords(prev => [...prev, record]);
   }, []);
+  const updateCatatanRecord = useCallback((id: string, updates: Partial<CatatanRecord>) => {
+    setCatatanRecords(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+  }, []);
+  const deleteCatatanRecord = useCallback((id: string) => {
+    setCatatanRecords(prev => prev.filter(r => r.id !== id));
+  }, []);
 
   const addJadwal = useCallback((slot: JadwalSlot) => {
     setJadwalList(prev => [...prev, slot]);
@@ -315,7 +323,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addKelas, deleteKelas, addStudentsToKelas, removeStudentFromKelas, updateStudent,
       absenRecords, addAbsenRecords, updateAbsenRecord, deleteAbsenRecord,
       kasusRecords, addKasusRecord, updateKasusRecord, deleteKasusRecord,
-      catatanRecords, addCatatanRecord,
+      catatanRecords, addCatatanRecord, updateCatatanRecord, deleteCatatanRecord,
       jadwalList, addJadwal, deleteJadwal,
       toasts, showToast,
       semester, setSemester,

@@ -24,6 +24,8 @@ export interface AbsenRecord {
   mataPelajaran?: string;
 }
 
+export type KasusStatus = 'baru' | 'proses' | 'selesai';
+
 export interface KasusRecord {
   id: string;
   studentId: string;
@@ -34,6 +36,8 @@ export interface KasusRecord {
   kelasId: string;
   periodeUjian?: PeriodeUjian;
   waktuPemanggilan?: string;
+  status?: KasusStatus;
+  tindakLanjut?: string;
 }
 
 export interface CatatanRecord {

@@ -109,17 +109,17 @@ export function SetelanPage() {
 
         <div className="mb-3">
           <label className="label-upper block mb-1.5">Tahun Ajaran</label>
-          <select value={semester.tahunAjaran} onChange={e => handleSemesterChange({ tahunAjaran: e.target.value })} className="input-soft">
+          <select value={semester.tahunAjaran} onChange={e => handleSemesterChange({ tahunAjaran: e.target.value })} className="input-soft w-full">
             {tahunOptions().map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
 
         <div>
           <label className="label-upper block mb-1.5">Periode Aktif</label>
-          <div className="flex bg-bg-2 rounded-xl p-1 gap-1">
+          <div className="flex flex-col sm:flex-row bg-bg-2 rounded-xl p-1 gap-1">
             {(['ganjil', 'genap'] as const).map(p => (
               <button key={p} onClick={() => handleSemesterChange({ semester: p })}
-                className={`flex-1 py-2.5 text-[13px] font-semibold rounded-lg transition-all capitalize ${
+                className={`flex-1 py-2.5 px-2 text-[13px] font-semibold rounded-lg transition-all capitalize ${
                   semester.semester === p ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary hover:text-text-secondary'
                 }`}>
                 {p === 'ganjil' ? 'Semester 1 (Ganjil)' : 'Semester 2 (Genap)'}
@@ -277,22 +277,22 @@ function UjianScheduleCard({
           {isActive && <span className="text-[11px] text-primary font-semibold">● Aktif</span>}
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="label-upper block mb-1.5">UTS Mulai</label>
-          <input type="date" value={schedule.utsStart} onChange={e => onChange({ utsStart: e.target.value })} className="input-soft text-xs" />
+          <input type="date" value={schedule.utsStart} onChange={e => onChange({ utsStart: e.target.value })} className="input-soft text-xs w-full" />
         </div>
         <div>
           <label className="label-upper block mb-1.5">UTS Selesai</label>
-          <input type="date" value={schedule.utsEnd} onChange={e => onChange({ utsEnd: e.target.value })} className="input-soft text-xs" />
+          <input type="date" value={schedule.utsEnd} onChange={e => onChange({ utsEnd: e.target.value })} className="input-soft text-xs w-full" />
         </div>
         <div>
           <label className="label-upper block mb-1.5">UAS Mulai</label>
-          <input type="date" value={schedule.uasStart} onChange={e => onChange({ uasStart: e.target.value })} className="input-soft text-xs" />
+          <input type="date" value={schedule.uasStart} onChange={e => onChange({ uasStart: e.target.value })} className="input-soft text-xs w-full" />
         </div>
         <div>
           <label className="label-upper block mb-1.5">UAS Selesai</label>
-          <input type="date" value={schedule.uasEnd} onChange={e => onChange({ uasEnd: e.target.value })} className="input-soft text-xs" />
+          <input type="date" value={schedule.uasEnd} onChange={e => onChange({ uasEnd: e.target.value })} className="input-soft text-xs w-full" />
         </div>
       </div>
     </div>

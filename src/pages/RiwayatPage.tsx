@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Search, Trash2, Pencil, Check, X, Filter, ChevronDown } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
-import type { AbsenRecord, KasusRecord, PeriodeUjian } from '@/types';
+import type { AbsenRecord, KasusRecord, CatatanRecord, PeriodeUjian } from '@/types';
 
 type FilterType = 'semua' | 'absen' | 'kasus' | 'catatan';
 
@@ -33,16 +33,16 @@ export function RiwayatPage() {
   const {
     absenRecords, updateAbsenRecord, deleteAbsenRecord,
     kasusRecords, updateKasusRecord, deleteKasusRecord,
-    catatanRecords,
+    catatanRecords, updateCatatanRecord, deleteCatatanRecord,
     kelasList, activeKelas, showToast,
   } = useApp();
 
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<FilterType>('semua');
   const [editId, setEditId] = useState<string | null>(null);
-  const [editType, setEditType] = useState<'absen' | 'kasus' | null>(null);
-  const [editData, setEditData] = useState<Partial<AbsenRecord & KasusRecord>>({});
-  const [confirmDelete, setConfirmDelete] = useState<{ id: string; type: 'absen' | 'kasus' } | null>(null);
+  const [editType, setEditType] = useState<'absen' | 'kasus' | 'catatan' | null>(null);
+  const [editData, setEditData] = useState<Partial<AbsenRecord & KasusRecord & CatatanRecord>>({});
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; type: 'absen' | 'kasus' | 'catatan' } | null>(null);
 
   // Pagination state per section
   const [absenShown, setAbsenShown] = useState(PAGE_SIZE);
@@ -102,21 +102,25 @@ export function RiwayatPage() {
   const kasusPage = kasusFiltered.slice(0, kasusShown);
   const catatanPage = catatanFiltered.slice(0, catatanShown);
 
-  const startEdit = (id: string, type: 'absen' | 'kasus') => {
-    setEditId(id); setEditType(type);
+  const startEdit = (id: string, type: 'absen' | 'kasus' | 'catatan') => {
+    setEditId(id); setEditType(type as any);
     if (type === 'absen') {
       const r = absenRecords.find(r => r.id === id)!;
       setEditData({ status: r.status, periodeUjian: r.periodeUjian, date: r.date });
-    } else {
+    } else if (type === 'kasus') {
       const r = kasusRecords.find(r => r.id === id)!;
-      setEditData({ description: r.description, category: r.category, periodeUjian: r.periodeUjian, date: r.date });
+      setEditData({ description: r.description, category: r.category, periodeUjian: r.periodeUjian, date: r.date, tindakLanjut: r.tindakLanjut || '' });
+    } else {
+      const r = catatanRecords.find(r => r.id === id)!;
+      setEditData({ content: r.content, tipe: r.tipe });
     }
   };
 
   const saveEdit = () => {
     if (!editId || !editType) return;
     if (editType === 'absen') updateAbsenRecord(editId, editData);
-    else updateKasusRecord(editId, editData);
+    else if (editType === 'kasus') updateKasusRecord(editId, editData);
+    else updateCatatanRecord(editId, editData);
     showToast('Data berhasil diperbarui');
     setEditId(null); setEditType(null); setEditData({});
   };
@@ -124,9 +128,17 @@ export function RiwayatPage() {
   const doDelete = () => {
     if (!confirmDelete) return;
     if (confirmDelete.type === 'absen') deleteAbsenRecord(confirmDelete.id);
-    else deleteKasusRecord(confirmDelete.id);
+    else if (confirmDelete.type === 'kasus') deleteKasusRecord(confirmDelete.id);
+    else deleteCatatanRecord(confirmDelete.id);
     showToast('Data berhasil dihapus');
     setConfirmDelete(null);
+  };
+
+  // Cycle kasus status: baru → proses → selesai → baru
+  const cycleStatus = (r: KasusRecord) => {
+    const next = r.status === 'baru' || !r.status ? 'proses' : r.status === 'proses' ? 'selesai' : 'baru';
+    updateKasusRecord(r.id, { status: next });
+    showToast(`Status kasus: ${next}`);
   };
 
   const periodeOptions: PeriodeUjian[] = ['Harian', 'UTS', 'UAS'];
@@ -240,6 +252,7 @@ export function RiwayatPage() {
                             {periodeOptions.map(p => <option key={p} value={p}>{p}</option>)}
                           </select>
                         </div>
+                        <input value={(editData as any).tindakLanjut || ''} onChange={e => setEditData(p => ({ ...p, tindakLanjut: e.target.value }))} placeholder="Tindak lanjut (opsional)" className="input-soft text-xs" />
                         <div className="flex gap-2 justify-end">
                           <button onClick={() => setEditId(null)} className="btn-soft btn-secondary-soft px-3 py-1.5 text-xs flex items-center gap-1"><X className="w-3 h-3"/>Batal</button>
                           <button onClick={saveEdit} className="btn-soft btn-primary-soft px-3 py-1.5 text-xs flex items-center gap-1"><Check className="w-3 h-3"/>Simpan</button>
@@ -252,8 +265,22 @@ export function RiwayatPage() {
                             <p className="text-sm font-semibold text-foreground">{r.studentName}</p>
                             <span className="text-xs bg-bg-2 text-text-secondary px-2 py-0.5 rounded-full">{r.category}</span>
                             {r.periodeUjian && <span className="text-xs text-primary font-medium">{r.periodeUjian}</span>}
+                            {/* Status badge — click to cycle */}
+                            <button
+                              onClick={() => cycleStatus(r)}
+                              title="Klik untuk ubah status"
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${
+                                !r.status || r.status === 'baru'
+                                  ? 'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'
+                                  : r.status === 'proses'
+                                  ? 'bg-yellow-50 border-yellow-200 text-yellow-700 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-400'
+                                  : 'bg-green-50 border-green-200 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400'
+                              }`}>
+                              {!r.status || r.status === 'baru' ? '🔴 Baru' : r.status === 'proses' ? '🟡 Proses' : '🟢 Selesai'}
+                            </button>
                           </div>
                           <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">{r.description}</p>
+                          {r.tindakLanjut && <p className="text-xs text-text-tertiary mt-0.5 italic">↳ {r.tindakLanjut}</p>}
                           <p className="text-xs text-text-tertiary mt-0.5">{r.date}</p>
                         </div>
                         <div className="flex flex-shrink-0">
@@ -290,13 +317,33 @@ export function RiwayatPage() {
               <div className="divide-y divide-border">
                 {catatanPage.map(r => (
                   <div key={r.id} className="px-4 py-3 flex items-start gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-center mb-0.5">
+                    {editId === r.id && editType === 'catatan' ? (
+                      <div className="flex-1 flex flex-col gap-2">
                         <p className="text-sm font-semibold text-foreground">{r.studentName}</p>
-                        <p className="text-xs text-text-tertiary">{r.date}</p>
+                        <textarea value={editData.content || ''} onChange={e => setEditData(p => ({ ...p, content: e.target.value }))} rows={3} className="input-soft text-xs resize-none" autoFocus />
+                        <div className="flex gap-2 justify-end">
+                          <button onClick={() => setEditId(null)} className="btn-soft btn-secondary-soft px-3 py-1.5 text-xs flex items-center gap-1"><X className="w-3 h-3"/>Batal</button>
+                          <button onClick={saveEdit} className="btn-soft btn-primary-soft px-3 py-1.5 text-xs flex items-center gap-1"><Check className="w-3 h-3"/>Simpan</button>
+                        </div>
                       </div>
-                      <p className="text-xs text-text-secondary leading-relaxed">{r.content}</p>
-                    </div>
+                    ) : (
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                          <p className="text-sm font-semibold text-foreground">{r.studentName}</p>
+                          {r.tipe && r.tipe !== 'umum' && (
+                            <span className="text-[10px] font-medium bg-accent-light text-primary px-2 py-0.5 rounded-full capitalize">{r.tipe}</span>
+                          )}
+                          <span className="ml-auto text-xs text-text-tertiary">{r.date}</span>
+                        </div>
+                        <p className="text-xs text-text-secondary leading-relaxed mt-0.5">{r.content}</p>
+                      </div>
+                    )}
+                    {editId !== r.id && (
+                      <div className="flex flex-shrink-0">
+                        <button onClick={() => startEdit(r.id, 'catatan')} className="p-1.5 hover:bg-bg-2 rounded-lg text-text-secondary hover:text-primary" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => setConfirmDelete({ id: r.id, type: 'catatan' })} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-text-secondary hover:text-red-500" title="Hapus"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
