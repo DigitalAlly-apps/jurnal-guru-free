@@ -104,7 +104,7 @@ return {
   ];
 
   return (
-    <div className="flex flex-col gap-5 max-w-2xl">
+    <div className="flex flex-col gap-5 max-w-4xl mx-auto w-full">
       {/* Semester info */}
       <div className="bg-accent-light rounded-xl px-4 py-3 text-[13px] text-primary font-medium">
         📅 {semester.tahunAjaran} — Semester {semester.semester === 'ganjil' ? '1 (Ganjil)' : '2 (Genap)'}

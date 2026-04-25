@@ -57,7 +57,7 @@ const tutorials = [
 
 export function InformasiPage() {
   return (
-    <div className="flex flex-col gap-4 max-w-2xl">
+    <div className="flex flex-col gap-4 max-w-4xl mx-auto w-full">
       {/* Logo & Intro */}
       <div className="bg-surface rounded-2xl shadow-soft p-6 flex flex-col items-center text-center">
         <JurnalGuruLogo size={110} showText={true} className="mb-2" />

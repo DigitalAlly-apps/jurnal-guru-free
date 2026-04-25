@@ -40,7 +40,7 @@ export function JadwalPage() {
   })).filter(g => g.slots.length > 0 || showForm);
 
   return (
-    <div className="flex flex-col gap-4 max-w-2xl">
+    <div className="flex flex-col gap-4 max-w-4xl mx-auto w-full">
       <div className="flex items-center justify-between">
         <p className="text-sm text-text-secondary">
           {kelas ? `Jadwal Kelas ${kelas.name}` : 'Pilih kelas terlebih dahulu'}

@@ -205,7 +205,7 @@ export function SiswaPage() {
 
 
   return (
-    <div className="flex flex-col gap-4 max-w-2xl">
+    <div className="flex flex-col gap-5 max-w-5xl w-full pb-10 mx-auto">
 
       {/* Modals */}
       {confirmDialog && (
@@ -357,54 +357,67 @@ export function SiswaPage() {
 
       {/* Daftar siswa */}
       {filteredStudents.length === 0 ? (
-        <div className="text-center py-12 text-text-tertiary text-sm">
-          {search ? 'Siswa tidak ditemukan' : 'Belum ada siswa. Tambahkan siswa di atas.'}
+        <div className="text-center py-16 bg-surface rounded-2xl border border-dashed border-border flex flex-col items-center justify-center">
+          <div className="w-16 h-16 rounded-full bg-bg-2 flex items-center justify-center mb-3">
+            <User className="w-8 h-8 text-text-tertiary" />
+          </div>
+          <p className="text-sm font-semibold text-text-secondary">
+            {search ? 'Siswa tidak ditemukan' : 'Belum ada siswa di kelas ini'}
+          </p>
+          {!search && <p className="text-xs text-text-tertiary mt-1">Gunakan tombol Tambah Siswa di atas untuk memulai.</p>}
         </div>
       ) : (
-        <div className="bg-surface rounded-2xl shadow-soft overflow-hidden">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredStudents.map((s, i) => {
             const alphaCount = absenRecords.filter(a => a.kelasId === activeKelas && a.studentId === s.id && a.status === 'A').length;
             const kasusCount = kasusRecords.filter(k => k.kelasId === activeKelas && k.studentId === s.id).length;
 
             return (
               <div key={s.id}
-                className={`flex items-center gap-3 px-4 py-3 group hover:bg-bg-2 transition-colors ${
-                  i < filteredStudents.length - 1 ? 'border-b border-border' : ''
-                }`}>
-
-                {/* Avatar */}
-                <div className="w-9 h-9 rounded-xl bg-accent-light flex items-center justify-center flex-shrink-0">
-                  <User className="w-4.5 h-4.5 text-primary" />
+                className="card-soft flex flex-col p-5 group relative cursor-pointer hover:border-primary/40"
+                onClick={() => setActiveStudentId(s.id)}
+              >
+                {/* Header Card: Avatar & Actions */}
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-12 h-12 rounded-2xl bg-accent-light flex items-center justify-center flex-shrink-0 shadow-inner group-hover:scale-105 transition-transform">
+                    <User className="w-6 h-6 text-primary" />
+                  </div>
+                  
+                  <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setEditingStudent({ id: s.id, name: s.name, nis: s.nis }) }}
+                      className="w-8 h-8 rounded-lg bg-bg-2 hover:bg-accent-light text-text-tertiary hover:text-primary flex items-center justify-center transition-all shadow-sm"
+                      title="Edit"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleRemove(s.id, s.name) }}
+                      className="w-8 h-8 rounded-lg bg-bg-2 hover:bg-semantic-red-light text-text-tertiary hover:text-semantic-red flex items-center justify-center transition-all shadow-sm"
+                      title="Hapus"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
-                {/* Info — tap buka detail */}
-                <button className="flex-1 text-left min-w-0" onClick={() => setActiveStudentId(s.id)}>
-                  <p className="text-[13px] font-semibold text-foreground truncate">{s.name}</p>
-                  <p className="text-[11px] text-text-tertiary mt-0.5">
+                {/* Info Siswa */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[16px] font-bold text-foreground truncate group-hover:text-primary transition-colors">{s.name}</p>
+                  <p className="text-[12px] text-text-secondary font-mono mt-1 font-medium">
                     NISN: {s.nis === '-' ? '—' : s.nis}
-                    {alphaCount > 0 && <span className="ml-2 text-semantic-red">{alphaCount}× alpha</span>}
-                    {kasusCount > 0 && <span className="ml-2 text-semantic-yellow">{kasusCount} kasus</span>}
                   </p>
-                </button>
+                </div>
 
-                {/* Action buttons — muncul saat hover */}
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                  {/* Edit */}
-                  <button
-                    onClick={() => setEditingStudent({ id: s.id, name: s.name, nis: s.nis })}
-                    className="w-7 h-7 rounded-lg hover:bg-accent-light text-text-tertiary hover:text-primary flex items-center justify-center transition-colors"
-                    title="Edit"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                  {/* Hapus */}
-                  <button
-                    onClick={() => handleRemove(s.id, s.name)}
-                    className="w-7 h-7 rounded-lg hover:bg-semantic-red-light text-text-tertiary hover:text-semantic-red flex items-center justify-center transition-colors"
-                    title="Hapus"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                {/* Status Badges */}
+                <div className="flex flex-wrap gap-2 mt-5 pt-3 border-t border-border/60">
+                  {alphaCount > 0 ? (
+                     <span className="badge-rich badge-red text-[11px] py-1">{alphaCount}× Alpha</span>
+                  ) : <span className="badge-rich badge-green text-[11px] py-1 opacity-80">Rajin</span>}
+                  
+                  {kasusCount > 0 && (
+                     <span className="badge-rich badge-yellow text-[11px] py-1">{kasusCount} Kasus</span>
+                  )}
                 </div>
               </div>
             );
@@ -467,7 +480,7 @@ function StudentDetail({ student, kelasId, kelasName }: {
   };
 
   return (
-    <div className="flex flex-col gap-4 max-w-2xl">
+    <div className="flex flex-col gap-5 max-w-4xl pb-10 w-full mx-auto">
       <div className="flex items-center justify-between">
         <button onClick={() => setActiveStudentId(null)}
           className="flex items-center gap-2 text-sm text-text-secondary hover:text-foreground transition-colors self-start">

@@ -58,7 +58,7 @@ export function SetelanPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4 max-w-2xl">
+    <div className="flex flex-col gap-4 max-w-4xl mx-auto w-full">
 
       {/* Nama Guru */}
       <div className="bg-surface rounded-2xl shadow-soft p-5">

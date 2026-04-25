@@ -41,8 +41,6 @@ export function HomePage() {
     [absenRecords, activeKelas]
   );
 
-  // Fix 5: pctHadir = (totalHariSekolah × totalSiswa - totalAbsen) / total
-  // Since we only store exceptions (S/I/A), total possible = totalStudents × uniqueDates
   const pctHadir = useMemo(() => {
     if (!totalStudents || !semesterAbsen.length) return 0;
     const uniqueDates = new Set(semesterAbsen.map(a => a.date)).size;
@@ -64,7 +62,6 @@ export function HomePage() {
     .slice(0, 5);
   }, [kelas, absenRecords, kasusRecords, activeKelas]);
 
-  // Fix 5: weeklyData also uses exception-based count
   const weeklyData = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date();
@@ -81,272 +78,286 @@ export function HomePage() {
   }, [absenRecords, activeKelas, totalStudents]);
 
   const pieData = [
-    { name: 'Sakit', value: sakit,  color: 'hsl(211, 86%, 53%)' },
-    { name: 'Izin',  value: izin,   color: 'hsl(36, 90%, 46%)'  },
-    { name: 'Alpha', value: alpha,  color: 'hsl(0, 72%, 51%)'   },
+    { name: 'Sakit', value: sakit,  color: 'hsl(var(--blue))' },
+    { name: 'Izin',  value: izin,   color: 'hsl(var(--yellow))' },
+    { name: 'Alpha', value: alpha,  color: 'hsl(var(--red))' },
   ].filter(d => d.value > 0);
 
-  const schedule = semester.semester === 'ganjil' ? semester.ganjil : semester.genap;
   const semLabel = semester.semester === 'ganjil' ? 'Semester 1' : 'Semester 2';
   const recentKasus = kasusRecords.filter(k => k.kelasId === activeKelas).slice(-3).reverse();
   const greeting = namaGuru ? namaGuru.split(' ')[0] : 'Guru';
 
   return (
-    <div className="flex flex-col gap-4 max-w-2xl">
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-5 max-w-6xl mx-auto w-full pb-10">
 
-      {/* Greeting header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="section-heading">Halo, {greeting} 👋</h1>
-          <p className="text-[13px] text-text-tertiary mt-1">
-            {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-          </p>
-          <div className="flex items-center gap-2 mt-2">
-            {kelas && <span className="kelas-pill-rich">{kelas.name}</span>}
-          </div>
-        </div>
-      </div>
-
-      {/* Backup alert */}
-      {showBackupAlert && (
-        <div className="alert-rich alert-rich-yellow flex items-start gap-3">
-          <Bell className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-semibold">
-              {lastBackupDate ? 'Sudah >7 hari sejak backup terakhir' : 'Belum pernah backup data'}
+      {/* Header and Alerts - Full width */}
+      <div className="md:col-span-12 flex flex-col gap-4 mb-2">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h1 className="section-heading text-3xl mb-1">Halo, {greeting}! 👋</h1>
+            <p className="text-[14px] text-text-tertiary">
+              {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
-            <p className="text-[12px] opacity-75 mt-0.5">Backup data di menu Setelan untuk keamanan data Anda.</p>
           </div>
-          <button
-            onClick={() => setActiveTab('setelan')}
-            className="text-[12px] font-semibold flex items-center gap-1 flex-shrink-0 hover:opacity-80 transition-opacity"
-          >
-            Backup <ArrowRight className="w-3 h-3" />
-          </button>
+          {kelas && (
+            <div className="flex items-center gap-2">
+              <span className="kelas-pill-rich shadow-soft scale-105">{kelas.name}</span>
+            </div>
+          )}
         </div>
-      )}
 
-      {/* Pemanggilan hari ini */}
-      {todayPemanggilan.length > 0 && (
-        <div className="alert-rich alert-rich-red flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <PhoneCall className="w-4 h-4 flex-shrink-0" />
-            <p className="text-[13px] font-semibold flex-1">
-              {todayPemanggilan.length} pemanggilan dijadwalkan hari ini
-            </p>
+        {/* Backup alert */}
+        {showBackupAlert && (
+          <div className="alert-rich alert-rich-yellow flex items-start gap-3 mt-2">
+            <Bell className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[14px] font-bold">
+                {lastBackupDate ? 'Sudah >7 hari sejak backup terakhir' : 'Belum pernah backup data'}
+              </p>
+              <p className="text-[13px] opacity-80 mt-0.5">Sebaiknya segera amankan data Anda di menu Setelan.</p>
+            </div>
             <button
-              onClick={() => setActiveTab('kasus')}
-              className="text-[12px] font-semibold flex items-center gap-1 flex-shrink-0 hover:opacity-80 transition-opacity"
+              onClick={() => setActiveTab('setelan')}
+              className="text-[13px] font-bold flex items-center gap-1 flex-shrink-0 hover:opacity-75 transition-opacity py-1 px-3 bg-yellow-500/20 rounded-full"
             >
-              Lihat <ArrowRight className="w-3 h-3" />
+              Backup <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
-          <div className="flex flex-col gap-1.5 pl-6">
-            {todayPemanggilan
-              .sort((a, b) => (a.waktuPemanggilan! > b.waktuPemanggilan! ? 1 : -1))
-              .map(k => (
-                <button
-                  key={k.id}
-                  onClick={() => { setActiveStudentId(k.studentId); setActiveTab('siswa'); }}
-                  className="flex items-center gap-2 text-left hover:opacity-70 transition-opacity"
-                >
-                  <span className="text-[11px] font-mono font-semibold opacity-80 w-10 flex-shrink-0">
-                    {k.waktuPemanggilan}
-                  </span>
-                  <span className="text-[12px] font-semibold truncate">{k.studentName}</span>
-                  <span className="text-[11px] opacity-60 truncate">— {k.description}</span>
-                </button>
-              ))}
+        )}
+
+        {/* Pemanggilan hari ini */}
+        {todayPemanggilan.length > 0 && (
+          <div className="alert-rich alert-rich-red flex flex-col gap-3 mt-2">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
+                <PhoneCall className="w-4 h-4 flex-shrink-0" />
+              </div>
+              <p className="text-[14px] font-bold flex-1">
+                Ada {todayPemanggilan.length} pemanggilan dijadwalkan hari ini!
+              </p>
+              <button
+                onClick={() => setActiveTab('kasus')}
+                className="text-[13px] font-bold flex items-center gap-1 flex-shrink-0 hover:opacity-75 transition-opacity py-1 px-3 bg-red-500/20 rounded-full"
+              >
+                Cek <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="flex flex-col gap-2 pl-[42px]">
+              {todayPemanggilan
+                .sort((a, b) => (a.waktuPemanggilan! > b.waktuPemanggilan! ? 1 : -1))
+                .map(k => (
+                  <button
+                    key={k.id}
+                    onClick={() => { setActiveStudentId(k.studentId); setActiveTab('siswa'); }}
+                    className="flex items-center gap-3 text-left hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded-lg transition-colors -ml-2"
+                  >
+                    <span className="text-[12px] font-mono-rich font-bold bg-white/50 dark:bg-black/20 px-2 py-0.5 rounded flex-shrink-0">
+                      {k.waktuPemanggilan}
+                    </span>
+                    <span className="text-[13px] font-semibold truncate">{k.studentName}</span>
+                    <span className="text-[12px] opacity-70 truncate hidden sm:inline">— {k.description}</span>
+                  </button>
+                ))}
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* Stat grid removed redundant schedule pills */}
-
-      {/* Stat grid */}
-      <div className="grid grid-cols-2 gap-3">
-        <StatBox value={todayKasus} label="Kasus"  accentColor="accent" icon={<FileWarning className="w-4 h-4 text-primary" />} />
-        <StatBox value={sakit}      label="Sakit"  accentColor="blue"   icon={<Clock className="w-4 h-4 text-semantic-blue" />} />
-        <StatBox value={izin}       label="Izin"   accentColor="yellow" icon={<AlertCircle className="w-4 h-4 text-semantic-yellow" />} />
-        <StatBox value={alpha}      label="Alpha"  accentColor="red"    icon={<UserX className="w-4 h-4 text-semantic-red" />} />
+        )}
       </div>
 
-      {/* Semester stats */}
-      {semesterAbsen.length > 0 && (
-        <div className="card-soft">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-accent-light flex items-center justify-center">
-                <Calendar className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <h3 className="text-[13px] font-semibold text-foreground">Statistik {semLabel}</h3>
-            </div>
-            <span className="label-upper">{semester.tahunAjaran}</span>
-          </div>
+      {/* BENTO GRID: Stat grid - spans 8 cols */}
+      <div className="md:col-span-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatBox value={todayKasus} label="Kasus"  accentColor="accent" icon={<FileWarning className="w-5 h-5 text-primary" />} />
+        <StatBox value={sakit}      label="Sakit"  accentColor="blue"   icon={<Clock className="w-5 h-5 text-semantic-blue" />} />
+        <StatBox value={izin}       label="Izin"   accentColor="yellow" icon={<AlertCircle className="w-5 h-5 text-semantic-yellow" />} />
+        <StatBox value={alpha}      label="Alpha"  accentColor="red"    icon={<UserX className="w-5 h-5 text-semantic-red" />} />
+      </div>
 
-          {/* Attendance rate */}
-          <div className="mb-4">
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-[12px] text-text-secondary">Tingkat Kehadiran</span>
-              <span className="text-[13px] font-semibold text-foreground font-mono-rich">{pctHadir}%</span>
+      {/* BENTO GRID: Semester stats - spans 4 cols */}
+      <div className="md:col-span-4 card-soft flex flex-col justify-between shadow-soft-md">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-accent-light flex items-center justify-center shadow-inner">
+              <Calendar className="w-4 h-4 text-primary" />
             </div>
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: `${pctHadir}%` }} />
-            </div>
+            <h3 className="text-[14px] font-bold text-foreground">Statistik {semLabel}</h3>
           </div>
+          <span className="badge-rich badge-neutral">{semester.tahunAjaran}</span>
+        </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <div className="card-inset text-center">
-              <p className="text-[20px] font-bold text-primary font-mono-rich">{pctHadir}%</p>
-              <p className="text-[11px] text-text-tertiary mt-0.5 label-upper">Kehadiran</p>
-            </div>
-            <div className="card-inset text-center">
-              <p className="text-[20px] font-bold text-semantic-red font-mono-rich">
-                {semesterAbsen.filter(a => a.status === 'A').length}
-              </p>
-              <p className="text-[11px] text-text-tertiary mt-0.5 label-upper">Alpha</p>
-            </div>
-            <div className="card-inset text-center">
-              <p className="text-[20px] font-bold text-semantic-yellow font-mono-rich">
-                {kasusRecords.filter(k => k.kelasId === activeKelas).length}
-              </p>
-              <p className="text-[11px] text-text-tertiary mt-0.5 label-upper">Kasus</p>
-            </div>
+        {/* Attendance rate */}
+        <div className="mb-5 flex-1 flex flex-col justify-center">
+          <div className="flex justify-between items-end mb-2">
+            <span className="text-[13px] font-medium text-text-secondary">Tingkat Kehadiran</span>
+            <span className="text-[28px] font-black text-primary font-mono-rich leading-none">{pctHadir}%</span>
+          </div>
+          <div className="progress-bar h-2.5 bg-bg-3">
+            <div className="progress-fill shadow-accent" style={{ width: `${pctHadir}%` }} />
           </div>
         </div>
-      )}
 
-      {/* Students needing attention */}
-      {siswaAlert.length > 0 && (
-        <div className="card-soft">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-lg bg-semantic-red-light flex items-center justify-center">
-              <AlertTriangle className="w-3.5 h-3.5 text-semantic-red" />
-            </div>
-            <h3 className="text-[13px] font-semibold text-foreground">Perlu Perhatian</h3>
-            <span className="ml-auto label-upper">Alpha ≥3 atau Kasus ≥3</span>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="card-inset text-center py-2.5">
+            <p className="text-[18px] font-black text-primary font-mono-rich">{pctHadir}%</p>
+            <p className="text-[10px] text-text-tertiary mt-1 label-upper">Kehadiran</p>
           </div>
-          <div className="flex flex-col gap-1.5">
-            {siswaAlert.map(s => (
-              <button
-                key={s.id}
-                onClick={() => { setActiveStudentId(s.id); setActiveTab('siswa'); }}
-                className="student-alert-item text-left"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-foreground truncate">{s.name}</p>
-                </div>
-                <div className="flex gap-1.5 flex-shrink-0">
-                  {s.alphaCount >= 3 && (
-                    <span className="badge-rich badge-red">{s.alphaCount}× Alpha</span>
-                  )}
-                  {s.kasusCount >= 3 && (
-                    <span className="badge-rich badge-yellow">{s.kasusCount} Kasus</span>
-                  )}
-                </div>
-              </button>
-            ))}
+          <div className="card-inset text-center py-2.5">
+            <p className="text-[18px] font-black text-semantic-red font-mono-rich">
+              {semesterAbsen.filter(a => a.status === 'A').length}
+            </p>
+            <p className="text-[10px] text-text-tertiary mt-1 label-upper">Alpha</p>
+          </div>
+          <div className="card-inset text-center py-2.5">
+            <p className="text-[18px] font-black text-semantic-yellow font-mono-rich">
+              {kasusRecords.filter(k => k.kelasId === activeKelas).length}
+            </p>
+            <p className="text-[10px] text-text-tertiary mt-1 label-upper">Kasus</p>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Weekly attendance chart */}
-      <div className="card-soft">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-7 h-7 rounded-lg bg-accent-light flex items-center justify-center">
-            <TrendingUp className="w-3.5 h-3.5 text-primary" />
+      {/* BENTO GRID: Weekly attendance chart - spans 8 cols */}
+      <div className="md:col-span-8 card-soft">
+        <div className="flex items-center gap-2 mb-6">
+          <div className="w-8 h-8 rounded-xl bg-accent-light flex items-center justify-center shadow-inner">
+            <TrendingUp className="w-4 h-4 text-primary" />
           </div>
-          <h3 className="text-[13px] font-semibold text-foreground">Tren Kehadiran 7 Hari</h3>
+          <h3 className="text-[14px] font-bold text-foreground">Tren Kehadiran 7 Hari</h3>
         </div>
-        <ResponsiveContainer width="100%" height={140}>
-          <AreaChart data={weeklyData} margin={{ top: 4, right: 0, bottom: 0, left: -20 }}>
+        <ResponsiveContainer width="100%" height={180}>
+          <AreaChart data={weeklyData} margin={{ top: 10, right: 0, bottom: 0, left: -20 }}>
             <defs>
               <linearGradient id="hadirGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%"  stopColor="hsl(243, 75%, 59%)" stopOpacity={0.15} />
-                <stop offset="95%" stopColor="hsl(243, 75%, 59%)" stopOpacity={0} />
+                <stop offset="5%"  stopColor="hsl(var(--accent))" stopOpacity={0.25} />
+                <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis
               dataKey="day"
-              tick={{ fontSize: 11, fill: 'hsl(224, 8%, 62%)', fontFamily: 'Geist Mono, monospace' }}
+              tick={{ fontSize: 12, fill: 'hsl(var(--text-3))', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}
               axisLine={false} tickLine={false}
+              dy={10}
             />
             <YAxis hide />
             <Tooltip
               contentStyle={{
-                borderRadius: '10px',
-                border: '1px solid hsl(220, 13%, 89%)',
-                boxShadow: '0 4px 12px rgba(0,0,0,.06)',
-                fontSize: 12,
-                fontFamily: 'Geist, sans-serif',
-                background: 'hsl(0, 0%, 100%)',
+                borderRadius: '12px',
+                border: '1px solid hsl(var(--border))',
+                boxShadow: '0 8px 30px rgba(0,0,0,.12)',
+                fontSize: 13,
+                fontFamily: 'Outfit, sans-serif',
+                fontWeight: 600,
+                background: 'hsl(var(--surface))',
               }}
-              cursor={{ stroke: 'hsl(220, 13%, 89%)', strokeWidth: 1 }}
+              cursor={{ stroke: 'hsl(var(--border-2))', strokeWidth: 1, strokeDasharray: '4 4' }}
             />
             <Area
               type="monotone"
               dataKey="hadir"
-              stroke="hsl(243, 75%, 59%)"
-              strokeWidth={2}
+              stroke="hsl(var(--accent))"
+              strokeWidth={3}
               fill="url(#hadirGrad)"
-              dot={false}
-              activeDot={{ r: 4, fill: 'hsl(243, 75%, 59%)', strokeWidth: 0 }}
+              dot={{ r: 4, fill: 'hsl(var(--surface))', stroke: 'hsl(var(--accent))', strokeWidth: 2 }}
+              activeDot={{ r: 6, fill: 'hsl(var(--accent))', strokeWidth: 0, shadow: '0 0 10px hsl(var(--accent))' }}
             />
           </AreaChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Today distribution pie */}
-      {pieData.length > 0 && (
-        <div className="card-soft">
-          <h3 className="text-[13px] font-semibold text-foreground mb-3">Distribusi Hari Ini</h3>
-          <div className="flex items-center gap-5">
-            <ResponsiveContainer width={96} height={96}>
+      {/* BENTO GRID: Today distribution pie - spans 4 cols */}
+      <div className="md:col-span-4 card-soft flex flex-col">
+        <h3 className="text-[14px] font-bold text-foreground mb-4">Distribusi Hari Ini</h3>
+        {pieData.length > 0 ? (
+          <div className="flex items-center gap-6 flex-1 justify-center">
+            <ResponsiveContainer width={110} height={110}>
               <PieChart>
-                <Pie data={pieData} dataKey="value" cx="50%" cy="50%" innerRadius={26} outerRadius={44} paddingAngle={3} startAngle={90} endAngle={-270}>
+                <Pie data={pieData} dataKey="value" cx="50%" cy="50%" innerRadius={34} outerRadius={54} paddingAngle={4} startAngle={90} endAngle={-270}>
                   {pieData.map((entry, i) => <Cell key={i} fill={entry.color} strokeWidth={0} />)}
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
               {pieData.map(d => (
-                <div key={d.name} className="flex items-center gap-2.5">
-                  <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: d.color }} />
-                  <span className="text-[12px] text-text-secondary">{d.name}</span>
-                  <span className="font-semibold text-[13px] text-foreground font-mono-rich ml-auto">{d.value}</span>
+                <div key={d.name} className="flex items-center gap-3">
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: d.color, boxShadow: `0 0 8px ${d.color}66` }} />
+                  <span className="text-[13px] font-medium text-text-secondary w-10">{d.name}</span>
+                  <span className="font-black text-[15px] text-foreground font-mono-rich">{d.value}</span>
                 </div>
               ))}
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Recent cases */}
-      {recentKasus.length > 0 && (
-        <div className="card-soft">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-lg bg-semantic-red-light flex items-center justify-center">
-              <AlertTriangle className="w-3.5 h-3.5 text-semantic-red" />
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center opacity-60">
+            <div className="w-20 h-20 rounded-full border-4 border-dashed border-border flex items-center justify-center mb-3">
+              <span className="text-[20px]">🎉</span>
             </div>
-            <h3 className="text-[13px] font-semibold text-foreground">Kasus Terbaru</h3>
+            <p className="text-[13px] font-semibold text-center">Hadir Semua!</p>
           </div>
-          <div className="flex flex-col divide-y divide-border">
-            {recentKasus.map(k => (
-              <button
-                key={k.id}
-                onClick={() => { setActiveStudentId(k.studentId); setActiveTab('siswa'); }}
-                className="text-left py-2.5 first:pt-0 last:pb-0 hover:opacity-70 transition-opacity"
-              >
-                <div className="flex justify-between items-center mb-0.5">
-                  <span className="text-[13px] font-semibold text-foreground">{k.studentName}</span>
-                  <span className="text-[11px] text-text-tertiary font-mono-rich">{k.date}</span>
-                </div>
-                <p className="text-[12px] text-text-secondary leading-relaxed line-clamp-2">{k.description}</p>
-              </button>
-            ))}
+        )}
+      </div>
+
+      {/* BENTO GRID: Students needing attention - span 6 */}
+      <div className="md:col-span-6 flex flex-col h-full">
+        {siswaAlert.length > 0 && (
+          <div className="card-soft h-full border-red-500/10">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-xl bg-semantic-red-light flex items-center justify-center">
+                <AlertTriangle className="w-4 h-4 text-semantic-red" />
+              </div>
+              <h3 className="text-[14px] font-bold text-foreground">Perlu Perhatian</h3>
+              <span className="ml-auto text-[10px] font-bold text-text-tertiary bg-bg-2 px-2 py-1 rounded-md">ALPHA ≥3 / KASUS ≥3</span>
+            </div>
+            <div className="flex flex-col gap-2">
+              {siswaAlert.map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => { setActiveStudentId(s.id); setActiveTab('siswa'); }}
+                  className="student-alert-item text-left hover:scale-[1.02] transition-transform"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] font-bold text-foreground truncate">{s.name}</p>
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    {s.alphaCount >= 3 && (
+                      <span className="badge-rich badge-red shadow-sm">{s.alphaCount}× Alpha</span>
+                    )}
+                    {s.kasusCount >= 3 && (
+                      <span className="badge-rich badge-yellow shadow-sm">{s.kasusCount} Kasus</span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+
+      {/* BENTO GRID: Recent cases - span 6 */}
+      <div className="md:col-span-6 flex flex-col h-full">
+        {recentKasus.length > 0 && (
+          <div className="card-soft h-full">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-xl bg-semantic-yellow-light flex items-center justify-center">
+                <FileWarning className="w-4 h-4 text-semantic-yellow" />
+              </div>
+              <h3 className="text-[14px] font-bold text-foreground">Kasus Terbaru</h3>
+            </div>
+            <div className="flex flex-col divide-y divide-border/50">
+              {recentKasus.map(k => (
+                <button
+                  key={k.id}
+                  onClick={() => { setActiveStudentId(k.studentId); setActiveTab('siswa'); }}
+                  className="text-left py-3 first:pt-0 last:pb-0 group"
+                >
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[14px] font-bold text-foreground group-hover:text-primary transition-colors">{k.studentName}</span>
+                    <span className="text-[11px] text-text-tertiary font-mono-rich font-semibold bg-bg-2 px-1.5 py-0.5 rounded">{k.date}</span>
+                  </div>
+                  <p className="text-[13px] text-text-secondary leading-relaxed line-clamp-2">{k.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
     </div>
   );

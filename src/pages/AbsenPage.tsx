@@ -136,7 +136,7 @@ export function AbsenPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 max-w-2xl">
+    <div className="flex flex-col gap-4 max-w-4xl mx-auto w-full">
 
       {/* Tanggal, Periode, Mata Pelajaran */}
       <div className="bg-surface rounded-2xl shadow-soft p-4 flex flex-col gap-3">
