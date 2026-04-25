@@ -25,7 +25,11 @@ export function HomePage() {
   const izin       = todayAbsen.filter(a => a.status === 'I').length;
   const alpha      = todayAbsen.filter(a => a.status === 'A').length;
   const todayKasus = kasusRecords.filter(k => k.date === today && k.kelasId === activeKelas).length;
-  const todayPemanggilan = kasusRecords.filter(k => k.date === today && k.kelasId === activeKelas && !!k.waktuPemanggilan);
+  const todayPemanggilan = kasusRecords.filter(k => 
+    k.kelasId === activeKelas && 
+    !!k.waktuPemanggilan && 
+    (k.tanggalPemanggilan || k.date) === today
+  );
 
   const showBackupAlert = useMemo(() => {
     if (!lastBackupDate) return true;

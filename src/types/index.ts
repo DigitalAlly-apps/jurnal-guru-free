@@ -36,6 +36,7 @@ export interface KasusRecord {
   kelasId: string;
   periodeUjian?: PeriodeUjian;
   waktuPemanggilan?: string;
+  tanggalPemanggilan?: string;
   status?: KasusStatus;
   tindakLanjut?: string;
 }

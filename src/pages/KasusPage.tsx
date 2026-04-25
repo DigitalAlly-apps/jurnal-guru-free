@@ -34,10 +34,11 @@ export function KasusPage() {
   const [category, setCategory] = useState(KATEGORI[0]);
   const [tipeCatatan, setTipeCatatan] = useState<'prestasi' | 'perkembangan' | 'umum'>('umum');
   const [showTemplates, setShowTemplates] = useState(false);
+  const [tanggalPemanggilan, setTanggalPemanggilan] = useState('');
   const [waktuPemanggilan, setWaktuPemanggilan] = useState('');
   const [status, setStatus] = useState<KasusStatus>('baru');
 
-  const reset = () => { setDescription(''); setStudentId(''); setShowTemplates(false); setWaktuPemanggilan(''); setStatus('baru'); };
+  const reset = () => { setDescription(''); setStudentId(''); setShowTemplates(false); setWaktuPemanggilan(''); setTanggalPemanggilan(''); setStatus('baru'); };
 
   const handleSave = () => {
     if (!studentId || !description.trim()) {
@@ -53,6 +54,7 @@ export function KasusPage() {
       date, description: description.trim(),
       category, kelasId: activeKelas, periodeUjian: periode,
       waktuPemanggilan: waktuPemanggilan || undefined,
+      tanggalPemanggilan: tanggalPemanggilan || undefined,
       status,
     };
     addKasusRecord(record);
@@ -115,8 +117,20 @@ export function KasusPage() {
           </div>
         </div>
 
-        <div className="flex gap-3">
-          <div className="flex-1">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="label-upper block mb-1.5">
+              Tgl Pemanggilan
+              <span className="ml-1.5 text-[10px] text-text-tertiary normal-case font-normal">(opsional)</span>
+            </label>
+            <input
+              type="date"
+              value={tanggalPemanggilan}
+              onChange={e => setTanggalPemanggilan(e.target.value)}
+              className="input-soft w-full"
+            />
+          </div>
+          <div>
             <label className="label-upper block mb-1.5">
               Waktu Pemanggilan
               <span className="ml-1.5 text-[10px] text-text-tertiary normal-case font-normal">(opsional)</span>
@@ -128,9 +142,9 @@ export function KasusPage() {
               className="input-soft w-full"
             />
           </div>
-          <div className="flex-1">
+          <div className="col-span-2">
             <label className="label-upper block mb-1.5">Status Kasus</label>
-            <select value={status} onChange={e => setStatus(e.target.value as KasusStatus)} className="input-soft">
+            <select value={status} onChange={e => setStatus(e.target.value as KasusStatus)} className="input-soft w-full">
               {STATUS_OPTIONS.map(s => (
                 <option key={s} value={s}>{s === 'baru' ? '🔴 Baru' : s === 'proses' ? '🟡 Proses' : '🟢 Selesai'}</option>
               ))}
