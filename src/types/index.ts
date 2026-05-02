@@ -4,10 +4,13 @@ export interface Student {
   nis: string;
 }
 
+export type Jenjang = 'SD' | 'SMP' | 'SMA';
+
 export interface Kelas {
   id: string;
   name: string;
   students: Student[];
+  jenjang?: Jenjang;
 }
 
 export type PeriodeUjian = 'UTS' | 'UAS' | 'Harian';
@@ -73,6 +76,13 @@ export interface JadwalSlot {
   kelasId: string;
 }
 
+export interface LiburDate {
+  id: string;
+  date: string;
+  jenjang: Jenjang;
+  keterangan?: string;
+}
+
 export interface SemesterConfig {
   tahunAjaran: string;
   semester: SemesterPeriod;
@@ -90,4 +100,5 @@ export interface BackupData {
   kasusRecords: KasusRecord[];
   catatanRecords: CatatanRecord[];
   jadwalList: JadwalSlot[];
+  liburDates?: LiburDate[];
 }

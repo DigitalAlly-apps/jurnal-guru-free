@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
-import { Search, CheckCircle, Pencil, ChevronDown } from 'lucide-react';
+import { Search, CheckCircle, Pencil, ChevronDown, CalendarX, X } from 'lucide-react';
 import type { AbsenRecord, PeriodeUjian } from '@/types';
 
 type AbsenStatus = 'H' | 'S' | 'I' | 'A';
@@ -15,8 +15,12 @@ const KETERANGAN_SUGGESTIONS: Record<AbsenStatus, string[]> = {
 };
 
 export function AbsenPage() {
-  const { kelasList, activeKelas, absenRecords, addAbsenRecords, jadwalList, showToast } = useApp();
+  const {
+    kelasList, activeKelas, absenRecords, addAbsenRecords, jadwalList, showToast,
+    liburDates, addLiburDate, deleteLiburDate, deleteAbsenRecordsByDateAndJenjang,
+  } = useApp();
   const kelas = kelasList.find(k => k.id === activeKelas);
+  const jenjangAktif = kelas?.jenjang || 'SMP';
 
   const [date, setDate]               = useState(new Date().toISOString().split('T')[0]);
   const [periode, setPeriode]         = useState<PeriodeUjian>('Harian');
@@ -26,6 +30,8 @@ export function AbsenPage() {
   const [localKet, setLocalKet]       = useState<Record<string, string>>({});  // keterangan per siswa
   const [expandedId, setExpandedId]   = useState<string | null>(null);         // siswa yang sedang buka keterangan
   const [showPreview, setShowPreview] = useState(false);
+  const [showLiburForm, setShowLiburForm] = useState(false);
+  const [liburKet, setLiburKet] = useState('');
 
   const hariIni       = new Date(date).toLocaleDateString('id-ID', { weekday: 'long' });
   const jadwalHariIni = jadwalList.filter(j => j.kelasId === activeKelas && j.hari === hariIni);
@@ -33,6 +39,11 @@ export function AbsenPage() {
   const existingForDate = useMemo(() =>
     absenRecords.filter(a => a.date === date && a.kelasId === activeKelas),
     [absenRecords, date, activeKelas]
+  );
+
+  const liburForDate = useMemo(() =>
+    liburDates.find(l => l.date === date && l.jenjang === jenjangAktif),
+    [liburDates, date, jenjangAktif]
   );
 
   const isEditMode = existingForDate.length > 0 && Object.keys(localStatus).length === 0;
@@ -87,6 +98,10 @@ export function AbsenPage() {
 
   const handleSave = () => {
     if (!kelas) return;
+    if (liburForDate) {
+      showToast('Tanggal ini libur, absensi tidak perlu disimpan');
+      return;
+    }
     const records: AbsenRecord[] = kelas.students.map(s => ({
       id:             `${date}_${s.id}_${activeKelas}`,
       studentId:      s.id,
@@ -112,6 +127,31 @@ export function AbsenPage() {
     setLocalKet({});
     setExpandedId(null);
     setShowPreview(false);
+    setShowLiburForm(false);
+    setLiburKet('');
+  };
+
+  const handleAddLibur = () => {
+    addLiburDate({
+      id: `l_${date}_${jenjangAktif}`,
+      date,
+      jenjang: jenjangAktif,
+      keterangan: liburKet.trim() || undefined,
+    });
+    deleteAbsenRecordsByDateAndJenjang(date, jenjangAktif);
+    setLocalStatus({});
+    setLocalKet({});
+    setExpandedId(null);
+    setShowPreview(false);
+    setShowLiburForm(false);
+    setLiburKet('');
+    showToast(`Tanggal ${date} ditandai libur untuk ${jenjangAktif}`);
+  };
+
+  const handleDeleteLibur = () => {
+    if (!liburForDate) return;
+    deleteLiburDate(liburForDate.id);
+    showToast('Libur dibatalkan');
   };
 
   const statuses: AbsenStatus[] = ['H', 'S', 'I', 'A'];
@@ -154,6 +194,44 @@ export function AbsenPage() {
           </div>
         </div>
 
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-bg-2 px-3 py-2">
+          <p className="text-[12px] text-text-secondary">
+            Jenjang aktif: <span className="font-bold text-foreground">{jenjangAktif}</span>
+          </p>
+          {liburForDate ? (
+            <button onClick={handleDeleteLibur}
+              className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-semantic-red-light text-semantic-red hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
+              <X className="w-3 h-3" /> Batalkan Libur
+            </button>
+          ) : (
+            <button onClick={() => setShowLiburForm(v => !v)}
+              className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-bg-3 text-text-secondary hover:text-primary transition-colors">
+              <CalendarX className="w-3 h-3" /> Tandai Libur
+            </button>
+          )}
+        </div>
+
+        {showLiburForm && !liburForDate && (
+          <div className="rounded-xl border border-border bg-bg-2 p-3 flex flex-col gap-2">
+            <label className="label-upper block">Keterangan Libur</label>
+            <input
+              value={liburKet}
+              onChange={e => setLiburKet(e.target.value)}
+              placeholder="Contoh: Libur nasional, rapat guru, kegiatan sekolah"
+              className="input-soft text-[13px]"
+            />
+            {existingForDate.length > 0 && (
+              <p className="text-[11px] text-semantic-red">
+                Menandai libur akan menghapus {existingForDate.length} data absensi pada tanggal ini.
+              </p>
+            )}
+            <div className="flex gap-2">
+              <button onClick={() => setShowLiburForm(false)} className="btn-soft btn-secondary-soft flex-1 py-2 text-sm">Batal</button>
+              <button onClick={handleAddLibur} className="btn-soft btn-primary-soft flex-1 py-2 text-sm">Simpan Libur</button>
+            </div>
+          </div>
+        )}
+
         <div>
           <label className="label-upper block mb-1.5">Mata Pelajaran (opsional)</label>
           {jadwalHariIni.length > 0 ? (
@@ -175,6 +253,23 @@ export function AbsenPage() {
           )}
         </div>
       </div>
+
+      {liburForDate && (
+        <div className="bg-semantic-yellow-light rounded-2xl px-4 py-5 flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-white/60 dark:bg-black/10 flex items-center justify-center flex-shrink-0">
+            <CalendarX className="w-4 h-4 text-semantic-yellow" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-semantic-yellow">Libur untuk jenjang {jenjangAktif}</p>
+            <p className="text-[12px] text-semantic-yellow/80 mt-1">
+              Tidak perlu mengisi absensi pada tanggal ini{liburForDate.keterangan ? `: ${liburForDate.keterangan}` : '.'}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {!liburForDate && (
+        <>
 
       {/* Edit mode banner */}
       {isEditMode && (
@@ -339,6 +434,8 @@ export function AbsenPage() {
             <button onClick={handleSave} className="btn-soft btn-primary-soft flex-1 py-3">Simpan</button>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

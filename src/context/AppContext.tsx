@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { Kelas, AbsenRecord, KasusRecord, CatatanRecord, TabId, SemesterConfig, BackupData, JadwalSlot, LiburDate } from '@/types';
+import type { Kelas, AbsenRecord, KasusRecord, CatatanRecord, TabId, SemesterConfig, BackupData, JadwalSlot, LiburDate, Jenjang } from '@/types';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 function ls<T>(key: string, fallback: T): T {
@@ -55,7 +55,7 @@ interface AppState {
   setActiveStudentId: (id: string | null) => void;
   kelasList: Kelas[];
   setKelasList: React.Dispatch<React.SetStateAction<Kelas[]>>;
-  addKelas: (name: string) => void;
+  addKelas: (name: string, jenjang?: Jenjang) => void;
   deleteKelas: (id: string) => void;
   addStudentsToKelas: (kelasId: string, students: { name: string; nis: string }[]) => void;
   removeStudentFromKelas: (kelasId: string, studentId: string) => void;
@@ -64,6 +64,7 @@ interface AppState {
   addAbsenRecords: (records: AbsenRecord[]) => void;
   updateAbsenRecord: (id: string, updates: Partial<AbsenRecord>) => void;
   deleteAbsenRecord: (id: string) => void;
+  deleteAbsenRecordsByDateAndJenjang: (date: string, jenjang: Jenjang) => void;
   kasusRecords: KasusRecord[];
   addKasusRecord: (record: KasusRecord) => void;
   updateKasusRecord: (id: string, updates: Partial<KasusRecord>) => void;
@@ -211,6 +212,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setAbsenRecords(prev => prev.filter(r => r.id !== id));
   }, []);
 
+  const deleteAbsenRecordsByDateAndJenjang = useCallback((date: string, jenjang: Jenjang) => {
+    const kelasIds = new Set(kelasList.filter(k => (k.jenjang || 'SMP') === jenjang).map(k => k.id));
+    setAbsenRecords(prev => prev.filter(r => !(r.date === date && kelasIds.has(r.kelasId))));
+  }, [kelasList]);
+
   const addKasusRecord = useCallback((record: KasusRecord) => {
     setKasusRecords(prev => [...prev, record]);
   }, []);
@@ -239,7 +245,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, []);
   const addLiburDate = useCallback((libur: LiburDate) => {
     setLiburDates(prev => {
-      const filtered = prev.filter(l => !(l.kelasId === libur.kelasId && l.date === libur.date));
+      const filtered = prev.filter(l => !(l.jenjang === libur.jenjang && l.date === libur.date));
       return [...filtered, libur];
     });
   }, []);
@@ -247,9 +253,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setLiburDates(prev => prev.filter(l => l.id !== id));
   }, []);
 
-  const addKelas = useCallback((name: string) => {
+  const addKelas = useCallback((name: string, jenjang: Jenjang = 'SMP') => {
     const id = 'k_' + Date.now();
-    setKelasList(prev => [...prev, { id, name, students: [] }]);
+    setKelasList(prev => [...prev, { id, name, jenjang, students: [] }]);
     setActiveKelas(id);
   }, []);
   const deleteKelas = useCallback((id: string) => {
@@ -343,7 +349,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       activeStudentId, setActiveStudentId,
       kelasList, setKelasList,
       addKelas, deleteKelas, addStudentsToKelas, removeStudentFromKelas, updateStudent,
-      absenRecords, addAbsenRecords, updateAbsenRecord, deleteAbsenRecord,
+      absenRecords, addAbsenRecords, updateAbsenRecord, deleteAbsenRecord, deleteAbsenRecordsByDateAndJenjang,
       kasusRecords, addKasusRecord, updateKasusRecord, deleteKasusRecord,
       catatanRecords, addCatatanRecord, updateCatatanRecord, deleteCatatanRecord,
       jadwalList, addJadwal, deleteJadwal,

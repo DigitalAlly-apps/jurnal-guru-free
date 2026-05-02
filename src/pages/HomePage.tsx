@@ -12,12 +12,14 @@ import {
 
 export function HomePage() {
   const {
-    kelasList, activeKelas, absenRecords, kasusRecords,
+    kelasList, activeKelas, absenRecords, kasusRecords, liburDates,
     namaGuru, semester, lastBackupDate, setActiveTab, setActiveStudentId
   } = useApp();
 
   const kelas = kelasList.find(k => k.id === activeKelas);
+  const jenjangAktif = kelas?.jenjang || 'SMP';
   const today = new Date().toISOString().split('T')[0];
+  const todayLibur = liburDates.find(l => l.date === today && l.jenjang === jenjangAktif);
 
   const todayAbsen   = absenRecords.filter(a => a.date === today && a.kelasId === activeKelas);
   const totalStudents = kelas?.students.length || 0;
@@ -67,15 +69,17 @@ export function HomePage() {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
       const dateStr = d.toISOString().split('T')[0];
+      const isLibur = liburDates.some(l => l.date === dateStr && l.jenjang === jenjangAktif);
       const dayExceptions = absenRecords.filter(a => a.date === dateStr && a.kelasId === activeKelas && a.status !== 'H');
       const dayAbsent = dayExceptions.length;
       return {
         day: d.toLocaleDateString('id-ID', { weekday: 'short' }),
-        hadir: Math.max(0, totalStudents - dayAbsent),
-        absen: dayAbsent,
+        hadir: isLibur ? 0 : Math.max(0, totalStudents - dayAbsent),
+        absen: isLibur ? 0 : dayAbsent,
+        status: isLibur ? 'Libur' : undefined,
       };
     });
-  }, [absenRecords, activeKelas, totalStudents]);
+  }, [absenRecords, activeKelas, totalStudents, liburDates, jenjangAktif]);
 
   const pieData = [
     { name: 'Sakit', value: sakit,  color: 'hsl(var(--blue))' },
@@ -126,6 +130,16 @@ export function HomePage() {
         )}
 
         {/* Pemanggilan hari ini */}
+        {todayLibur && (
+          <div className="alert-rich alert-rich-yellow flex items-start gap-3 mt-2">
+            <Calendar className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[14px] font-bold">Hari ini libur untuk jenjang {jenjangAktif}</p>
+              <p className="text-[13px] opacity-80 mt-0.5">{todayLibur.keterangan || 'Absensi hari ini tidak perlu diisi.'}</p>
+            </div>
+          </div>
+        )}
+
         {todayPemanggilan.length > 0 && (
           <div className="alert-rich alert-rich-red flex flex-col gap-3 mt-2">
             <div className="flex items-center gap-2">
@@ -265,7 +279,13 @@ export function HomePage() {
       {/* BENTO GRID: Today distribution pie - spans 4 cols */}
       <div className="md:col-span-4 card-soft flex flex-col">
         <h3 className="text-[14px] font-bold text-foreground mb-4">Distribusi Hari Ini</h3>
-        {pieData.length > 0 ? (
+        {todayLibur ? (
+          <div className="flex-1 flex flex-col items-center justify-center opacity-70 text-center">
+            <Calendar className="w-10 h-10 text-semantic-yellow mb-3" />
+            <p className="text-[13px] font-semibold">Libur</p>
+            <p className="text-[12px] text-text-tertiary mt-1">Tidak ada absensi hari ini.</p>
+          </div>
+        ) : pieData.length > 0 ? (
           <div className="flex items-center gap-6 flex-1 justify-center">
             <ResponsiveContainer width={110} height={110}>
               <PieChart>

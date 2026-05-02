@@ -4,6 +4,9 @@ import {
   User, ArrowLeft, CheckCircle, AlertTriangle, BookOpen,
   Clock, Plus, Trash2, Upload, X, Pencil, Check,
 } from 'lucide-react';
+import type { Jenjang } from '@/types';
+
+const JENJANG_OPTIONS: Jenjang[] = ['SD', 'SMP', 'SMA'];
 
 // ── Confirm dialog ────────────────────────────────────────────────────────────
 function ConfirmDialog({ message, onConfirm, onCancel }: {
@@ -108,6 +111,7 @@ export function SiswaPage() {
 
   const [showAddKelas,   setShowAddKelas]   = useState(false);
   const [newKelasName,   setNewKelasName]   = useState('');
+  const [newKelasJenjang,setNewKelasJenjang]= useState<Jenjang>('SMP');
   const [showAddSiswa,   setShowAddSiswa]   = useState(false);
   const [addMode,        setAddMode]        = useState<'manual' | 'paste'>('manual');
   const [manualName,     setManualName]     = useState('');
@@ -145,8 +149,9 @@ export function SiswaPage() {
   // ── Kelas ──
   const handleAddKelas = () => {
     if (!newKelasName.trim()) return;
-    addKelas(newKelasName.trim());
+    addKelas(newKelasName.trim(), newKelasJenjang);
     setNewKelasName('');
+    setNewKelasJenjang('SMP');
     setShowAddKelas(false);
     showToast('Kelas berhasil ditambahkan');
   };
@@ -255,10 +260,13 @@ export function SiswaPage() {
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input value={newKelasName} onChange={e => setNewKelasName(e.target.value)}
               placeholder="Nama kelas (misal: 9A)" className="input-soft flex-1"
               onKeyDown={e => e.key === 'Enter' && handleAddKelas()} autoFocus />
+            <select value={newKelasJenjang} onChange={e => setNewKelasJenjang(e.target.value as Jenjang)} className="input-soft sm:w-28">
+              {JENJANG_OPTIONS.map(j => <option key={j} value={j}>{j}</option>)}
+            </select>
             <button onClick={handleAddKelas} className="btn-soft btn-primary-soft">Tambah</button>
           </div>
         </div>
