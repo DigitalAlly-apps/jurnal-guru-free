@@ -1,0 +1,327 @@
+ (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
+diff --git a/src/context/AppContext.tsx b/src/context/AppContext.tsx
+index 9126b72511fef437dbbf574d744e536e63629926..ce2ed9ee306652bb57b669d3af7ffc82d5bac894 100644
+--- a/src/context/AppContext.tsx
++++ b/src/context/AppContext.tsx
+@@ -1,27 +1,27 @@
+ import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+-import type { Kelas, AbsenRecord, KasusRecord, CatatanRecord, TabId, SemesterConfig, BackupData, JadwalSlot } from '@/types';
++import type { Kelas, AbsenRecord, KasusRecord, CatatanRecord, TabId, SemesterConfig, BackupData, JadwalSlot, LiburDate } from '@/types';
+ 
+ // ─── helpers ────────────────────────────────────────────────────────────────
+ function ls<T>(key: string, fallback: T): T {
+   try {
+     const raw = localStorage.getItem(key);
+     return raw ? (JSON.parse(raw) as T) : fallback;
+   } catch {
+     return fallback;
+   }
+ }
+ function save(key: string, value: unknown) {
+   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* quota */ }
+ }
+ 
+ // ─── defaults ───────────────────────────────────────────────────────────────
+ const currentYear = new Date().getFullYear();
+ const DEFAULT_SEMESTER: SemesterConfig = {
+   tahunAjaran: `${currentYear}/${currentYear + 1}`,
+   semester: new Date().getMonth() < 6 ? 'genap' : 'ganjil',
+   ganjil: { utsStart: '', utsEnd: '', uasStart: '', uasEnd: '' },
+   genap:  { utsStart: '', utsEnd: '', uasStart: '', uasEnd: '' },
+ };
+ 
+ // ─── Fix 3: Zod-lite validation for importBackup ─────────────────────────────
+ function validateBackup(data: unknown): data is BackupData {
+@@ -53,73 +53,77 @@ interface AppState {
+   setActiveKelas: (id: string) => void;
+   activeStudentId: string | null;
+   setActiveStudentId: (id: string | null) => void;
+   kelasList: Kelas[];
+   setKelasList: React.Dispatch<React.SetStateAction<Kelas[]>>;
+   addKelas: (name: string) => void;
+   deleteKelas: (id: string) => void;
+   addStudentsToKelas: (kelasId: string, students: { name: string; nis: string }[]) => void;
+   removeStudentFromKelas: (kelasId: string, studentId: string) => void;
+   updateStudent: (kelasId: string, studentId: string, updates: { name?: string; nis?: string }) => void;
+   absenRecords: AbsenRecord[];
+   addAbsenRecords: (records: AbsenRecord[]) => void;
+   updateAbsenRecord: (id: string, updates: Partial<AbsenRecord>) => void;
+   deleteAbsenRecord: (id: string) => void;
+   kasusRecords: KasusRecord[];
+   addKasusRecord: (record: KasusRecord) => void;
+   updateKasusRecord: (id: string, updates: Partial<KasusRecord>) => void;
+   deleteKasusRecord: (id: string) => void;
+   catatanRecords: CatatanRecord[];
+   addCatatanRecord: (record: CatatanRecord) => void;
+   updateCatatanRecord: (id: string, updates: Partial<CatatanRecord>) => void;
+   deleteCatatanRecord: (id: string) => void;
+   jadwalList: JadwalSlot[];
+   addJadwal: (slot: JadwalSlot) => void;
+   deleteJadwal: (id: string) => void;
++  liburDates: LiburDate[];
++  addLiburDate: (libur: LiburDate) => void;
++  deleteLiburDate: (id: string) => void;
+   toasts: { id: string; message: string }[];
+   showToast: (message: string) => void;
+   semester: SemesterConfig;
+   setSemester: React.Dispatch<React.SetStateAction<SemesterConfig>>;
+   exportBackup: () => void;
+   importBackup: (data: BackupData) => void;
+   resetAll: () => void;
+ }
+ 
+ const AppContext = createContext<AppState | null>(null);
+ 
+ export function AppProvider({ children }: { children: React.ReactNode }) {
+   // ── Fix 1: All state loaded from localStorage ──────────────────────────────
+   const [namaGuru,       setNamaGuruRaw]   = useState(() => ls<string>('jg_namaGuru', ''));
+   const [lastBackupDate, setLastBackupRaw] = useState(() => ls<string | null>('jg_lastBackup', null));
+   const [activeTab,      setActiveTabRaw]  = useState<TabId>(() => ls<TabId>('jg_activeTab', 'home'));
+   const [activeKelas,    setActiveKelasRaw]= useState<string>(() => ls<string>('jg_activeKelas', ''));
+   const [activeStudentId,setActiveStudentId] = useState<string | null>(null);
+   const [kelasList,      setKelasListRaw]  = useState<Kelas[]>(() => ls<Kelas[]>('jg_kelasList', []));
+   const [absenRecords,   setAbsenRecordsRaw] = useState<AbsenRecord[]>(() => ls<AbsenRecord[]>('jg_absenRecords', []));
+   const [kasusRecords,   setKasusRecordsRaw] = useState<KasusRecord[]>(() => ls<KasusRecord[]>('jg_kasusRecords', []));
+   const [catatanRecords, setCatatanRecordsRaw] = useState<CatatanRecord[]>(() => ls<CatatanRecord[]>('jg_catatanRecords', []));
+   const [jadwalList,     setJadwalListRaw] = useState<JadwalSlot[]>(() => ls<JadwalSlot[]>('jg_jadwalList', []));
++  const [liburDates,     setLiburDatesRaw] = useState<LiburDate[]>(() => ls<LiburDate[]>('jg_liburDates', []));
+   const [toasts,         setToasts]        = useState<{ id: string; message: string }[]>([]);
+   const [semester,       setSemesterRaw]   = useState<SemesterConfig>(() => ls<SemesterConfig>('jg_semester', DEFAULT_SEMESTER));
+ 
+   // ── Fix 1: Wrapped setters that also persist ──────────────────────────────
+   const setNamaGuru = useCallback((v: string) => {
+     setNamaGuruRaw(v); save('jg_namaGuru', v);
+   }, []);
+   const setLastBackupDate = useCallback((v: string) => {
+     setLastBackupRaw(v); save('jg_lastBackup', v);
+   }, []);
+   const setActiveTab = useCallback((v: TabId) => {
+     setActiveTabRaw(v); save('jg_activeTab', v);
+   }, []);
+   const setActiveKelas = useCallback((v: string) => {
+     setActiveKelasRaw(v); save('jg_activeKelas', v);
+     // Reset student detail view when kelas changes
+     setActiveStudentId(null);
+   }, []);
+   const setSemester: React.Dispatch<React.SetStateAction<SemesterConfig>> = useCallback((v) => {
+     setSemesterRaw(prev => {
+       const next = typeof v === 'function' ? v(prev) : v;
+       save('jg_semester', next);
+       return next;
+     });
+   }, []);
+@@ -136,50 +140,57 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
+       save('jg_absenRecords', next);
+       return next;
+     });
+   }, []);
+   const setKasusRecords = useCallback((v: React.SetStateAction<KasusRecord[]>) => {
+     setKasusRecordsRaw(prev => {
+       const next = typeof v === 'function' ? v(prev) : v;
+       save('jg_kasusRecords', next);
+       return next;
+     });
+   }, []);
+   const setCatatanRecords = useCallback((v: React.SetStateAction<CatatanRecord[]>) => {
+     setCatatanRecordsRaw(prev => {
+       const next = typeof v === 'function' ? v(prev) : v;
+       save('jg_catatanRecords', next);
+       return next;
+     });
+   }, []);
+   const setJadwalList = useCallback((v: React.SetStateAction<JadwalSlot[]>) => {
+     setJadwalListRaw(prev => {
+       const next = typeof v === 'function' ? v(prev) : v;
+       save('jg_jadwalList', next);
+       return next;
+     });
+   }, []);
++  const setLiburDates = useCallback((v: React.SetStateAction<LiburDate[]>) => {
++    setLiburDatesRaw(prev => {
++      const next = typeof v === 'function' ? v(prev) : v;
++      save('jg_liburDates', next);
++      return next;
++    });
++  }, []);
+ 
+   // ── Auto-set activeKelas ───────────────────────────────────────────────────
+   useEffect(() => {
+     if (kelasList.length > 0 && !kelasList.find(k => k.id === activeKelas)) {
+       setActiveKelas(kelasList[0].id);
+     }
+     if (kelasList.length === 0) setActiveKelas('');
+   }, [kelasList]);
+ 
+   const showToast = useCallback((message: string) => {
+     const id = Date.now().toString();
+     setToasts(prev => [...prev, { id, message }]);
+     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
+   }, []);
+ 
+   // ── Fix 2: exception-based absen — H is dropped, editing to H deletes ─────
+   const addAbsenRecords = useCallback((records: AbsenRecord[]) => {
+     setAbsenRecords(prev => {
+       // Remove any existing record for same studentId+date+kelasId
+       const deduped = prev.filter(p =>
+         !records.some(r => r.studentId === p.studentId && r.date === p.date && r.kelasId === p.kelasId)
+       );
+       // Only store non-H (exceptions: S, I, A)
+       const exceptions = records.filter(r => r.status !== 'H');
+       return [...deduped, ...exceptions];
+@@ -204,138 +215,150 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
+     setKasusRecords(prev => [...prev, record]);
+   }, []);
+   const updateKasusRecord = useCallback((id: string, updates: Partial<KasusRecord>) => {
+     setKasusRecords(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+   }, []);
+   const deleteKasusRecord = useCallback((id: string) => {
+     setKasusRecords(prev => prev.filter(r => r.id !== id));
+   }, []);
+ 
+   const addCatatanRecord = useCallback((record: CatatanRecord) => {
+     setCatatanRecords(prev => [...prev, record]);
+   }, []);
+   const updateCatatanRecord = useCallback((id: string, updates: Partial<CatatanRecord>) => {
+     setCatatanRecords(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
+   }, []);
+   const deleteCatatanRecord = useCallback((id: string) => {
+     setCatatanRecords(prev => prev.filter(r => r.id !== id));
+   }, []);
+ 
+   const addJadwal = useCallback((slot: JadwalSlot) => {
+     setJadwalList(prev => [...prev, slot]);
+   }, []);
+   const deleteJadwal = useCallback((id: string) => {
+     setJadwalList(prev => prev.filter(j => j.id !== id));
+   }, []);
++  const addLiburDate = useCallback((libur: LiburDate) => {
++    setLiburDates(prev => {
++      const filtered = prev.filter(l => !(l.kelasId === libur.kelasId && l.date === libur.date));
++      return [...filtered, libur];
++    });
++  }, []);
++  const deleteLiburDate = useCallback((id: string) => {
++    setLiburDates(prev => prev.filter(l => l.id !== id));
++  }, []);
+ 
+   const addKelas = useCallback((name: string) => {
+     const id = 'k_' + Date.now();
+     setKelasList(prev => [...prev, { id, name, students: [] }]);
+     setActiveKelas(id);
+   }, []);
+   const deleteKelas = useCallback((id: string) => {
+     setKelasList(prev => prev.filter(k => k.id !== id));
+   }, []);
+   const addStudentsToKelas = useCallback((kelasId: string, students: { name: string; nis: string }[]) => {
+     setKelasList(prev => prev.map(k => {
+       if (k.id !== kelasId) return k;
+       const newStudents = students.map((s, i) => ({
+         id: `${kelasId}_${Date.now()}_${i}`,
+         name: s.name.trim(), nis: s.nis.trim(),
+       })).filter(s => s.name);
+       return { ...k, students: [...k.students, ...newStudents] };
+     }));
+   }, []);
+   const updateStudent = useCallback((kelasId: string, studentId: string, updates: { name?: string; nis?: string }) => {
+     setKelasList(prev => prev.map(k =>
+       k.id !== kelasId ? k : {
+         ...k,
+         students: k.students.map(s =>
+           s.id !== studentId ? s : { ...s, ...updates }
+         )
+       }
+     ));
+   }, []);
+   const removeStudentFromKelas = useCallback((kelasId: string, studentId: string) => {
+     setKelasList(prev => prev.map(k =>
+       k.id !== kelasId ? k : { ...k, students: k.students.filter(s => s.id !== studentId) }
+     ));
+   }, []);
+ 
+   const resetAll = useCallback(() => {
+     setNamaGuru('');
+     setKelasList([]);
+     setAbsenRecords([]);
+     setKasusRecords([]);
+     setCatatanRecords([]);
+     setJadwalList([]);
++    setLiburDates([]);
+     setLastBackupDate('');
+     setActiveKelas('');
+     setSemester(DEFAULT_SEMESTER);
+     // Clear all localStorage keys
+     ['jg_namaGuru','jg_lastBackup','jg_activeTab','jg_activeKelas',
+      'jg_kelasList','jg_absenRecords','jg_kasusRecords','jg_catatanRecords',
+-     'jg_jadwalList','jg_semester'].forEach(k => localStorage.removeItem(k));
++     'jg_jadwalList','jg_liburDates','jg_semester'].forEach(k => localStorage.removeItem(k));
+     showToast('Semua data berhasil direset');
+   }, [showToast]);
+ 
+   const exportBackup = useCallback(() => {
+     const data: BackupData = {
+       version: '5.0', exportedAt: new Date().toISOString(),
+-      namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList,
++      namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates,
+     };
+     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+     const url = URL.createObjectURL(blob);
+     const a = document.createElement('a');
+     a.href = url;
+     a.download = `backup_jurnal_guru_${new Date().toISOString().split('T')[0]}.json`;
+     a.click();
+     URL.revokeObjectURL(url);
+     const today = new Date().toISOString().split('T')[0];
+     setLastBackupDate(today);
+     showToast('Backup berhasil diunduh');
+-  }, [namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, showToast]);
++  }, [namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, showToast]);
+ 
+   // ── Fix 3: Zod-lite validation, reject corrupt/random JSON ────────────────
+   const importBackup = useCallback((data: BackupData) => {
+     if (!validateBackup(data)) {
+       showToast('❌ Format backup tidak valid atau file corrupt');
+       return;
+     }
+     if (data.namaGuru) setNamaGuru(data.namaGuru);
+     setKelasList(data.kelasList);
+     setAbsenRecords(data.absenRecords || []);
+     setKasusRecords(data.kasusRecords || []);
+     setCatatanRecords(data.catatanRecords || []);
+     if (data.jadwalList) setJadwalList(data.jadwalList);
++    if (data.liburDates) setLiburDates(data.liburDates);
+     if (data.semester) setSemester(data.semester);
+     if (data.kelasList.length > 0) setActiveKelas(data.kelasList[0].id);
+     showToast('✅ Data berhasil dipulihkan dari backup');
+   }, [showToast]);
+ 
+   return (
+     <AppContext.Provider value={{
+       namaGuru, setNamaGuru,
+       lastBackupDate, setLastBackupDate,
+       activeTab, setActiveTab,
+       activeKelas, setActiveKelas,
+       activeStudentId, setActiveStudentId,
+       kelasList, setKelasList,
+       addKelas, deleteKelas, addStudentsToKelas, removeStudentFromKelas, updateStudent,
+       absenRecords, addAbsenRecords, updateAbsenRecord, deleteAbsenRecord,
+       kasusRecords, addKasusRecord, updateKasusRecord, deleteKasusRecord,
+       catatanRecords, addCatatanRecord, updateCatatanRecord, deleteCatatanRecord,
+       jadwalList, addJadwal, deleteJadwal,
++      liburDates, addLiburDate, deleteLiburDate,
+       toasts, showToast,
+       semester, setSemester,
+       exportBackup, importBackup, resetAll,
+     }}>
+       {children}
+     </AppContext.Provider>
+   );
+ }
+ 
+ export const useApp = () => {
+   const ctx = useContext(AppContext);
+   if (!ctx) throw new Error('useApp must be used within AppProvider');
+   return ctx;
+ };
+ 
+EOF
+)

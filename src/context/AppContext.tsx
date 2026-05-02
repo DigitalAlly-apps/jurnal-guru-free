@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { Kelas, AbsenRecord, KasusRecord, CatatanRecord, TabId, SemesterConfig, BackupData, JadwalSlot } from '@/types';
+import type { Kelas, AbsenRecord, KasusRecord, CatatanRecord, TabId, SemesterConfig, BackupData, JadwalSlot, LiburDate } from '@/types';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 function ls<T>(key: string, fallback: T): T {
@@ -75,6 +75,9 @@ interface AppState {
   jadwalList: JadwalSlot[];
   addJadwal: (slot: JadwalSlot) => void;
   deleteJadwal: (id: string) => void;
+  liburDates: LiburDate[];
+  addLiburDate: (libur: LiburDate) => void;
+  deleteLiburDate: (id: string) => void;
   toasts: { id: string; message: string }[];
   showToast: (message: string) => void;
   semester: SemesterConfig;
@@ -98,6 +101,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [kasusRecords,   setKasusRecordsRaw] = useState<KasusRecord[]>(() => ls<KasusRecord[]>('jg_kasusRecords', []));
   const [catatanRecords, setCatatanRecordsRaw] = useState<CatatanRecord[]>(() => ls<CatatanRecord[]>('jg_catatanRecords', []));
   const [jadwalList,     setJadwalListRaw] = useState<JadwalSlot[]>(() => ls<JadwalSlot[]>('jg_jadwalList', []));
+  const [liburDates,     setLiburDatesRaw] = useState<LiburDate[]>(() => ls<LiburDate[]>('jg_liburDates', []));
   const [toasts,         setToasts]        = useState<{ id: string; message: string }[]>([]);
   const [semester,       setSemesterRaw]   = useState<SemesterConfig>(() => ls<SemesterConfig>('jg_semester', DEFAULT_SEMESTER));
 
@@ -155,6 +159,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setJadwalListRaw(prev => {
       const next = typeof v === 'function' ? v(prev) : v;
       save('jg_jadwalList', next);
+      return next;
+    });
+  }, []);
+  const setLiburDates = useCallback((v: React.SetStateAction<LiburDate[]>) => {
+    setLiburDatesRaw(prev => {
+      const next = typeof v === 'function' ? v(prev) : v;
+      save('jg_liburDates', next);
       return next;
     });
   }, []);
@@ -226,6 +237,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const deleteJadwal = useCallback((id: string) => {
     setJadwalList(prev => prev.filter(j => j.id !== id));
   }, []);
+  const addLiburDate = useCallback((libur: LiburDate) => {
+    setLiburDates(prev => {
+      const filtered = prev.filter(l => !(l.kelasId === libur.kelasId && l.date === libur.date));
+      return [...filtered, libur];
+    });
+  }, []);
+  const deleteLiburDate = useCallback((id: string) => {
+    setLiburDates(prev => prev.filter(l => l.id !== id));
+  }, []);
 
   const addKelas = useCallback((name: string) => {
     const id = 'k_' + Date.now();
@@ -268,20 +288,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setKasusRecords([]);
     setCatatanRecords([]);
     setJadwalList([]);
+    setLiburDates([]);
     setLastBackupDate('');
     setActiveKelas('');
     setSemester(DEFAULT_SEMESTER);
     // Clear all localStorage keys
     ['jg_namaGuru','jg_lastBackup','jg_activeTab','jg_activeKelas',
      'jg_kelasList','jg_absenRecords','jg_kasusRecords','jg_catatanRecords',
-     'jg_jadwalList','jg_semester'].forEach(k => localStorage.removeItem(k));
+     'jg_jadwalList','jg_liburDates','jg_semester'].forEach(k => localStorage.removeItem(k));
     showToast('Semua data berhasil direset');
   }, [showToast]);
 
   const exportBackup = useCallback(() => {
     const data: BackupData = {
       version: '5.0', exportedAt: new Date().toISOString(),
-      namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList,
+      namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates,
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -293,7 +314,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const today = new Date().toISOString().split('T')[0];
     setLastBackupDate(today);
     showToast('Backup berhasil diunduh');
-  }, [namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, showToast]);
+  }, [namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, showToast]);
 
   // ── Fix 3: Zod-lite validation, reject corrupt/random JSON ────────────────
   const importBackup = useCallback((data: BackupData) => {
@@ -307,6 +328,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setKasusRecords(data.kasusRecords || []);
     setCatatanRecords(data.catatanRecords || []);
     if (data.jadwalList) setJadwalList(data.jadwalList);
+    if (data.liburDates) setLiburDates(data.liburDates);
     if (data.semester) setSemester(data.semester);
     if (data.kelasList.length > 0) setActiveKelas(data.kelasList[0].id);
     showToast('✅ Data berhasil dipulihkan dari backup');
@@ -325,6 +347,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       kasusRecords, addKasusRecord, updateKasusRecord, deleteKasusRecord,
       catatanRecords, addCatatanRecord, updateCatatanRecord, deleteCatatanRecord,
       jadwalList, addJadwal, deleteJadwal,
+      liburDates, addLiburDate, deleteLiburDate,
       toasts, showToast,
       semester, setSemester,
       exportBackup, importBackup, resetAll,
