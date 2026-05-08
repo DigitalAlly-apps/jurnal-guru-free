@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
-import { Search, CheckCircle, Pencil, ChevronDown, CalendarX, X } from 'lucide-react';
+import { Search, CheckCircle, Pencil, ChevronDown, CalendarX, X, CalendarDays } from 'lucide-react';
 import type { AbsenRecord, PeriodeUjian } from '@/types';
+import { AbsensiKalender } from '@/components/AbsensiKalender';
 
 type AbsenStatus = 'H' | 'S' | 'I' | 'A';
 const PERIODE_OPTIONS: PeriodeUjian[] = ['Harian', 'UTS', 'UAS'];
@@ -32,6 +33,7 @@ export function AbsenPage() {
   const [showPreview, setShowPreview] = useState(false);
   const [showLiburForm, setShowLiburForm] = useState(false);
   const [liburKet, setLiburKet] = useState('');
+  const [showKalender, setShowKalender] = useState(false);
 
   const hariIni       = new Date(date).toLocaleDateString('id-ID', { weekday: 'long' });
   const jadwalHariIni = jadwalList.filter(j => j.kelasId === activeKelas && j.hari === hariIni);
@@ -131,6 +133,16 @@ export function AbsenPage() {
     setLiburKet('');
   };
 
+  // Baca target date dari sessionStorage (dikirim dari HomePage widget)
+  useEffect(() => {
+    const target = sessionStorage.getItem('jg_absen_target_date');
+    if (target) {
+      handleDateChange(target);
+      sessionStorage.removeItem('jg_absen_target_date');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleAddLibur = () => {
     addLiburDate({
       id: `l_${date}_${jenjangAktif}`,
@@ -184,6 +196,18 @@ export function AbsenPage() {
           <input type="date" value={date}
             onChange={e => handleDateChange(e.target.value)}
             className="input-soft flex-1" />
+          <button
+            onClick={() => setShowKalender(v => !v)}
+            title="Lihat kalender absensi"
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-semibold transition-all flex-shrink-0 ${
+              showKalender
+                ? 'bg-primary text-white'
+                : 'bg-bg-2 text-text-secondary hover:text-primary hover:bg-accent-light'
+            }`}
+          >
+            <CalendarDays className="w-4 h-4" />
+            <span className="hidden sm:inline">Kalender</span>
+          </button>
           <div className="flex bg-bg-2 rounded-xl p-1 gap-1">
             {PERIODE_OPTIONS.map(p => (
               <button key={p} onClick={() => setPeriode(p)}
@@ -193,6 +217,17 @@ export function AbsenPage() {
             ))}
           </div>
         </div>
+
+        {/* Kalender mini */}
+        {showKalender && (
+          <AbsensiKalender
+            selectedDate={date}
+            onSelectDate={(d) => {
+              handleDateChange(d);
+              setShowKalender(false);
+            }}
+          />
+        )}
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-bg-2 px-3 py-2">
           <p className="text-[12px] text-text-secondary">

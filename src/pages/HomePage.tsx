@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useApp } from '@/context/AppContext';
 import { StatBox } from '@/components/StatBox';
+import { AbsensiGapWidget } from '@/components/AbsensiGapWidget';
 import {
   UserX, Clock, AlertCircle, FileWarning, PhoneCall,
   TrendingUp, AlertTriangle, Calendar, Bell, ArrowRight
@@ -13,8 +14,15 @@ import {
 export function HomePage() {
   const {
     kelasList, activeKelas, absenRecords, kasusRecords, liburDates,
-    namaGuru, semester, lastBackupDate, setActiveTab, setActiveStudentId
+    namaGuru, semester, lastBackupDate, setActiveTab, setActiveStudentId,
   } = useApp();
+
+  // Navigasi ke AbsenPage dengan tanggal tertentu
+  const handleGoToAbsen = useCallback((date: string) => {
+    // Simpan tanggal target ke sessionStorage supaya AbsenPage bisa pick up
+    sessionStorage.setItem('jg_absen_target_date', date);
+    setActiveTab('absen');
+  }, [setActiveTab]);
 
   const kelas = kelasList.find(k => k.id === activeKelas);
   const jenjangAktif = kelas?.jenjang || 'SMP';
@@ -377,6 +385,11 @@ export function HomePage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* BENTO GRID: Absensi gap widget - full width */}
+      <div className="md:col-span-12">
+        <AbsensiGapWidget onGoToAbsen={handleGoToAbsen} lookbackDays={30} />
       </div>
 
     </div>
