@@ -19,6 +19,7 @@ export function AbsenPage() {
   const {
     kelasList, activeKelas, absenRecords, addAbsenRecords, jadwalList, showToast,
     liburDates, addLiburDate, deleteLiburDate, deleteAbsenRecordsByDateAndJenjang,
+    confirmDate, unconfirmDate, isDateConfirmed,
   } = useApp();
   const kelas = kelasList.find(k => k.id === activeKelas);
   const jenjangAktif = kelas?.jenjang || 'SMP';
@@ -48,7 +49,9 @@ export function AbsenPage() {
     [liburDates, date, jenjangAktif]
   );
 
-  const isEditMode = existingForDate.length > 0 && Object.keys(localStatus).length === 0;
+  // isEditMode: tanggal sudah pernah disimpan (ada record S/I/A atau sudah dikonfirmasi hadir semua)
+  const isConfirmed = isDateConfirmed(activeKelas, date);
+  const isEditMode = (existingForDate.length > 0 || isConfirmed) && Object.keys(localStatus).length === 0;
 
   const students = useMemo(() => {
     if (!kelas) return [];
@@ -116,6 +119,8 @@ export function AbsenPage() {
       mataPelajaran:  mataPelajaran || undefined,
     }));
     addAbsenRecords(records);
+    // Tandai tanggal ini sudah dikonfirmasi (termasuk kalau semua hadir = tidak ada record S/I/A)
+    confirmDate(activeKelas, date, periode, mataPelajaran || undefined);
     setLocalStatus({});
     setLocalKet({});
     setExpandedId(null);
@@ -151,6 +156,8 @@ export function AbsenPage() {
       keterangan: liburKet.trim() || undefined,
     });
     deleteAbsenRecordsByDateAndJenjang(date, jenjangAktif);
+    // Unconfirm semua kelas jenjang ini untuk tanggal ini
+    unconfirmDate(activeKelas, date);
     setLocalStatus({});
     setLocalKet({});
     setExpandedId(null);
@@ -310,7 +317,11 @@ export function AbsenPage() {
       {isEditMode && (
         <div className="bg-semantic-blue-light rounded-xl px-4 py-3 flex items-center justify-between gap-3">
           <div>
-            <p className="text-[13px] text-semantic-blue font-semibold">Data absensi sudah ada</p>
+            <p className="text-[13px] text-semantic-blue font-semibold">
+              {existingForDate.length === 0 && isConfirmed
+                ? 'Semua siswa hadir pada hari ini'
+                : 'Data absensi sudah ada'}
+            </p>
             <p className="text-[11px] text-semantic-blue/70 mt-0.5">
               {existingForDate.filter(a => a.status !== 'H').length} siswa tidak hadir tercatat
             </p>

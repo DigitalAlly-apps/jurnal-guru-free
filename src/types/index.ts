@@ -83,6 +83,16 @@ export interface LiburDate {
   keterangan?: string;
 }
 
+/** Tanggal yang sudah dikonfirmasi absensi-nya (termasuk yang semua hadir = tidak ada record S/I/A) */
+export interface ConfirmedDate {
+  /** format: `${kelasId}_${date}` */
+  id: string;
+  kelasId: string;
+  date: string;
+  periodeUjian?: PeriodeUjian;
+  mataPelajaran?: string;
+}
+
 export interface SemesterConfig {
   tahunAjaran: string;
   semester: SemesterPeriod;
@@ -101,4 +111,5 @@ export interface BackupData {
   catatanRecords: CatatanRecord[];
   jadwalList: JadwalSlot[];
   liburDates?: LiburDate[];
+  confirmedDates?: ConfirmedDate[];
 }

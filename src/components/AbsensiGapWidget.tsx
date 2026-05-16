@@ -15,17 +15,13 @@ function formatTanggal(dateStr: string) {
   return d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
-function getDayOfWeek(dateStr: string) {
-  return new Date(dateStr + 'T00:00:00').getDay();
-}
-
 interface Props {
   onGoToAbsen: (date: string) => void;
   lookbackDays?: number;
 }
 
 export function AbsensiGapWidget({ onGoToAbsen, lookbackDays = 30 }: Props) {
-  const { activeKelas, kelasList, absenRecords, liburDates, jadwalList } = useApp();
+  const { activeKelas, kelasList, absenRecords, liburDates, jadwalList, confirmedDates } = useApp();
   const [expanded, setExpanded] = useState(false);
 
   const kelas = kelasList.find(k => k.id === activeKelas);
@@ -43,7 +39,7 @@ export function AbsensiGapWidget({ onGoToAbsen, lookbackDays = 30 }: Props) {
     return days;
   }, [adaJadwalSabtu]);
 
-  // Set tanggal yang sudah ada absensi (minimal 1 record non-H)
+  // Set tanggal yang sudah ada absensi S/I/A
   const tanggalSudahAbsen = useMemo(() => {
     const set = new Set<string>();
     absenRecords
@@ -51,6 +47,15 @@ export function AbsensiGapWidget({ onGoToAbsen, lookbackDays = 30 }: Props) {
       .forEach(a => set.add(a.date));
     return set;
   }, [absenRecords, activeKelas]);
+
+  // Set tanggal yang sudah dikonfirmasi (termasuk hadir semua)
+  const tanggalSudahKonfirmasi = useMemo(() => {
+    const set = new Set<string>();
+    confirmedDates
+      .filter(c => c.kelasId === activeKelas)
+      .forEach(c => set.add(c.date));
+    return set;
+  }, [confirmedDates, activeKelas]);
 
   // Set tanggal libur untuk jenjang ini
   const tanggalLibur = useMemo(() => {
@@ -76,12 +81,13 @@ export function AbsensiGapWidget({ onGoToAbsen, lookbackDays = 30 }: Props) {
       const dateStr = d.toISOString().split('T')[0];
       if (tanggalLibur.has(dateStr)) continue;
       if (tanggalSudahAbsen.has(dateStr)) continue;
+      if (tanggalSudahKonfirmasi.has(dateStr)) continue;
 
       result.push(dateStr);
     }
 
     return result;
-  }, [lookbackDays, hariAktif, tanggalLibur, tanggalSudahAbsen]);
+  }, [lookbackDays, hariAktif, tanggalLibur, tanggalSudahAbsen, tanggalSudahKonfirmasi]);
 
   if (!kelas || kelas.students.length === 0) return null;
 

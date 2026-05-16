@@ -1,17 +1,14 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { Kelas, AbsenRecord, KasusRecord, CatatanRecord, TabId, SemesterConfig, BackupData, JadwalSlot, LiburDate, Jenjang } from '@/types';
+import type { Kelas, AbsenRecord, KasusRecord, CatatanRecord, TabId, SemesterConfig, BackupData, JadwalSlot, LiburDate, Jenjang, ConfirmedDate, PeriodeUjian } from '@/types';
+import { storageGet, storageSet, storageRemove, initStorage } from '@/lib/storage';
+import { useAutoBackup } from '@/hooks/use-auto-backup';
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+// ─── helpers (sekarang pakai IndexedDB via storage layer) ────────────────────
 function ls<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
+  return storageGet<T>(key, fallback);
 }
 function save(key: string, value: unknown) {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* quota */ }
+  storageSet(key, value);
 }
 
 // ─── defaults ───────────────────────────────────────────────────────────────
@@ -79,6 +76,10 @@ interface AppState {
   liburDates: LiburDate[];
   addLiburDate: (libur: LiburDate) => void;
   deleteLiburDate: (id: string) => void;
+  confirmedDates: ConfirmedDate[];
+  confirmDate: (kelasId: string, date: string, periodeUjian?: PeriodeUjian, mataPelajaran?: string) => void;
+  unconfirmDate: (kelasId: string, date: string) => void;
+  isDateConfirmed: (kelasId: string, date: string) => boolean;
   toasts: { id: string; message: string }[];
   showToast: (message: string) => void;
   semester: SemesterConfig;
@@ -103,6 +104,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [catatanRecords, setCatatanRecordsRaw] = useState<CatatanRecord[]>(() => ls<CatatanRecord[]>('jg_catatanRecords', []));
   const [jadwalList,     setJadwalListRaw] = useState<JadwalSlot[]>(() => ls<JadwalSlot[]>('jg_jadwalList', []));
   const [liburDates,     setLiburDatesRaw] = useState<LiburDate[]>(() => ls<LiburDate[]>('jg_liburDates', []));
+  const [confirmedDates, setConfirmedDatesRaw] = useState<ConfirmedDate[]>(() => ls<ConfirmedDate[]>('jg_confirmedDates', []));
   const [toasts,         setToasts]        = useState<{ id: string; message: string }[]>([]);
   const [semester,       setSemesterRaw]   = useState<SemesterConfig>(() => ls<SemesterConfig>('jg_semester', DEFAULT_SEMESTER));
 
@@ -169,6 +171,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       save('jg_liburDates', next);
       return next;
     });
+  }, []);
+  const setConfirmedDates = useCallback((v: React.SetStateAction<ConfirmedDate[]>) => {
+    setConfirmedDatesRaw(prev => {
+      const next = typeof v === 'function' ? v(prev) : v;
+      save('jg_confirmedDates', next);
+      return next;
+    });
+  }, []);
+
+  // ── Inisialisasi IndexedDB storage saat pertama mount ─────────────────────
+  useEffect(() => {
+    initStorage().catch(() => {/* fallback ke localStorage sudah ditangani di storage.ts */});
   }, []);
 
   // ── Auto-set activeKelas ───────────────────────────────────────────────────
@@ -253,6 +267,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setLiburDates(prev => prev.filter(l => l.id !== id));
   }, []);
 
+  const confirmDate = useCallback((kelasId: string, date: string, periodeUjian?: PeriodeUjian, mataPelajaran?: string) => {
+    setConfirmedDates(prev => {
+      const filtered = prev.filter(c => !(c.kelasId === kelasId && c.date === date));
+      return [...filtered, { id: `${kelasId}_${date}`, kelasId, date, periodeUjian, mataPelajaran }];
+    });
+  }, []);
+  const unconfirmDate = useCallback((kelasId: string, date: string) => {
+    setConfirmedDates(prev => prev.filter(c => !(c.kelasId === kelasId && c.date === date)));
+  }, []);
+  const isDateConfirmed = useCallback((kelasId: string, date: string) => {
+    return confirmedDates.some(c => c.kelasId === kelasId && c.date === date);
+  }, [confirmedDates]);
+
   const addKelas = useCallback((name: string, jenjang: Jenjang = 'SMP') => {
     const id = 'k_' + Date.now();
     setKelasList(prev => [...prev, { id, name, jenjang, students: [] }]);
@@ -295,20 +322,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCatatanRecords([]);
     setJadwalList([]);
     setLiburDates([]);
+    setConfirmedDates([]);
     setLastBackupDate('');
     setActiveKelas('');
     setSemester(DEFAULT_SEMESTER);
-    // Clear all localStorage keys
+    // Clear all storage keys (IDB + localStorage)
     ['jg_namaGuru','jg_lastBackup','jg_activeTab','jg_activeKelas',
      'jg_kelasList','jg_absenRecords','jg_kasusRecords','jg_catatanRecords',
-     'jg_jadwalList','jg_liburDates','jg_semester'].forEach(k => localStorage.removeItem(k));
+     'jg_jadwalList','jg_liburDates','jg_semester','jg_autobackup','jg_confirmedDates'].forEach(k => storageRemove(k));
     showToast('Semua data berhasil direset');
   }, [showToast]);
 
   const exportBackup = useCallback(() => {
     const data: BackupData = {
       version: '5.0', exportedAt: new Date().toISOString(),
-      namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates,
+      namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, confirmedDates,
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -335,10 +363,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCatatanRecords(data.catatanRecords || []);
     if (data.jadwalList) setJadwalList(data.jadwalList);
     if (data.liburDates) setLiburDates(data.liburDates);
+    if (data.confirmedDates) setConfirmedDates(data.confirmedDates);
     if (data.semester) setSemester(data.semester);
     if (data.kelasList.length > 0) setActiveKelas(data.kelasList[0].id);
     showToast('✅ Data berhasil dipulihkan dari backup');
   }, [showToast]);
+
+  // ── Auto-backup: snapshot ke IDB setiap ada perubahan, auto-download kalau >3 hari ──
+  const autoBackupData: BackupData = {
+    version: '5.0',
+    exportedAt: new Date().toISOString(),
+    namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, confirmedDates,
+  };
+  useAutoBackup({
+    data: autoBackupData,
+    lastBackupDate,
+    onAutoBackupDone: (date) => {
+      setLastBackupDate(date);
+      showToast('💾 Auto-backup berhasil diunduh');
+    },
+  });
 
   return (
     <AppContext.Provider value={{
@@ -354,6 +398,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       catatanRecords, addCatatanRecord, updateCatatanRecord, deleteCatatanRecord,
       jadwalList, addJadwal, deleteJadwal,
       liburDates, addLiburDate, deleteLiburDate,
+      confirmedDates, confirmDate, unconfirmDate, isDateConfirmed,
       toasts, showToast,
       semester, setSemester,
       exportBackup, importBackup, resetAll,

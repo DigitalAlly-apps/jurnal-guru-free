@@ -18,7 +18,7 @@ interface Props {
 const HARI_SINGKAT = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
 export function AbsensiKalender({ onSelectDate, selectedDate }: Props) {
-  const { activeKelas, kelasList, absenRecords, liburDates, jadwalList } = useApp();
+  const { activeKelas, kelasList, absenRecords, liburDates, jadwalList, confirmedDates } = useApp();
 
   const kelas = kelasList.find(k => k.id === activeKelas);
   const jenjangAktif = kelas?.jenjang || 'SMP';
@@ -33,7 +33,7 @@ export function AbsensiKalender({ onSelectDate, selectedDate }: Props) {
     [jadwalList, activeKelas]
   );
 
-  // Set tanggal yang sudah ada absensi
+  // Set tanggal yang sudah ada absensi S/I/A
   const tanggalSudahAbsen = useMemo(() => {
     const set = new Set<string>();
     absenRecords
@@ -41,6 +41,15 @@ export function AbsensiKalender({ onSelectDate, selectedDate }: Props) {
       .forEach(a => set.add(a.date));
     return set;
   }, [absenRecords, activeKelas]);
+
+  // Set tanggal yang sudah dikonfirmasi (termasuk hadir semua)
+  const tanggalSudahKonfirmasi = useMemo(() => {
+    const set = new Set<string>();
+    confirmedDates
+      .filter(c => c.kelasId === activeKelas)
+      .forEach(c => set.add(c.date));
+    return set;
+  }, [confirmedDates, activeKelas]);
 
   // Set tanggal libur
   const tanggalLibur = useMemo(() => {
@@ -83,7 +92,7 @@ export function AbsensiKalender({ onSelectDate, selectedDate }: Props) {
         status = 'libur';
       } else if (dow === 0 || (dow === 6 && !adaJadwalSabtu)) {
         status = 'weekend';
-      } else if (tanggalSudahAbsen.has(dateStr)) {
+      } else if (tanggalSudahAbsen.has(dateStr) || tanggalSudahKonfirmasi.has(dateStr)) {
         status = 'sudah';
       } else {
         status = 'belum';
@@ -93,7 +102,7 @@ export function AbsensiKalender({ onSelectDate, selectedDate }: Props) {
     }
 
     return days;
-  }, [viewYear, viewMonth, tanggalSudahAbsen, tanggalLibur, adaJadwalSabtu]);
+  }, [viewYear, viewMonth, tanggalSudahAbsen, tanggalSudahKonfirmasi, tanggalLibur, adaJadwalSabtu]);
 
   // Hitung ringkasan bulan ini
   const summary = useMemo(() => {
