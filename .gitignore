@@ -23,7 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment variables & secrets
+# Environment variables & secretss
 .env
 .env.local
 .env.*.local

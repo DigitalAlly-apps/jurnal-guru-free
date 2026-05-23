@@ -7,7 +7,7 @@ import { AbsensiKalender } from '@/components/AbsensiKalender';
 type AbsenStatus = 'H' | 'S' | 'I' | 'A';
 const PERIODE_OPTIONS: PeriodeUjian[] = ['Harian', 'UTS', 'UAS'];
 
-// Saran keterangan per status
+// Saran keterangan per statusss
 const KETERANGAN_SUGGESTIONS: Record<AbsenStatus, string[]> = {
   H: [],
   S: ['Sakit perut', 'Demam', 'Flu / pilek', 'Sakit kepala', 'Sakit gigi', 'Rawat inap'],
