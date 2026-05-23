@@ -220,21 +220,24 @@ export function AbsenPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 max-w-4xl mx-auto w-full">
+    <div className="flex flex-col gap-4 w-full max-w-4xl mx-auto overflow-hidden">
 
-      {/* Tanggal, Periode, Mata Pelajaran */}
-      <div className="bg-surface rounded-2xl shadow-soft p-4 flex flex-col gap-3">
-        <div className="flex gap-2">
-          <input type="date" value={date}
+      {/* ── Card kontrol: Tanggal · Periode · Mapel ── */}
+      <div className="bg-surface rounded-2xl shadow-soft p-4 flex flex-col gap-3 overflow-hidden">
+
+        {/* Baris 1: Tanggal + tombol Kalender */}
+        <div className="flex gap-2 min-w-0">
+          <input
+            type="date"
+            value={date}
             onChange={e => handleDateChange(e.target.value)}
-            className="input-soft flex-1 min-w-0" />
+            className="input-soft flex-1 min-w-0 w-0"
+          />
           <button
             onClick={() => setShowKalender(v => !v)}
             title="Lihat kalender absensi"
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-semibold transition-all flex-shrink-0 ${
-              showKalender
-                ? 'bg-primary text-white'
-                : 'bg-bg-2 text-text-secondary hover:text-primary hover:bg-accent-light'
+            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-semibold transition-all ${
+              showKalender ? 'bg-primary text-white' : 'bg-bg-2 text-text-secondary hover:text-primary hover:bg-accent-light'
             }`}
           >
             <CalendarDays className="w-4 h-4" />
@@ -242,13 +245,18 @@ export function AbsenPage() {
           </button>
         </div>
 
-        {/* Toggle Harian / UTS / UAS — baris terpisah supaya tidak overflow di HP */}
+        {/* Baris 2: Toggle Harian / UTS / UAS */}
         <div className="flex bg-bg-2 rounded-xl p-1 gap-1">
           {PERIODE_OPTIONS.map(p => (
-            <button key={p} onClick={() => setPeriode(p)}
+            <button
+              key={p}
+              onClick={() => setPeriode(p)}
               className={`flex-1 py-2 text-[12px] font-semibold rounded-lg transition-all ${
                 periode === p ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary'
-              }`}>{p}</button>
+              }`}
+            >
+              {p}
+            </button>
           ))}
         </div>
 
@@ -256,37 +264,40 @@ export function AbsenPage() {
         {showKalender && (
           <AbsensiKalender
             selectedDate={date}
-            onSelectDate={(d) => {
-              handleDateChange(d);
-              setShowKalender(false);
-            }}
+            onSelectDate={d => { handleDateChange(d); setShowKalender(false); }}
           />
         )}
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl bg-bg-2 px-3 py-2">
-          <p className="text-[12px] text-text-secondary">
-            Jenjang aktif: <span className="font-bold text-foreground">{jenjangAktif}</span>
+        {/* Baris 3: Jenjang + Tandai Libur */}
+        <div className="flex items-center justify-between gap-2 rounded-xl bg-bg-2 px-3 py-2">
+          <p className="text-[12px] text-text-secondary truncate">
+            Jenjang: <span className="font-bold text-foreground">{jenjangAktif}</span>
           </p>
           {liburForDate ? (
-            <button onClick={handleDeleteLibur}
-              className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-semantic-red-light text-semantic-red hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
+            <button
+              onClick={handleDeleteLibur}
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-semantic-red-light text-semantic-red hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+            >
               <X className="w-3 h-3" /> Batalkan Libur
             </button>
           ) : (
-            <button onClick={() => setShowLiburForm(v => !v)}
-              className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-bg-3 text-text-secondary hover:text-primary transition-colors">
+            <button
+              onClick={() => setShowLiburForm(v => !v)}
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-bg-3 text-text-secondary hover:text-primary transition-colors"
+            >
               <CalendarX className="w-3 h-3" /> Tandai Libur
             </button>
           )}
         </div>
 
+        {/* Form libur */}
         {showLiburForm && !liburForDate && (
           <div className="rounded-xl border border-border bg-bg-2 p-3 flex flex-col gap-2">
             <label className="label-upper block">Keterangan Libur</label>
             <input
               value={liburKet}
               onChange={e => setLiburKet(e.target.value)}
-              placeholder="Contoh: Libur nasional, rapat guru, kegiatan sekolah"
+              placeholder="Contoh: Libur nasional, rapat guru..."
               className="input-soft text-[13px]"
             />
             {existingForDate.length > 0 && (
@@ -301,6 +312,7 @@ export function AbsenPage() {
           </div>
         )}
 
+        {/* Mata Pelajaran */}
         <div>
           <label className="label-upper block mb-1.5">
             Mata Pelajaran
@@ -310,10 +322,10 @@ export function AbsenPage() {
             }
           </label>
 
-          {/* Sesi ujian yang sudah ada hari ini — quick-select */}
+          {/* Chip sesi ujian yang sudah ada hari ini */}
           {isUjian && sesiUjianHariIni.length > 0 && (
-            <div className="mb-2 flex flex-wrap gap-1.5">
-              <span className="text-[10px] text-text-tertiary self-center">Sesi hari ini:</span>
+            <div className="mb-2 flex flex-wrap gap-1.5 items-center">
+              <span className="text-[10px] text-text-tertiary">Sesi hari ini:</span>
               {sesiUjianHariIni.map(mapel => (
                 <button
                   key={mapel}
@@ -335,11 +347,13 @@ export function AbsenPage() {
             <select
               value={mataPelajaran}
               onChange={e => setMataPelajaran(e.target.value)}
-              className={`input-soft ${isUjian && !mataPelajaran ? 'border-semantic-red/50 focus:border-semantic-red' : ''}`}
+              className={`input-soft w-full ${isUjian && !mataPelajaran ? 'border-semantic-red/50' : ''}`}
             >
               <option value="">{isUjian ? '-- Pilih mapel ujian --' : '-- Pilih dari jadwal --'}</option>
               {jadwalHariIni.map(j => (
-                <option key={j.id} value={j.mataPelajaran}>{j.mataPelajaran} ({j.jamMulai}–{j.jamSelesai})</option>
+                <option key={j.id} value={j.mataPelajaran}>
+                  {j.mataPelajaran} ({j.jamMulai}–{j.jamSelesai})
+                </option>
               ))}
               <option value="__custom">Lainnya...</option>
             </select>
@@ -348,12 +362,16 @@ export function AbsenPage() {
               value={mataPelajaran}
               onChange={e => setMataPelajaran(e.target.value)}
               placeholder={isUjian ? `Nama mapel ${periode} (wajib)` : 'Contoh: Matematika, IPA...'}
-              className={`input-soft ${isUjian && !mataPelajaran ? 'border-semantic-red/50 focus:border-semantic-red' : ''}`}
+              className={`input-soft w-full ${isUjian && !mataPelajaran ? 'border-semantic-red/50' : ''}`}
             />
           )}
           {mataPelajaran === '__custom' && (
-            <input className="input-soft mt-2" placeholder="Nama mata pelajaran"
-              onChange={e => setMataPelajaran(e.target.value)} autoFocus />
+            <input
+              className="input-soft w-full mt-2"
+              placeholder="Nama mata pelajaran"
+              onChange={e => setMataPelajaran(e.target.value)}
+              autoFocus
+            />
           )}
           {isUjian && !mataPelajaran && (
             <p className="text-[11px] text-semantic-red mt-1 flex items-center gap-1">
