@@ -224,10 +224,10 @@ export function AbsenPage() {
 
       {/* Tanggal, Periode, Mata Pelajaran */}
       <div className="bg-surface rounded-2xl shadow-soft p-4 flex flex-col gap-3">
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <input type="date" value={date}
             onChange={e => handleDateChange(e.target.value)}
-            className="input-soft flex-1" />
+            className="input-soft flex-1 min-w-0" />
           <button
             onClick={() => setShowKalender(v => !v)}
             title="Lihat kalender absensi"
@@ -240,14 +240,16 @@ export function AbsenPage() {
             <CalendarDays className="w-4 h-4" />
             <span className="hidden sm:inline">Kalender</span>
           </button>
-          <div className="flex bg-bg-2 rounded-xl p-1 gap-1">
-            {PERIODE_OPTIONS.map(p => (
-              <button key={p} onClick={() => setPeriode(p)}
-                className={`px-2.5 py-1.5 text-[11px] font-semibold rounded-lg transition-all ${
-                  periode === p ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary'
-                }`}>{p}</button>
-            ))}
-          </div>
+        </div>
+
+        {/* Toggle Harian / UTS / UAS — baris terpisah supaya tidak overflow di HP */}
+        <div className="flex bg-bg-2 rounded-xl p-1 gap-1">
+          {PERIODE_OPTIONS.map(p => (
+            <button key={p} onClick={() => setPeriode(p)}
+              className={`flex-1 py-2 text-[12px] font-semibold rounded-lg transition-all ${
+                periode === p ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary'
+              }`}>{p}</button>
+          ))}
         </div>
 
         {/* Kalender mini */}
