@@ -126,9 +126,9 @@ export function SetelanPage() {
         </button>
 
         {showSemesterConfig && (
-          <div className="mt-5 space-y-4 pt-4 border-t border-border/50 animate-fade-in">
+          <div className="mt-5 space-y-4 pt-4 border-t border-border/50 animate-fade-in overflow-hidden">
             {/* Periode & Tahun Ajaran */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="label-upper block mb-1.5">Tahun Ajaran</label>
                 <select value={semester.tahunAjaran} onChange={e => handleSemesterChange({ tahunAjaran: e.target.value })} className="input-soft w-full text-xs py-2">
@@ -156,26 +156,36 @@ export function SetelanPage() {
               { key: 'genap' as const, label: 'Jadwal Genap', data: semester.genap }
             ]).map(item => (
               <div key={item.key} className={`p-3 rounded-xl border border-border/40 ${semester.semester === item.key ? 'bg-primary/5 border-primary/20' : 'bg-bg-2/50'}`}>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-3">
                   <label className="label-upper block !mb-0">{item.label}</label>
                   {semester.semester === item.key && <span className="text-[10px] text-primary font-bold px-2 py-0.5 rounded-full bg-primary/10">Aktif</span>}
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <span className="text-[10px] text-text-tertiary mb-1 block">Mulai UTS</span>
-                    <input type="date" value={item.data.utsStart} onChange={e => handleScheduleChange(item.key, { utsStart: e.target.value })} className="input-soft text-[11px] w-full py-1.5 px-2" />
+                {/* UTS */}
+                <div className="mb-2">
+                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1.5 block">UTS</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="min-w-0">
+                      <span className="text-[10px] text-text-tertiary mb-1 block">Mulai</span>
+                      <input type="date" value={item.data.utsStart} onChange={e => handleScheduleChange(item.key, { utsStart: e.target.value })} className="input-soft text-[11px] w-full py-1.5 px-2 min-w-0" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[10px] text-text-tertiary mb-1 block">Selesai</span>
+                      <input type="date" value={item.data.utsEnd} onChange={e => handleScheduleChange(item.key, { utsEnd: e.target.value })} className="input-soft text-[11px] w-full py-1.5 px-2 min-w-0" />
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-[10px] text-text-tertiary mb-1 block">Selesai UTS</span>
-                    <input type="date" value={item.data.utsEnd} onChange={e => handleScheduleChange(item.key, { utsEnd: e.target.value })} className="input-soft text-[11px] w-full py-1.5 px-2" />
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-text-tertiary mb-1 block">Mulai UAS</span>
-                    <input type="date" value={item.data.uasStart} onChange={e => handleScheduleChange(item.key, { uasStart: e.target.value })} className="input-soft text-[11px] w-full py-1.5 px-2" />
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-text-tertiary mb-1 block">Selesai UAS</span>
-                    <input type="date" value={item.data.uasEnd} onChange={e => handleScheduleChange(item.key, { uasEnd: e.target.value })} className="input-soft text-[11px] w-full py-1.5 px-2" />
+                </div>
+                {/* UAS */}
+                <div>
+                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1.5 block">UAS</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="min-w-0">
+                      <span className="text-[10px] text-text-tertiary mb-1 block">Mulai</span>
+                      <input type="date" value={item.data.uasStart} onChange={e => handleScheduleChange(item.key, { uasStart: e.target.value })} className="input-soft text-[11px] w-full py-1.5 px-2 min-w-0" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[10px] text-text-tertiary mb-1 block">Selesai</span>
+                      <input type="date" value={item.data.uasEnd} onChange={e => handleScheduleChange(item.key, { uasEnd: e.target.value })} className="input-soft text-[11px] w-full py-1.5 px-2 min-w-0" />
+                    </div>
                   </div>
                 </div>
               </div>

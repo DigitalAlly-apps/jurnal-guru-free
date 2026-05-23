@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
-import { Search, CheckCircle, Pencil, ChevronDown, CalendarX, X, CalendarDays } from 'lucide-react';
+import { Search, CheckCircle, Pencil, ChevronDown, CalendarX, X, CalendarDays, BookOpen, AlertCircle } from 'lucide-react';
 import type { AbsenRecord, PeriodeUjian } from '@/types';
 import { AbsensiKalender } from '@/components/AbsensiKalender';
 
@@ -36,12 +36,29 @@ export function AbsenPage() {
   const [liburKet, setLiburKet] = useState('');
   const [showKalender, setShowKalender] = useState(false);
 
+  const isUjian = periode === 'UTS' || periode === 'UAS';
+
   const hariIni       = new Date(date).toLocaleDateString('id-ID', { weekday: 'long' });
   const jadwalHariIni = jadwalList.filter(j => j.kelasId === activeKelas && j.hari === hariIni);
 
+  // Sesi ujian yang sudah ada di tanggal ini (untuk periode UTS/UAS)
+  const sesiUjianHariIni = useMemo(() => {
+    if (!isUjian) return [];
+    const mapelSet = new Set<string>();
+    absenRecords
+      .filter(a => a.date === date && a.kelasId === activeKelas && a.periodeUjian === periode && a.mataPelajaran)
+      .forEach(a => mapelSet.add(a.mataPelajaran!));
+    return Array.from(mapelSet).sort();
+  }, [absenRecords, date, activeKelas, periode, isUjian]);
+
   const existingForDate = useMemo(() =>
-    absenRecords.filter(a => a.date === date && a.kelasId === activeKelas),
-    [absenRecords, date, activeKelas]
+    absenRecords.filter(a =>
+      a.date === date &&
+      a.kelasId === activeKelas &&
+      // Saat UTS/UAS: filter by mapel juga supaya multi-sesi tidak saling timpa
+      (!isUjian || !mataPelajaran || a.mataPelajaran === mataPelajaran)
+    ),
+    [absenRecords, date, activeKelas, isUjian, mataPelajaran]
   );
 
   const liburForDate = useMemo(() =>
@@ -107,8 +124,17 @@ export function AbsenPage() {
       showToast('Tanggal ini libur, absensi tidak perlu disimpan');
       return;
     }
+    // Saat UTS/UAS, mapel wajib diisi
+    if (isUjian && !mataPelajaran.trim()) {
+      showToast('Mata pelajaran wajib diisi untuk absensi ujian');
+      return;
+    }
+    const mapelKey = mataPelajaran.trim();
     const records: AbsenRecord[] = kelas.students.map(s => ({
-      id:             `${date}_${s.id}_${activeKelas}`,
+      // ID include mapel saat UTS/UAS supaya multi-sesi per hari tidak saling timpa
+      id:             isUjian && mapelKey
+                        ? `${date}_${mapelKey.replace(/\s+/g, '_')}_${s.id}_${activeKelas}`
+                        : `${date}_${s.id}_${activeKelas}`,
       studentId:      s.id,
       studentName:    s.name,
       date,
@@ -116,11 +142,10 @@ export function AbsenPage() {
       keterangan:     getKet(s.id) || undefined,
       kelasId:        activeKelas,
       periodeUjian:   periode,
-      mataPelajaran:  mataPelajaran || undefined,
+      mataPelajaran:  mapelKey || undefined,
     }));
     addAbsenRecords(records);
-    // Tandai tanggal ini sudah dikonfirmasi (termasuk kalau semua hadir = tidak ada record S/I/A)
-    confirmDate(activeKelas, date, periode, mataPelajaran || undefined);
+    confirmDate(activeKelas, date, periode, mapelKey || undefined);
     setLocalStatus({});
     setLocalKet({});
     setExpandedId(null);
@@ -275,23 +300,63 @@ export function AbsenPage() {
         )}
 
         <div>
-          <label className="label-upper block mb-1.5">Mata Pelajaran (opsional)</label>
+          <label className="label-upper block mb-1.5">
+            Mata Pelajaran
+            {isUjian
+              ? <span className="ml-1.5 text-semantic-red text-[10px] font-bold normal-case">* wajib untuk {periode}</span>
+              : <span className="ml-1.5 text-text-tertiary text-[10px] font-normal normal-case">(opsional)</span>
+            }
+          </label>
+
+          {/* Sesi ujian yang sudah ada hari ini — quick-select */}
+          {isUjian && sesiUjianHariIni.length > 0 && (
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              <span className="text-[10px] text-text-tertiary self-center">Sesi hari ini:</span>
+              {sesiUjianHariIni.map(mapel => (
+                <button
+                  key={mapel}
+                  onClick={() => { setMataPelajaran(mapel); setLocalStatus({}); setLocalKet({}); }}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all flex items-center gap-1 ${
+                    mataPelajaran === mapel
+                      ? 'bg-primary text-white border-primary'
+                      : 'bg-bg-2 border-border text-text-secondary hover:border-primary hover:text-primary'
+                  }`}
+                >
+                  <BookOpen className="w-3 h-3" />
+                  {mapel}
+                </button>
+              ))}
+            </div>
+          )}
+
           {jadwalHariIni.length > 0 ? (
-            <select value={mataPelajaran} onChange={e => setMataPelajaran(e.target.value)} className="input-soft">
-              <option value="">-- Pilih dari jadwal --</option>
+            <select
+              value={mataPelajaran}
+              onChange={e => setMataPelajaran(e.target.value)}
+              className={`input-soft ${isUjian && !mataPelajaran ? 'border-semantic-red/50 focus:border-semantic-red' : ''}`}
+            >
+              <option value="">{isUjian ? '-- Pilih mapel ujian --' : '-- Pilih dari jadwal --'}</option>
               {jadwalHariIni.map(j => (
                 <option key={j.id} value={j.mataPelajaran}>{j.mataPelajaran} ({j.jamMulai}–{j.jamSelesai})</option>
               ))}
               <option value="__custom">Lainnya...</option>
             </select>
           ) : (
-            <input value={mataPelajaran} onChange={e => setMataPelajaran(e.target.value)}
-              placeholder="Contoh: Matematika, IPA..."
-              className="input-soft" />
+            <input
+              value={mataPelajaran}
+              onChange={e => setMataPelajaran(e.target.value)}
+              placeholder={isUjian ? `Nama mapel ${periode} (wajib)` : 'Contoh: Matematika, IPA...'}
+              className={`input-soft ${isUjian && !mataPelajaran ? 'border-semantic-red/50 focus:border-semantic-red' : ''}`}
+            />
           )}
           {mataPelajaran === '__custom' && (
             <input className="input-soft mt-2" placeholder="Nama mata pelajaran"
               onChange={e => setMataPelajaran(e.target.value)} autoFocus />
+          )}
+          {isUjian && !mataPelajaran && (
+            <p className="text-[11px] text-semantic-red mt-1 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" /> Isi mapel dulu sebelum simpan
+            </p>
           )}
         </div>
       </div>
@@ -321,6 +386,9 @@ export function AbsenPage() {
               {existingForDate.length === 0 && isConfirmed
                 ? 'Semua siswa hadir pada hari ini'
                 : 'Data absensi sudah ada'}
+              {isUjian && mataPelajaran && (
+                <span className="ml-1.5 text-[11px] font-normal opacity-80">· {mataPelajaran}</span>
+              )}
             </p>
             <p className="text-[11px] text-semantic-blue/70 mt-0.5">
               {existingForDate.filter(a => a.status !== 'H').length} siswa tidak hadir tercatat

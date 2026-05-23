@@ -206,7 +206,11 @@ export function RiwayatPage() {
                       <div className="flex items-center gap-3">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-foreground truncate">{r.studentName}</p>
-                          <p className="text-xs text-text-tertiary">{r.date}{r.periodeUjian && <span className="ml-1 text-primary font-medium">· {r.periodeUjian}</span>}</p>
+                          <p className="text-xs text-text-tertiary">
+                            {r.date}
+                            {r.periodeUjian && <span className="ml-1 text-primary font-medium">· {r.periodeUjian}</span>}
+                            {r.mataPelajaran && <span className="ml-1 text-text-secondary">· {r.mataPelajaran}</span>}
+                          </p>
                         </div>
                         <span className={`text-xs font-bold px-2 py-1 rounded-lg flex-shrink-0 ${STATUS_COLOR[r.status]}`}>{STATUS_LABEL[r.status]}</span>
                         <button onClick={() => startEdit(r.id, 'absen')} className="p-1.5 hover:bg-bg-2 rounded-lg text-text-secondary hover:text-primary"><Pencil className="w-3.5 h-3.5" /></button>
