@@ -106,7 +106,7 @@ export function RiwayatPage() {
     setEditId(id); setEditType(type as any);
     if (type === 'absen') {
       const r = absenRecords.find(r => r.id === id)!;
-      setEditData({ status: r.status, periodeUjian: r.periodeUjian, date: r.date });
+      setEditData({ status: r.status, periodeUjian: r.periodeUjian, date: r.date, mataPelajaran: r.mataPelajaran || '', jamUjian: r.jamUjian || '' });
     } else if (type === 'kasus') {
       const r = kasusRecords.find(r => r.id === id)!;
       setEditData({ description: r.description, category: r.category, periodeUjian: r.periodeUjian, date: r.date, tindakLanjut: r.tindakLanjut || '' });
@@ -197,6 +197,12 @@ export function RiwayatPage() {
                             {periodeOptions.map(p => <option key={p} value={p}>{p}</option>)}
                           </select>
                         </div>
+                        {(editData.periodeUjian === 'UTS' || editData.periodeUjian === 'UAS') && (
+                          <div className="flex gap-2 flex-wrap">
+                            <input value={editData.mataPelajaran || ''} onChange={e => setEditData(p => ({ ...p, mataPelajaran: e.target.value }))} placeholder="Mata Pelajaran" className="input-soft text-xs flex-1 min-w-[130px]" />
+                            <input value={editData.jamUjian || ''} onChange={e => setEditData(p => ({ ...p, jamUjian: e.target.value }))} placeholder="Jam / Sesi Ujian" className="input-soft text-xs flex-1 min-w-[130px]" />
+                          </div>
+                        )}
                         <div className="flex gap-2 justify-end">
                           <button onClick={() => setEditId(null)} className="btn-soft btn-secondary-soft px-3 py-1.5 text-xs flex items-center gap-1"><X className="w-3 h-3"/>Batal</button>
                           <button onClick={saveEdit} className="btn-soft btn-primary-soft px-3 py-1.5 text-xs flex items-center gap-1"><Check className="w-3 h-3"/>Simpan</button>
@@ -210,6 +216,7 @@ export function RiwayatPage() {
                             {r.date}
                             {r.periodeUjian && <span className="ml-1 text-primary font-medium">· {r.periodeUjian}</span>}
                             {r.mataPelajaran && <span className="ml-1 text-text-secondary">· {r.mataPelajaran}</span>}
+                            {r.jamUjian && <span className="ml-1 text-text-tertiary font-medium">({r.jamUjian})</span>}
                           </p>
                         </div>
                         <span className={`text-xs font-bold px-2 py-1 rounded-lg flex-shrink-0 ${STATUS_COLOR[r.status]}`}>{STATUS_LABEL[r.status]}</span>

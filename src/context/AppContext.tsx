@@ -77,9 +77,9 @@ interface AppState {
   addLiburDate: (libur: LiburDate) => void;
   deleteLiburDate: (id: string) => void;
   confirmedDates: ConfirmedDate[];
-  confirmDate: (kelasId: string, date: string, periodeUjian?: PeriodeUjian, mataPelajaran?: string) => void;
-  unconfirmDate: (kelasId: string, date: string) => void;
-  isDateConfirmed: (kelasId: string, date: string) => boolean;
+  confirmDate: (kelasId: string, date: string, periodeUjian?: PeriodeUjian, mataPelajaran?: string, jamUjian?: string) => void;
+  unconfirmDate: (kelasId: string, date: string, periodeUjian?: PeriodeUjian, mataPelajaran?: string, jamUjian?: string) => void;
+  isDateConfirmed: (kelasId: string, date: string, periodeUjian?: PeriodeUjian, mataPelajaran?: string, jamUjian?: string) => boolean;
   toasts: { id: string; message: string }[];
   showToast: (message: string) => void;
   semester: SemesterConfig;
@@ -267,17 +267,37 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setLiburDates(prev => prev.filter(l => l.id !== id));
   }, []);
 
-  const confirmDate = useCallback((kelasId: string, date: string, periodeUjian?: PeriodeUjian, mataPelajaran?: string) => {
+  const confirmDate = useCallback((kelasId: string, date: string, periodeUjian?: PeriodeUjian, mataPelajaran?: string, jamUjian?: string) => {
     setConfirmedDates(prev => {
-      const filtered = prev.filter(c => !(c.kelasId === kelasId && c.date === date));
-      return [...filtered, { id: `${kelasId}_${date}`, kelasId, date, periodeUjian, mataPelajaran }];
+      // Remove any existing confirmed date that matches this specific criteria (or exact same slots)
+      const filtered = prev.filter(c =>
+        !(c.kelasId === kelasId &&
+          c.date === date &&
+          c.periodeUjian === periodeUjian &&
+          c.mataPelajaran === mataPelajaran &&
+          c.jamUjian === jamUjian)
+      );
+      const id = `${kelasId}_${date}${mataPelajaran ? `_${mataPelajaran.replace(/\s+/g, '_')}` : ''}${jamUjian ? `_${jamUjian.replace(/\s+/g, '_')}` : ''}`;
+      return [...filtered, { id, kelasId, date, periodeUjian, mataPelajaran, jamUjian }];
     });
   }, []);
-  const unconfirmDate = useCallback((kelasId: string, date: string) => {
-    setConfirmedDates(prev => prev.filter(c => !(c.kelasId === kelasId && c.date === date)));
+  const unconfirmDate = useCallback((kelasId: string, date: string, periodeUjian?: PeriodeUjian, mataPelajaran?: string, jamUjian?: string) => {
+    setConfirmedDates(prev => prev.filter(c =>
+      !(c.kelasId === kelasId &&
+        c.date === date &&
+        (!periodeUjian || c.periodeUjian === periodeUjian) &&
+        (!mataPelajaran || c.mataPelajaran === mataPelajaran) &&
+        (!jamUjian || c.jamUjian === jamUjian))
+    ));
   }, []);
-  const isDateConfirmed = useCallback((kelasId: string, date: string) => {
-    return confirmedDates.some(c => c.kelasId === kelasId && c.date === date);
+  const isDateConfirmed = useCallback((kelasId: string, date: string, periodeUjian?: PeriodeUjian, mataPelajaran?: string, jamUjian?: string) => {
+    return confirmedDates.some(c =>
+      c.kelasId === kelasId &&
+      c.date === date &&
+      (!periodeUjian || c.periodeUjian === periodeUjian) &&
+      (!mataPelajaran || c.mataPelajaran === mataPelajaran) &&
+      (!jamUjian || c.jamUjian === jamUjian)
+    );
   }, [confirmedDates]);
 
   const addKelas = useCallback((name: string, jenjang: Jenjang = 'SMP') => {

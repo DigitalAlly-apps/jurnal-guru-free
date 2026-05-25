@@ -27,8 +27,19 @@ export function AbsenPage() {
   const [date, setDate]               = useState(new Date().toISOString().split('T')[0]);
   const [periode, setPeriode]         = useState<PeriodeUjian>('Harian');
   const [mataPelajaran, setMataPelajaran] = useState('');
+  const [jamUjian, setJamUjian]       = useState('');
   const [search, setSearch]           = useState('');
   const [localStatus, setLocalStatus] = useState<Record<string, AbsenStatus>>({});
+
+  const handlePeriodeChange = (p: PeriodeUjian) => {
+    setPeriode(p);
+    setMataPelajaran('');
+    setJamUjian('');
+    setLocalStatus({});
+    setLocalKet({});
+    setExpandedId(null);
+    setShowPreview(false);
+  };
   const [localKet, setLocalKet]       = useState<Record<string, string>>({});  // keterangan per siswa
   const [expandedId, setExpandedId]   = useState<string | null>(null);         // siswa yang sedang buka keterangan
   const [showPreview, setShowPreview] = useState(false);
@@ -44,21 +55,24 @@ export function AbsenPage() {
   // Sesi ujian yang sudah ada di tanggal ini (untuk periode UTS/UAS)
   const sesiUjianHariIni = useMemo(() => {
     if (!isUjian) return [];
-    const mapelSet = new Set<string>();
+    const sessionsMap = new Map<string, { mapel: string; jam?: string }>();
     absenRecords
       .filter(a => a.date === date && a.kelasId === activeKelas && a.periodeUjian === periode && a.mataPelajaran)
-      .forEach(a => mapelSet.add(a.mataPelajaran!));
-    return Array.from(mapelSet).sort();
+      .forEach(a => {
+        const key = `${a.mataPelajaran}${a.jamUjian ? ` (${a.jamUjian})` : ''}`;
+        sessionsMap.set(key, { mapel: a.mataPelajaran!, jam: a.jamUjian });
+      });
+    return Array.from(sessionsMap.entries()).map(([label, val]) => ({ label, ...val }));
   }, [absenRecords, date, activeKelas, periode, isUjian]);
 
   const existingForDate = useMemo(() =>
     absenRecords.filter(a =>
       a.date === date &&
       a.kelasId === activeKelas &&
-      // Saat UTS/UAS: filter by mapel juga supaya multi-sesi tidak saling timpa
-      (!isUjian || !mataPelajaran || a.mataPelajaran === mataPelajaran)
+      // Saat UTS/UAS: filter by mapel & jamUjian supaya multi-sesi tidak saling timpa
+      (!isUjian || !mataPelajaran || (a.mataPelajaran === mataPelajaran && (!jamUjian || a.jamUjian === jamUjian)))
     ),
-    [absenRecords, date, activeKelas, isUjian, mataPelajaran]
+    [absenRecords, date, activeKelas, isUjian, mataPelajaran, jamUjian]
   );
 
   const liburForDate = useMemo(() =>
@@ -67,7 +81,13 @@ export function AbsenPage() {
   );
 
   // isEditMode: tanggal sudah pernah disimpan (ada record S/I/A atau sudah dikonfirmasi hadir semua)
-  const isConfirmed = isDateConfirmed(activeKelas, date);
+  const isConfirmed = isDateConfirmed(
+    activeKelas,
+    date,
+    isUjian ? periode : undefined,
+    isUjian ? mataPelajaran : undefined,
+    isUjian ? jamUjian : undefined
+  );
   const isEditMode = (existingForDate.length > 0 || isConfirmed) && Object.keys(localStatus).length === 0;
 
   const students = useMemo(() => {
@@ -130,10 +150,11 @@ export function AbsenPage() {
       return;
     }
     const mapelKey = mataPelajaran.trim();
+    const jamKey = isUjian ? jamUjian.trim() : '';
     const records: AbsenRecord[] = kelas.students.map(s => ({
-      // ID include mapel saat UTS/UAS supaya multi-sesi per hari tidak saling timpa
+      // ID include mapel & jam saat UTS/UAS supaya multi-sesi per hari tidak saling timpa
       id:             isUjian && mapelKey
-                        ? `${date}_${mapelKey.replace(/\s+/g, '_')}_${s.id}_${activeKelas}`
+                        ? `${date}_${mapelKey.replace(/\s+/g, '_')}${jamKey ? `_${jamKey.replace(/\s+/g, '_')}` : ''}_${s.id}_${activeKelas}`
                         : `${date}_${s.id}_${activeKelas}`,
       studentId:      s.id,
       studentName:    s.name,
@@ -143,9 +164,10 @@ export function AbsenPage() {
       kelasId:        activeKelas,
       periodeUjian:   periode,
       mataPelajaran:  mapelKey || undefined,
+      jamUjian:       jamKey || undefined,
     }));
     addAbsenRecords(records);
-    confirmDate(activeKelas, date, periode, mapelKey || undefined);
+    confirmDate(activeKelas, date, periode, mapelKey || undefined, jamKey || undefined);
     setLocalStatus({});
     setLocalKet({});
     setExpandedId(null);
@@ -155,6 +177,7 @@ export function AbsenPage() {
 
   const handleDateChange = (newDate: string) => {
     setDate(newDate);
+    setJamUjian('');
     setLocalStatus({});
     setLocalKet({});
     setExpandedId(null);
@@ -250,7 +273,7 @@ export function AbsenPage() {
           {PERIODE_OPTIONS.map(p => (
             <button
               key={p}
-              onClick={() => setPeriode(p)}
+              onClick={() => handlePeriodeChange(p)}
               className={`flex-1 py-2 text-[12px] font-semibold rounded-lg transition-all ${
                 periode === p ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary'
               }`}
@@ -326,20 +349,28 @@ export function AbsenPage() {
           {isUjian && sesiUjianHariIni.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-1.5 items-center">
               <span className="text-[10px] text-text-tertiary">Sesi hari ini:</span>
-              {sesiUjianHariIni.map(mapel => (
-                <button
-                  key={mapel}
-                  onClick={() => { setMataPelajaran(mapel); setLocalStatus({}); setLocalKet({}); }}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all flex items-center gap-1 ${
-                    mataPelajaran === mapel
-                      ? 'bg-primary text-white border-primary'
-                      : 'bg-bg-2 border-border text-text-secondary hover:border-primary hover:text-primary'
-                  }`}
-                >
-                  <BookOpen className="w-3 h-3" />
-                  {mapel}
-                </button>
-              ))}
+              {sesiUjianHariIni.map(session => {
+                const isActive = mataPelajaran === session.mapel && jamUjian === (session.jam || '');
+                return (
+                  <button
+                    key={session.label}
+                    onClick={() => {
+                      setMataPelajaran(session.mapel);
+                      setJamUjian(session.jam || '');
+                      setLocalStatus({});
+                      setLocalKet({});
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all flex items-center gap-1 ${
+                      isActive
+                        ? 'bg-primary text-white border-primary'
+                        : 'bg-bg-2 border-border text-text-secondary hover:border-primary hover:text-primary'
+                    }`}
+                  >
+                    <BookOpen className="w-3 h-3" />
+                    {session.label}
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -379,6 +410,38 @@ export function AbsenPage() {
             </p>
           )}
         </div>
+
+        {/* Jam/Sesi Ujian (opsional, hanya UTS/UAS) */}
+        {isUjian && (
+          <div className="mt-3">
+            <label className="label-upper block mb-1.5">
+              Jam / Sesi Ujian <span className="text-text-tertiary text-[10px] font-normal normal-case">(opsional)</span>
+            </label>
+            <div className="flex gap-1.5 mb-2">
+              {['Jam 1', 'Jam 2', 'Jam 3', 'Jam 4'].map(label => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setJamUjian(jamUjian === label ? '' : label)}
+                  className={`flex-1 py-1.5 rounded-xl border text-[11px] font-bold transition-all active:scale-[0.97] ${
+                    jamUjian === label
+                      ? 'bg-primary text-white border-primary shadow-soft'
+                      : 'bg-surface border-border text-text-secondary hover:border-primary/50'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={jamUjian}
+              onChange={e => setJamUjian(e.target.value)}
+              placeholder="cth: Jam 1, Jam 2, atau kosongkan"
+              className="input-soft w-full text-[13px]"
+            />
+          </div>
+        )}
       </div>
 
       {liburForDate && (
@@ -535,7 +598,7 @@ export function AbsenPage() {
       ) : (
         <div className="flex flex-col gap-3">
           <h3 className="label-upper">
-            Pratinjau — {date} · {periode}{mataPelajaran && mataPelajaran !== '__custom' ? ` · ${mataPelajaran}` : ''}
+            Pratinjau — {date} · {periode}{mataPelajaran && mataPelajaran !== '__custom' ? ` · ${mataPelajaran}` : ''}{jamUjian ? ` (${jamUjian})` : ''}
           </h3>
           <div className="bg-surface rounded-2xl shadow-soft overflow-hidden">
             {kelas?.students.map((s, i, arr) => {

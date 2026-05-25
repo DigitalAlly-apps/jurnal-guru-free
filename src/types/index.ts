@@ -25,6 +25,7 @@ export interface AbsenRecord {
   kelasId: string;
   periodeUjian?: PeriodeUjian;
   mataPelajaran?: string;
+  jamUjian?: string;             // ← BARU: Jam/Sesi Ujian (opsional)
 }
 
 export type KasusStatus = 'baru' | 'proses' | 'selesai';
@@ -91,6 +92,7 @@ export interface ConfirmedDate {
   date: string;
   periodeUjian?: PeriodeUjian;
   mataPelajaran?: string;
+  jamUjian?: string;
 }
 
 export interface SemesterConfig {

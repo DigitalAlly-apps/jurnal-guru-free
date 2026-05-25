@@ -27,10 +27,13 @@ export function RekapUjianPage() {
     [absenRecords, activeKelas, periodeFilter]
   );
 
-  // Daftar mapel unik, diurutkan
+  // Daftar mapel unik (Mata Pelajaran + Jam jika ada), diurutkan
   const mapelList = useMemo(() => {
     const set = new Set<string>();
-    ujianRecords.forEach(a => set.add(a.mataPelajaran!));
+    ujianRecords.forEach(a => {
+      const key = `${a.mataPelajaran}${a.jamUjian ? ` (${a.jamUjian})` : ''}`;
+      set.add(key);
+    });
     return Array.from(set).sort();
   }, [ujianRecords]);
 
@@ -38,8 +41,9 @@ export function RekapUjianPage() {
   const tanggalPerMapel = useMemo(() => {
     const map: Record<string, string[]> = {};
     ujianRecords.forEach(a => {
-      if (!map[a.mataPelajaran!]) map[a.mataPelajaran!] = [];
-      if (!map[a.mataPelajaran!].includes(a.date)) map[a.mataPelajaran!].push(a.date);
+      const key = `${a.mataPelajaran}${a.jamUjian ? ` (${a.jamUjian})` : ''}`;
+      if (!map[key]) map[key] = [];
+      if (!map[key].includes(a.date)) map[key].push(a.date);
     });
     Object.keys(map).forEach(k => map[k].sort());
     return map;
@@ -51,10 +55,10 @@ export function RekapUjianPage() {
     ujianRecords
       .filter(a => a.status !== 'H')
       .forEach(a => {
-        const mapel = a.mataPelajaran!;
-        if (!result[mapel]) result[mapel] = {};
-        if (!result[mapel][a.studentId]) result[mapel][a.studentId] = [];
-        result[mapel][a.studentId].push({ date: a.date, status: a.status, keterangan: a.keterangan });
+        const key = `${a.mataPelajaran}${a.jamUjian ? ` (${a.jamUjian})` : ''}`;
+        if (!result[key]) result[key] = {};
+        if (!result[key][a.studentId]) result[key][a.studentId] = [];
+        result[key][a.studentId].push({ date: a.date, status: a.status, keterangan: a.keterangan });
       });
     return result;
   }, [ujianRecords]);
