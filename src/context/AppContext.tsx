@@ -203,8 +203,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addAbsenRecords = useCallback((records: AbsenRecord[]) => {
     setAbsenRecords(prev => {
       // Remove any existing record for same studentId+date+kelasId
+      // Untuk ujian multi-sesi (ada mataPelajaran), juga match mataPelajaran+jamUjian
+      // supaya sesi Jam 1 tidak terhapus saat simpan Jam 2
       const deduped = prev.filter(p =>
-        !records.some(r => r.studentId === p.studentId && r.date === p.date && r.kelasId === p.kelasId)
+        !records.some(r =>
+          r.studentId === p.studentId &&
+          r.date === p.date &&
+          r.kelasId === p.kelasId &&
+          // Kalau record baru punya mataPelajaran, hanya hapus record lama yang mapel+jam-nya sama
+          (r.mataPelajaran
+            ? r.mataPelajaran === p.mataPelajaran && (r.jamUjian || '') === (p.jamUjian || '')
+            : !p.mataPelajaran)
+        )
       );
       // Only store non-H (exceptions: S, I, A)
       const exceptions = records.filter(r => r.status !== 'H');

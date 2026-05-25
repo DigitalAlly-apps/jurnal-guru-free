@@ -11,7 +11,7 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export function RekapUjianPage() {
-  const { kelasList, activeKelas, absenRecords, semester } = useApp();
+  const { kelasList, activeKelas, absenRecords, confirmedDates, semester } = useApp();
   const kelas = kelasList.find(k => k.id === activeKelas);
 
   const [periodeFilter, setPeriodeFilter] = useState<'UTS' | 'UAS'>('UTS');
@@ -27,17 +27,25 @@ export function RekapUjianPage() {
     [absenRecords, activeKelas, periodeFilter]
   );
 
-  // Daftar mapel unik (Mata Pelajaran + Jam jika ada), diurutkan
+  // Daftar mapel unik: gabungkan dari absenRecords DAN confirmedDates
+  // (karena model exception-based, mapel yang semua hadir tidak punya record di absenRecords)
   const mapelList = useMemo(() => {
     const set = new Set<string>();
     ujianRecords.forEach(a => {
       const key = `${a.mataPelajaran}${a.jamUjian ? ` (${a.jamUjian})` : ''}`;
       set.add(key);
     });
+    // Tambahkan mapel dari confirmedDates yang mungkin semua hadir (tidak ada exception)
+    confirmedDates
+      .filter(c => c.kelasId === activeKelas && c.periodeUjian === periodeFilter && c.mataPelajaran)
+      .forEach(c => {
+        const key = `${c.mataPelajaran}${c.jamUjian ? ` (${c.jamUjian})` : ''}`;
+        set.add(key);
+      });
     return Array.from(set).sort();
-  }, [ujianRecords]);
+  }, [ujianRecords, confirmedDates, activeKelas, periodeFilter]);
 
-  // Daftar tanggal unik per mapel
+  // Daftar tanggal unik per mapel (gabungkan dari absenRecords dan confirmedDates)
   const tanggalPerMapel = useMemo(() => {
     const map: Record<string, string[]> = {};
     ujianRecords.forEach(a => {
@@ -45,9 +53,17 @@ export function RekapUjianPage() {
       if (!map[key]) map[key] = [];
       if (!map[key].includes(a.date)) map[key].push(a.date);
     });
+    // Tambahkan tanggal dari confirmedDates
+    confirmedDates
+      .filter(c => c.kelasId === activeKelas && c.periodeUjian === periodeFilter && c.mataPelajaran)
+      .forEach(c => {
+        const key = `${c.mataPelajaran}${c.jamUjian ? ` (${c.jamUjian})` : ''}`;
+        if (!map[key]) map[key] = [];
+        if (!map[key].includes(c.date)) map[key].push(c.date);
+      });
     Object.keys(map).forEach(k => map[k].sort());
     return map;
-  }, [ujianRecords]);
+  }, [ujianRecords, confirmedDates, activeKelas, periodeFilter]);
 
   // Siswa yang tidak hadir per mapel: { mapel -> { studentId -> { date, status, keterangan }[] } }
   const absenPerMapel = useMemo(() => {

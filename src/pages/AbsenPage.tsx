@@ -39,10 +39,12 @@ export function AbsenPage() {
     setLocalKet({});
     setExpandedId(null);
     setShowPreview(false);
+    setEditingSession(false);
   };
   const [localKet, setLocalKet]       = useState<Record<string, string>>({});  // keterangan per siswa
   const [expandedId, setExpandedId]   = useState<string | null>(null);         // siswa yang sedang buka keterangan
   const [showPreview, setShowPreview] = useState(false);
+  const [editingSession, setEditingSession] = useState(false); // true saat mode edit aktif (startEdit dipanggil)
   const [showLiburForm, setShowLiburForm] = useState(false);
   const [liburKet, setLiburKet] = useState('');
   const [showKalender, setShowKalender] = useState(false);
@@ -127,6 +129,7 @@ export function AbsenPage() {
     });
     setLocalStatus(prefilled);
     setLocalKet(prefilledKet);
+    setEditingSession(true);
     showToast('Mode edit aktif — perubahan belum disimpan');
   };
 
@@ -148,6 +151,16 @@ export function AbsenPage() {
     if (isUjian && !mataPelajaran.trim()) {
       showToast('Mata pelajaran wajib diisi untuk absensi ujian');
       return;
+    }
+    // Validasi: cegah input mapel+jam yang sama dua kali di hari yang sama (kecuali sedang edit)
+    if (isUjian && mataPelajaran.trim() && !editingSession) {
+      const mapelKey2 = mataPelajaran.trim();
+      const jamKey2 = jamUjian.trim();
+      const alreadyExists = isDateConfirmed(activeKelas, date, periode, mapelKey2 || undefined, jamKey2 || undefined);
+      if (alreadyExists) {
+        showToast(`Absensi ${mapelKey2}${jamKey2 ? ` (${jamKey2})` : ''} sudah ada. Klik Edit untuk mengubah.`);
+        return;
+      }
     }
     const mapelKey = mataPelajaran.trim();
     const jamKey = isUjian ? jamUjian.trim() : '';
@@ -172,7 +185,14 @@ export function AbsenPage() {
     setLocalKet({});
     setExpandedId(null);
     setShowPreview(false);
+    setEditingSession(false);
     showToast('Absensi berhasil disimpan');
+
+    // UX: Saat ujian, auto-reset mapel & jam untuk input sesi berikutnya
+    if (isUjian) {
+      setMataPelajaran('');
+      setJamUjian('');
+    }
   };
 
   const handleDateChange = (newDate: string) => {
@@ -184,6 +204,7 @@ export function AbsenPage() {
     setShowPreview(false);
     setShowLiburForm(false);
     setLiburKet('');
+    setEditingSession(false);
   };
 
   // Baca target date dari sessionStorage (dikirim dari HomePage widget)
