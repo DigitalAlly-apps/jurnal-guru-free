@@ -11,6 +11,7 @@ import { SiswaPage } from '@/pages/SiswaPage';
 import { SetelanPage } from '@/pages/SetelanPage';
 import { JurnalPage } from '@/pages/JurnalPage';
 import { LaporanRiwayatPage } from '@/pages/LaporanRiwayatPage';
+import AuthPage from '@/pages/AuthPage';
 import { OnboardingWizard } from '@/components/OnboardingWizard';
 
 export function AppLayout() {
@@ -25,6 +26,7 @@ export function AppLayout() {
       case 'jadwal':     return <JadwalPage />;
       case 'laporan':    return <LaporanRiwayatPage />;
       case 'setelan':    return <SetelanPage />;
+      case 'auth':       return <AuthPage />;
       default:           return <HomePage />;
     }
   };

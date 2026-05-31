@@ -1,13 +1,15 @@
 import { useState, useRef } from 'react';
 import { Switch } from '@/components/ui/switch';
-import { Moon, Calendar, Download, Upload, Smartphone, User, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Moon, Calendar, Download, Upload, Smartphone, User, Trash2, ChevronDown, ChevronUp, Cloud } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useDarkMode } from '@/hooks/use-dark-mode';
+import { useSupabase } from '@/context/SupabaseContext';
 import type { BackupData, SemesterConfig, UjianSchedule } from '@/types';
 import { InformasiPage } from './InformasiPage';
 
 export function SetelanPage() {
-  const { namaGuru, setNamaGuru, semester, setSemester, exportBackup, importBackup, resetAll, showToast } = useApp();
+  const { namaGuru, setNamaGuru, semester, setSemester, exportBackup, importBackup, resetAll, showToast, setActiveTab } = useApp();
+  const { user, profile, isConfigured, syncState } = useSupabase();
   const { isDark, toggle: toggleDark } = useDarkMode();
   const [showInstall, setShowInstall] = useState(false);
   const [showSemesterConfig, setShowSemesterConfig] = useState(false);
@@ -81,6 +83,57 @@ export function SetelanPage() {
             Simpan
           </button>
         </div>
+      </div>
+
+      {/* Cloud Sync */}
+      <div className="bg-surface rounded-2xl shadow-soft p-5 border border-indigo-100 dark:border-indigo-950 bg-gradient-to-br from-surface to-indigo-50/5 dark:to-indigo-950/5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 flex items-center justify-center">
+            <Cloud className="w-4 h-4 text-indigo-500" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Sinkronisasi Cloud</h3>
+            <p className="text-[12px] text-text-tertiary">Penyimpanan cloud multi-perangkat otomatis</p>
+          </div>
+        </div>
+
+        <div className="p-4 bg-bg-2 rounded-xl border border-border/40 mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider block">Status Akun</span>
+            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+              {user ? `Terhubung: ${profile?.nama_guru || user.email}` : 'Belum Terhubung'}
+            </span>
+          </div>
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+            !isConfigured ? 'bg-slate-100 text-slate-500 dark:bg-slate-800' :
+            !user ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/20' :
+            syncState === 'syncing' ? 'bg-blue-50 text-blue-600 dark:bg-blue-950/20' :
+            syncState === 'error' ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/20' :
+            'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20'
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${
+              !isConfigured ? 'bg-slate-400' :
+              !user ? 'bg-amber-500' :
+              syncState === 'syncing' ? 'bg-blue-500 animate-pulse' :
+              syncState === 'error' ? 'bg-rose-500' :
+              'bg-emerald-500'
+            }`} />
+            {!isConfigured ? 'Setup Diperlukan' :
+             !user ? 'Siap Dihubungkan' :
+             syncState === 'syncing' ? 'Menyinkronkan...' :
+             syncState === 'error' ? 'Gagal Sinkron' :
+             'Aktif & Aman'}
+          </span>
+        </div>
+
+        <button
+          onClick={() => setActiveTab('auth')}
+          className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm transition-all shadow-md shadow-indigo-500/10 active:scale-[0.99]"
+        >
+          {!isConfigured ? 'Buka Panduan Setup Supabase 🛠️' :
+           !user ? 'Hubungkan Akun Cloud Sekarang 🔑' :
+           'Kelola Akun & Sinkronisasi Cloud ☁️'}
+        </button>
       </div>
 
       {/* Dark mode */}

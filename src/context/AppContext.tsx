@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import type { Kelas, AbsenRecord, KasusRecord, CatatanRecord, TabId, SemesterConfig, BackupData, JadwalSlot, LiburDate, Jenjang, ConfirmedDate, PeriodeUjian } from '@/types';
 import { storageGet, storageSet, storageRemove, initStorage } from '@/lib/storage';
 import { useAutoBackup } from '@/hooks/use-auto-backup';
+import { useSupabase } from './SupabaseContext';
 
 // ─── helpers (sekarang pakai IndexedDB via storage layer) ────────────────────
 function ls<T>(key: string, fallback: T): T {
@@ -87,11 +88,13 @@ interface AppState {
   exportBackup: () => void;
   importBackup: (data: BackupData) => void;
   resetAll: () => void;
+  syncWithCloud: () => Promise<boolean>;
 }
 
 const AppContext = createContext<AppState | null>(null);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const { user, syncData, syncState } = useSupabase();
   // ── Fix 1: All state loaded from localStorage ──────────────────────────────
   const [namaGuru,       setNamaGuruRaw]   = useState(() => ls<string>('jg_namaGuru', ''));
   const [lastBackupDate, setLastBackupRaw] = useState(() => ls<string | null>('jg_lastBackup', null));
@@ -414,6 +417,106 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     },
   });
 
+  // ── Sync awal saat user pertama kali login ────────────────────────────────
+  useEffect(() => {
+    if (user) {
+      const triggerInitialSync = async () => {
+        const localState: BackupData = {
+          version: '5.0',
+          exportedAt: new Date().toISOString(),
+          namaGuru,
+          semester,
+          kelasList,
+          absenRecords,
+          kasusRecords,
+          catatanRecords,
+          jadwalList,
+          liburDates,
+          confirmedDates
+        };
+        
+        const synced = await syncData(localState);
+        if (synced) {
+          if (synced.namaGuru) setNamaGuru(synced.namaGuru);
+          setSemester(synced.semester);
+          setKelasList(synced.kelasList);
+          setAbsenRecords(synced.absenRecords || []);
+          setKasusRecords(synced.kasusRecords || []);
+          setCatatanRecords(synced.catatanRecords || []);
+          setJadwalList(synced.jadwalList || []);
+          setLiburDates(synced.liburDates || []);
+          setConfirmedDates(synced.confirmedDates || []);
+          showToast('☁️ Cloud Sync: Data berhasil dipulihkan dari Cloud!');
+        }
+      };
+      
+      triggerInitialSync();
+    }
+  }, [user]);
+
+  // ── Auto-sync debounced ke Supabase ──────────────────────────────────────
+  useEffect(() => {
+    if (!user) return;
+    if (syncState === 'syncing') return;
+
+    const timer = setTimeout(async () => {
+      const localState: BackupData = {
+        version: '5.0',
+        exportedAt: new Date().toISOString(),
+        namaGuru,
+        semester,
+        kelasList,
+        absenRecords,
+        kasusRecords,
+        catatanRecords,
+        jadwalList,
+        liburDates,
+        confirmedDates
+      };
+      
+      await syncData(localState);
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, confirmedDates, user]);
+
+  const syncWithCloud = useCallback(async () => {
+    if (!user) {
+      showToast('⚠️ Silakan masuk ke akun Cloud terlebih dahulu');
+      return false;
+    }
+    const localState: BackupData = {
+      version: '5.0',
+      exportedAt: new Date().toISOString(),
+      namaGuru,
+      semester,
+      kelasList,
+      absenRecords,
+      kasusRecords,
+      catatanRecords,
+      jadwalList,
+      liburDates,
+      confirmedDates
+    };
+    const synced = await syncData(localState);
+    if (synced) {
+      if (synced.namaGuru) setNamaGuru(synced.namaGuru);
+      setSemester(synced.semester);
+      setKelasList(synced.kelasList);
+      setAbsenRecords(synced.absenRecords || []);
+      setKasusRecords(synced.kasusRecords || []);
+      setCatatanRecords(synced.catatanRecords || []);
+      setJadwalList(synced.jadwalList || []);
+      setLiburDates(synced.liburDates || []);
+      setConfirmedDates(synced.confirmedDates || []);
+      showToast('☁️ Sukses menyinkronkan data dengan Cloud!');
+      return true;
+    } else {
+      showToast('❌ Gagal sinkronisasi data dengan Cloud');
+      return false;
+    }
+  }, [user, namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, confirmedDates, syncData, showToast]);
+
   return (
     <AppContext.Provider value={{
       namaGuru, setNamaGuru,
@@ -432,6 +535,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       toasts, showToast,
       semester, setSemester,
       exportBackup, importBackup, resetAll,
+      syncWithCloud,
     }}>
       {children}
     </AppContext.Provider>
