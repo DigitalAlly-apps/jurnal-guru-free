@@ -39,7 +39,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         .from('profiles')
         .select('nama_guru')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
       if (!error && data) {
         setProfile(data);
       }
@@ -285,10 +285,25 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       }
 
       // ── B. DOWNLOAD TERBARU DARI CLOUD ─────────────────────────────────────
-
-      // 1. Fetch profiles
-      const { data: dbProfile } = await supabase.from('profiles').select('nama_guru').eq('id', uid).single();
-      const namaGuru = dbProfile?.nama_guru || localState.namaGuru || '';
+ 
+      // 1. Fetch profiles (dengan fallback jika profile belum terbuat)
+      let dbProfileName = '';
+      const { data: dbProfile } = await supabase.from('profiles').select('nama_guru').eq('id', uid).maybeSingle();
+      if (!dbProfile) {
+        const fallbackName = localState.namaGuru || user.user_metadata?.nama_guru || 'Guru Jurnal';
+        const { error: errProfileUpsert } = await supabase.from('profiles').upsert({
+          id: uid,
+          nama_guru: fallbackName,
+          updated_at: new Date().toISOString()
+        });
+        if (!errProfileUpsert) {
+          dbProfileName = fallbackName;
+          setProfile({ nama_guru: fallbackName });
+        }
+      } else {
+        dbProfileName = dbProfile.nama_guru || '';
+      }
+      const namaGuru = dbProfileName || localState.namaGuru || '';
 
       // 2. Fetch kelas
       const { data: dbKelas, error: errFetchK } = await supabase.from('kelas').select('*').order('created_at', { ascending: true });
