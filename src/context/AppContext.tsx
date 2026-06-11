@@ -18,7 +18,7 @@ const DEFAULT_SEMESTER: SemesterConfig = {
   tahunAjaran: `${currentYear}/${currentYear + 1}`,
   semester: new Date().getMonth() < 6 ? 'genap' : 'ganjil',
   ganjil: { utsStart: '', utsEnd: '', uasStart: '', uasEnd: '' },
-  genap:  { utsStart: '', utsEnd: '', uasStart: '', uasEnd: '' },
+  genap: { utsStart: '', utsEnd: '', uasStart: '', uasEnd: '' },
 };
 
 // ─── Fix 3: Zod-lite validation for importBackup ─────────────────────────────
@@ -96,20 +96,20 @@ const AppContext = createContext<AppState | null>(null);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const { user, syncData, syncState } = useSupabase();
   // ── Fix 1: All state loaded from localStorage ──────────────────────────────
-  const [namaGuru,       setNamaGuruRaw]   = useState(() => ls<string>('jg_namaGuru', ''));
+  const [namaGuru, setNamaGuruRaw] = useState(() => ls<string>('jg_namaGuru', ''));
   const [lastBackupDate, setLastBackupRaw] = useState(() => ls<string | null>('jg_lastBackup', null));
-  const [activeTab,      setActiveTabRaw]  = useState<TabId>(() => ls<TabId>('jg_activeTab', 'home'));
-  const [activeKelas,    setActiveKelasRaw]= useState<string>(() => ls<string>('jg_activeKelas', ''));
-  const [activeStudentId,setActiveStudentId] = useState<string | null>(null);
-  const [kelasList,      setKelasListRaw]  = useState<Kelas[]>(() => ls<Kelas[]>('jg_kelasList', []));
-  const [absenRecords,   setAbsenRecordsRaw] = useState<AbsenRecord[]>(() => ls<AbsenRecord[]>('jg_absenRecords', []));
-  const [kasusRecords,   setKasusRecordsRaw] = useState<KasusRecord[]>(() => ls<KasusRecord[]>('jg_kasusRecords', []));
+  const [activeTab, setActiveTabRaw] = useState<TabId>(() => ls<TabId>('jg_activeTab', 'home'));
+  const [activeKelas, setActiveKelasRaw] = useState<string>(() => ls<string>('jg_activeKelas', ''));
+  const [activeStudentId, setActiveStudentId] = useState<string | null>(null);
+  const [kelasList, setKelasListRaw] = useState<Kelas[]>(() => ls<Kelas[]>('jg_kelasList', []));
+  const [absenRecords, setAbsenRecordsRaw] = useState<AbsenRecord[]>(() => ls<AbsenRecord[]>('jg_absenRecords', []));
+  const [kasusRecords, setKasusRecordsRaw] = useState<KasusRecord[]>(() => ls<KasusRecord[]>('jg_kasusRecords', []));
   const [catatanRecords, setCatatanRecordsRaw] = useState<CatatanRecord[]>(() => ls<CatatanRecord[]>('jg_catatanRecords', []));
-  const [jadwalList,     setJadwalListRaw] = useState<JadwalSlot[]>(() => ls<JadwalSlot[]>('jg_jadwalList', []));
-  const [liburDates,     setLiburDatesRaw] = useState<LiburDate[]>(() => ls<LiburDate[]>('jg_liburDates', []));
+  const [jadwalList, setJadwalListRaw] = useState<JadwalSlot[]>(() => ls<JadwalSlot[]>('jg_jadwalList', []));
+  const [liburDates, setLiburDatesRaw] = useState<LiburDate[]>(() => ls<LiburDate[]>('jg_liburDates', []));
   const [confirmedDates, setConfirmedDatesRaw] = useState<ConfirmedDate[]>(() => ls<ConfirmedDate[]>('jg_confirmedDates', []));
-  const [toasts,         setToasts]        = useState<{ id: string; message: string }[]>([]);
-  const [semester,       setSemesterRaw]   = useState<SemesterConfig>(() => ls<SemesterConfig>('jg_semester', DEFAULT_SEMESTER));
+  const [toasts, setToasts] = useState<{ id: string; message: string }[]>([]);
+  const [semester, setSemesterRaw] = useState<SemesterConfig>(() => ls<SemesterConfig>('jg_semester', DEFAULT_SEMESTER));
 
   // ── Fix 1: Wrapped setters that also persist ──────────────────────────────
   const setNamaGuru = useCallback((v: string) => {
@@ -185,7 +185,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── Inisialisasi IndexedDB storage saat pertama mount ─────────────────────
   useEffect(() => {
-    initStorage().catch(() => {/* fallback ke localStorage sudah ditangani di storage.ts */});
+    initStorage().catch(() => {/* fallback ke localStorage sudah ditangani di storage.ts */ });
   }, []);
 
   // ── Auto-set activeKelas ───────────────────────────────────────────────────
@@ -360,9 +360,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setActiveKelas('');
     setSemester(DEFAULT_SEMESTER);
     // Clear all storage keys (IDB + localStorage)
-    ['jg_namaGuru','jg_lastBackup','jg_activeTab','jg_activeKelas',
-     'jg_kelasList','jg_absenRecords','jg_kasusRecords','jg_catatanRecords',
-     'jg_jadwalList','jg_liburDates','jg_semester','jg_autobackup','jg_confirmedDates'].forEach(k => storageRemove(k));
+    ['jg_namaGuru', 'jg_lastBackup', 'jg_activeTab', 'jg_activeKelas',
+      'jg_kelasList', 'jg_absenRecords', 'jg_kasusRecords', 'jg_catatanRecords',
+      'jg_jadwalList', 'jg_liburDates', 'jg_semester', 'jg_autobackup', 'jg_confirmedDates'].forEach(k => storageRemove(k));
     showToast('Semua data berhasil direset');
   }, [showToast]);
 
@@ -417,9 +417,38 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     },
   });
 
+  // Ref & helper untuk mengoptimalkan frekuensi sync
+  const lastSyncedUserIdRef = React.useRef<string | null>(null);
+  const lastSyncedDataRef = React.useRef<string>('');
+
+  const getSerializedState = useCallback((
+    name: string,
+    sem: SemesterConfig,
+    kelas: Kelas[],
+    absen: AbsenRecord[],
+    kasus: KasusRecord[],
+    catatan: CatatanRecord[],
+    jadwal: JadwalSlot[],
+    libur: LiburDate[],
+    confirmed: ConfirmedDate[]
+  ) => {
+    return JSON.stringify({
+      namaGuru: name,
+      semester: sem,
+      kelasList: kelas,
+      absenRecords: absen,
+      kasusRecords: kasus,
+      catatanRecords: catatan,
+      jadwalList: jadwal,
+      liburDates: libur,
+      confirmedDates: confirmed
+    });
+  }, []);
+
   // ── Sync awal saat user pertama kali login ────────────────────────────────
   useEffect(() => {
-    if (user) {
+    if (user && lastSyncedUserIdRef.current !== user.id) {
+      lastSyncedUserIdRef.current = user.id;
       const triggerInitialSync = async () => {
         const localState: BackupData = {
           version: '5.0',
@@ -434,9 +463,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           liburDates,
           confirmedDates
         };
-        
+
         const synced = await syncData(localState);
         if (synced) {
+          // Set lastSyncedDataRef agar tidak men-trigger auto-sync setelah ini
+          lastSyncedDataRef.current = getSerializedState(
+            synced.namaGuru || '',
+            synced.semester,
+            synced.kelasList,
+            synced.absenRecords || [],
+            synced.kasusRecords || [],
+            synced.catatanRecords || [],
+            synced.jadwalList || [],
+            synced.liburDates || [],
+            synced.confirmedDates || []
+          );
+
           if (synced.namaGuru) setNamaGuru(synced.namaGuru);
           setSemester(synced.semester);
           setKelasList(synced.kelasList);
@@ -449,8 +491,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           showToast('☁️ Cloud Sync: Data berhasil dipulihkan dari Cloud!');
         }
       };
-      
+
       triggerInitialSync();
+    } else if (!user) {
+      lastSyncedUserIdRef.current = null;
+      lastSyncedDataRef.current = '';
     }
   }, [user]);
 
@@ -458,6 +503,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!user) return;
     if (syncState === 'syncing') return;
+
+    const currentSerialized = getSerializedState(
+      namaGuru,
+      semester,
+      kelasList,
+      absenRecords,
+      kasusRecords,
+      catatanRecords,
+      jadwalList,
+      liburDates,
+      confirmedDates
+    );
+
+    // Jika data tidak berubah dari sinkronisasi terakhir, abaikan auto-sync
+    if (currentSerialized === lastSyncedDataRef.current) return;
 
     const timer = setTimeout(async () => {
       const localState: BackupData = {
@@ -473,12 +533,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         liburDates,
         confirmedDates
       };
-      
-      await syncData(localState);
+
+      const synced = await syncData(localState);
+      if (synced) {
+        lastSyncedDataRef.current = currentSerialized;
+      }
     }, 2500);
 
     return () => clearTimeout(timer);
-  }, [namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, confirmedDates, user]);
+  }, [namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, confirmedDates, user, syncState, getSerializedState]);
 
   const syncWithCloud = useCallback(async () => {
     if (!user) {
@@ -500,6 +563,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
     const synced = await syncData(localState);
     if (synced) {
+      lastSyncedDataRef.current = getSerializedState(
+        synced.namaGuru || '',
+        synced.semester,
+        synced.kelasList,
+        synced.absenRecords || [],
+        synced.kasusRecords || [],
+        synced.catatanRecords || [],
+        synced.jadwalList || [],
+        synced.liburDates || [],
+        synced.confirmedDates || []
+      );
+
       if (synced.namaGuru) setNamaGuru(synced.namaGuru);
       setSemester(synced.semester);
       setKelasList(synced.kelasList);
@@ -515,7 +590,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       showToast('❌ Gagal sinkronisasi data dengan Cloud');
       return false;
     }
-  }, [user, namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, confirmedDates, syncData, showToast]);
+  }, [user, namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, confirmedDates, syncData, showToast, getSerializedState]);
 
   return (
     <AppContext.Provider value={{
