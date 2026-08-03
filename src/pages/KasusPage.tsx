@@ -3,21 +3,28 @@ import { useApp } from '@/context/AppContext';
 import { AlertTriangle, Zap } from 'lucide-react';
 import type { KasusRecord, PeriodeUjian, KasusStatus } from '@/types';
 
-const KATEGORI = ['Akademik', 'Kedisiplinan', 'Perilaku', 'Kehadiran', 'Sholat / Ibadah', 'Lainnya'];
+const KATEGORI = [
+  'Kedisiplinan',
+  'Sholat / Ibadah',
+  'Perilaku & Etika',
+  'Tugas & Peralatan',
+  'Pelanggaran Berat',
+  'Lainnya'
+];
 const PERIODE_OPTIONS: PeriodeUjian[] = ['Harian', 'UTS', 'UAS'];
 const STATUS_OPTIONS: KasusStatus[] = ['baru', 'proses', 'selesai'];
 
 const TEMPLATE_KASUS = [
-  'Tidak mengerjakan PR',
-  'Terlambat masuk kelas',
+  'Tidak mengerjakan PR / Tugas',
+  'Terlambat masuk kelas / sekolah',
   'Tidak melaksanakan sholat berjamaah',
-  'Terlambat masuk masjid / tempat sholat',
+  'Terlambat / kabur saat waktu sholat',
   'Mengganggu teman saat pelajaran',
-  'Tidak membawa perlengkapan belajar / alat sholat',
-  'Berbicara tidak sopan',
-  'Bermain HP saat pelajaran',
-  'Tidak mengikuti pelajaran dengan serius',
-  'Berkelahi dengan teman',
+  'Tidak membawa buku / perlengkapan belajar',
+  'Berbicara tidak sopan / berisik',
+  'Bermain HP saat jam pelajaran',
+  'Berkelahi / pertengkaran',
+  'Meninggalkan kelas tanpa izin (membolos)',
 ];
 
 const TIPE_CATATAN = [

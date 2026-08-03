@@ -18,7 +18,7 @@ const tutorials = [
     steps: [
       'Pilih tab "Kasus" di menu navigasi.',
       'Pilih siswa, tanggal, dan periode ujian.',
-      'Isi deskripsi kasus dan pilih kategori (Akademik, Kedisiplinan, Perilaku, dll).',
+      'Isi deskripsi kasus dan pilih kategori pelanggaran (Kedisiplinan, Sholat/Ibadah, Perilaku & Etika, dll).',
       'Klik "Simpan Kasus" untuk menyimpan catatan.',
     ],
   },
