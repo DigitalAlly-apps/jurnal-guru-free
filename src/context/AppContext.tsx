@@ -420,6 +420,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Ref & helper untuk mengoptimalkan frekuensi sync
   const lastSyncedUserIdRef = React.useRef<string | null>(null);
   const lastSyncedDataRef = React.useRef<string>('');
+  const isSyncingRef = React.useRef<boolean>(false);
 
   const getSerializedState = useCallback((
     name: string,
@@ -502,7 +503,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ── Auto-sync debounced ke Supabase ──────────────────────────────────────
   useEffect(() => {
     if (!user) return;
-    if (syncState === 'syncing') return;
+    // Gunakan ref, bukan syncState, agar tidak memicu ulang effect ini saat status sync berubah
+    if (isSyncingRef.current) return;
 
     const currentSerialized = getSerializedState(
       namaGuru,
@@ -520,6 +522,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (currentSerialized === lastSyncedDataRef.current) return;
 
     const timer = setTimeout(async () => {
+      // Double-check ref sebelum eksekusi (mencegah race condition)
+      if (isSyncingRef.current) return;
+      isSyncingRef.current = true;
+
       const localState: BackupData = {
         version: '5.0',
         exportedAt: new Date().toISOString(),
@@ -538,10 +544,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (synced) {
         lastSyncedDataRef.current = currentSerialized;
       }
+      isSyncingRef.current = false;
     }, 2500);
 
     return () => clearTimeout(timer);
-  }, [namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, confirmedDates, user, syncState, getSerializedState]);
+  // syncState sengaja DIHAPUS dari dependency array untuk mencegah infinite loop
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, confirmedDates, user, getSerializedState]);
 
   const syncWithCloud = useCallback(async () => {
     if (!user) {
