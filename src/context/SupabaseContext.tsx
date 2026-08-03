@@ -12,6 +12,7 @@ interface SupabaseContextType {
   isConfigured: boolean;
   syncState: SyncState;
   lastSyncTime: string | null;
+  lastSyncError: string | null;
   setLastSyncTime: (t: string | null) => void;
   signUp: (email: string, password: string, namaGuru: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
@@ -30,6 +31,9 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [syncState, setSyncState] = useState<SyncState>('idle');
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(() => {
     return localStorage.getItem('jg_lastSyncTime');
+  });
+  const [lastSyncError, setLastSyncError] = useState<string | null>(() => {
+    return sessionStorage.getItem('jg_lastSyncError');
   });
 
   // Ambil profil guru dari tabel profiles
@@ -477,13 +481,15 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       setLastSyncTime(syncTimeString);
       localStorage.setItem('jg_lastSyncTime', syncTimeString);
       setSyncState('success');
+      setLastSyncError(null);
+      sessionStorage.removeItem('jg_lastSyncError');
 
       return finalState;
     } catch (err: any) {
       const msg = err?.message || err?.details || JSON.stringify(err) || 'Unknown error';
       console.error('Sync error:', msg, err);
       setSyncState('error');
-      // Simpan error ke sessionStorage agar bisa ditampilkan di UI
+      setLastSyncError(msg);
       sessionStorage.setItem('jg_lastSyncError', msg);
       return null;
     }
@@ -498,6 +504,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       isConfigured: isSupabaseConfigured,
       syncState,
       lastSyncTime,
+      lastSyncError,
       setLastSyncTime,
       signUp,
       signIn,

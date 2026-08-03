@@ -16,7 +16,7 @@ function GoogleIcon({ className }: { className?: string }) {
 }
 
 export default function AuthPage() {
-  const { user, profile, isConfigured, signInWithGoogle, signOut, syncState, lastSyncTime } = useSupabase();
+  const { user, profile, isConfigured, signInWithGoogle, signOut, syncState, lastSyncTime, lastSyncError } = useSupabase();
   const { syncWithCloud, showToast } = useApp();
   const [loading, setLoading] = useState(false);
 
@@ -98,6 +98,13 @@ export default function AuthPage() {
               <span className="text-text-secondary">Terakhir Sync</span>
               <span className="font-mono text-xs text-foreground">{lastSyncTime || 'Belum pernah'}</span>
             </div>
+
+            {lastSyncError && (
+              <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl text-xs text-rose-700 dark:text-rose-300 space-y-1">
+                <span className="font-semibold block">⚠️ Detail Error Supabase:</span>
+                <span className="font-mono break-all block">{lastSyncError}</span>
+              </div>
+            )}
           </div>
 
           {/* Actions */}
