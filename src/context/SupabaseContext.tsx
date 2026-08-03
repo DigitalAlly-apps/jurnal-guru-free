@@ -5,6 +5,18 @@ import type { BackupData, Kelas, Student, AbsenRecord, KasusRecord, CatatanRecor
 
 export type SyncState = 'idle' | 'syncing' | 'success' | 'error';
 
+function dedupeById<T extends { id: string }>(items: T[]): T[] {
+  const seen = new Set<string>();
+  const result: T[] = [];
+  for (const item of items) {
+    if (item.id && !seen.has(item.id)) {
+      seen.add(item.id);
+      result.push(item);
+    }
+  }
+  return result;
+}
+
 interface SupabaseContextType {
   user: User | null;
   profile: { nama_guru?: string } | null;
@@ -159,25 +171,25 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     try {
       const uid = user.id;
 
-      // ── A. UPLOAD DATA LOKAL KE CLOUD (UPSERT) ──────────────────────────────
-
-      // 1. Upload Kelas
+      // ── A.       // 1. Upload Kelas
       if (localState.kelasList.length > 0) {
-        const payloadKelas = localState.kelasList.map(k => ({
+        const payloadKelas = dedupeById(localState.kelasList.map(k => ({
           id: k.id,
           name: k.name,
           jenjang: k.jenjang || 'SMP',
           user_id: uid
-        }));
-        const { error: errK } = await supabase.from('kelas').upsert(payloadKelas);
-        if (errK) throw errK;
+        })));
+        if (payloadKelas.length > 0) {
+          const { error: errK } = await supabase.from('kelas').upsert(payloadKelas);
+          if (errK) throw errK;
+        }
       }
 
       // 2. Upload Students
-      const payloadStudents: any[] = [];
+      const rawStudents: any[] = [];
       localState.kelasList.forEach(k => {
         k.students.forEach(s => {
-          payloadStudents.push({
+          rawStudents.push({
             id: s.id,
             name: s.name,
             nis: s.nis,
@@ -186,6 +198,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
           });
         });
       });
+      const payloadStudents = dedupeById(rawStudents);
       if (payloadStudents.length > 0) {
         const { error: errS } = await supabase.from('students').upsert(payloadStudents);
         if (errS) throw errS;
@@ -193,7 +206,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
 
       // 3. Upload Absen Records
       if (localState.absenRecords.length > 0) {
-        const payloadAbsen = localState.absenRecords.map(r => ({
+        const payloadAbsen = dedupeById(localState.absenRecords.map(r => ({
           id: r.id,
           student_id: r.studentId,
           student_name: r.studentName,
@@ -205,14 +218,16 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
           mata_pelajaran: r.mataPelajaran || null,
           jam_ujian: r.jamUjian || null,
           user_id: uid
-        }));
-        const { error: errA } = await supabase.from('absen_records').upsert(payloadAbsen);
-        if (errA) throw errA;
+        })));
+        if (payloadAbsen.length > 0) {
+          const { error: errA } = await supabase.from('absen_records').upsert(payloadAbsen);
+          if (errA) throw errA;
+        }
       }
 
       // 4. Upload Kasus Records
       if (localState.kasusRecords.length > 0) {
-        const payloadKasus = localState.kasusRecords.map(r => ({
+        const payloadKasus = dedupeById(localState.kasusRecords.map(r => ({
           id: r.id,
           student_id: r.studentId,
           student_name: r.studentName,
@@ -226,14 +241,16 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
           status: r.status || 'baru',
           tindak_lanjut: r.tindakLanjut || null,
           user_id: uid
-        }));
-        const { error: errKas } = await supabase.from('kasus_records').upsert(payloadKasus);
-        if (errKas) throw errKas;
+        })));
+        if (payloadKasus.length > 0) {
+          const { error: errKas } = await supabase.from('kasus_records').upsert(payloadKasus);
+          if (errKas) throw errKas;
+        }
       }
 
       // 5. Upload Catatan Records
       if (localState.catatanRecords.length > 0) {
-        const payloadCatatan = localState.catatanRecords.map(r => ({
+        const payloadCatatan = dedupeById(localState.catatanRecords.map(r => ({
           id: r.id,
           student_id: r.studentId,
           student_name: r.studentName,
@@ -242,14 +259,16 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
           kelas_id: r.kelasId,
           tipe: r.tipe || 'umum',
           user_id: uid
-        }));
-        const { error: errCat } = await supabase.from('catatan_records').upsert(payloadCatatan);
-        if (errCat) throw errCat;
+        })));
+        if (payloadCatatan.length > 0) {
+          const { error: errCat } = await supabase.from('catatan_records').upsert(payloadCatatan);
+          if (errCat) throw errCat;
+        }
       }
 
       // 6. Upload Jadwal Pelajaran
       if (localState.jadwalList.length > 0) {
-        const payloadJadwal = localState.jadwalList.map(r => ({
+        const payloadJadwal = dedupeById(localState.jadwalList.map(r => ({
           id: r.id,
           hari: r.hari,
           jam_mulai: r.jamMulai,
@@ -257,27 +276,31 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
           mata_pelajaran: r.mataPelajaran,
           kelas_id: r.kelasId,
           user_id: uid
-        }));
-        const { error: errJad } = await supabase.from('jadwal_slots').upsert(payloadJadwal);
-        if (errJad) throw errJad;
+        })));
+        if (payloadJadwal.length > 0) {
+          const { error: errJad } = await supabase.from('jadwal_slots').upsert(payloadJadwal);
+          if (errJad) throw errJad;
+        }
       }
 
       // 7. Upload Libur Dates
       if (localState.liburDates && localState.liburDates.length > 0) {
-        const payloadLibur = localState.liburDates.map(r => ({
+        const payloadLibur = dedupeById(localState.liburDates.map(r => ({
           id: r.id,
           date: r.date,
           jenjang: r.jenjang,
           keterangan: r.keterangan || null,
           user_id: uid
-        }));
-        const { error: errLib } = await supabase.from('libur_dates').upsert(payloadLibur);
-        if (errLib) throw errLib;
+        })));
+        if (payloadLibur.length > 0) {
+          const { error: errLib } = await supabase.from('libur_dates').upsert(payloadLibur);
+          if (errLib) throw errLib;
+        }
       }
 
       // 8. Upload Confirmed Dates
       if (localState.confirmedDates && localState.confirmedDates.length > 0) {
-        const payloadConf = localState.confirmedDates.map(r => ({
+        const payloadConf = dedupeById(localState.confirmedDates.map(r => ({
           id: r.id,
           kelas_id: r.kelasId,
           date: r.date,
@@ -285,9 +308,11 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
           mata_pelajaran: r.mataPelajaran || null,
           jam_ujian: r.jamUjian || null,
           user_id: uid
-        }));
-        const { error: errConf } = await supabase.from('confirmed_dates').upsert(payloadConf);
-        if (errConf) throw errConf;
+        })));
+        if (payloadConf.length > 0) {
+          const { error: errConf } = await supabase.from('confirmed_dates').upsert(payloadConf);
+          if (errConf) throw errConf;
+        }
       }
 
       // 9. Upload Semester Config
