@@ -474,29 +474,45 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         isSyncingRef.current = false;
 
         if (synced) {
-          // Set lastSyncedDataRef agar tidak men-trigger auto-sync setelah ini
-          lastSyncedDataRef.current = getSerializedState(
-            synced.namaGuru || '',
-            synced.semester,
-            synced.kelasList,
-            synced.absenRecords || [],
-            synced.kasusRecords || [],
-            synced.catatanRecords || [],
-            synced.jadwalList || [],
-            synced.liburDates || [],
-            synced.confirmedDates || []
-          );
+          // ── GUARD DATA LOSS: Jika cloud kosong tapi lokal ada data,
+          // jangan timpa data lokal. Biarkan auto-sync yang mengunggahnya.
+          const cloudHasData = (synced.kelasList?.length ?? 0) > 0 ||
+            (synced.absenRecords?.length ?? 0) > 0 ||
+            (synced.kasusRecords?.length ?? 0) > 0 ||
+            (synced.catatanRecords?.length ?? 0) > 0;
+          const localHasData = kelasList.length > 0 || absenRecords.length > 0;
 
-          if (synced.namaGuru) setNamaGuru(synced.namaGuru);
-          setSemester(synced.semester);
-          setKelasList(synced.kelasList);
-          setAbsenRecords(synced.absenRecords || []);
-          setKasusRecords(synced.kasusRecords || []);
-          setCatatanRecords(synced.catatanRecords || []);
-          setJadwalList(synced.jadwalList || []);
-          setLiburDates(synced.liburDates || []);
-          setConfirmedDates(synced.confirmedDates || []);
-          showToast('☁️ Cloud Sync: Data berhasil dipulihkan dari Cloud!');
+          if (cloudHasData) {
+            // Cloud punya data → pulihkan ke lokal
+            lastSyncedDataRef.current = getSerializedState(
+              synced.namaGuru || '',
+              synced.semester,
+              synced.kelasList,
+              synced.absenRecords || [],
+              synced.kasusRecords || [],
+              synced.catatanRecords || [],
+              synced.jadwalList || [],
+              synced.liburDates || [],
+              synced.confirmedDates || []
+            );
+            if (synced.namaGuru) setNamaGuru(synced.namaGuru);
+            setSemester(synced.semester);
+            setKelasList(synced.kelasList);
+            setAbsenRecords(synced.absenRecords || []);
+            setKasusRecords(synced.kasusRecords || []);
+            setCatatanRecords(synced.catatanRecords || []);
+            setJadwalList(synced.jadwalList || []);
+            setLiburDates(synced.liburDates || []);
+            setConfirmedDates(synced.confirmedDates || []);
+            showToast('☁️ Cloud Sync: Data berhasil dipulihkan dari Cloud!');
+          } else if (localHasData) {
+            // Cloud kosong tapi lokal ada data → biarkan data lokal, auto-sync akan mengunggahnya
+            lastSyncedDataRef.current = ''; // force auto-sync untuk upload data lokal
+            showToast('☁️ Cloud Sync: Terhubung! Data lokal akan diunggah...');
+          } else {
+            // Keduanya kosong → tidak ada yang perlu dilakukan
+            showToast('☁️ Cloud Sync: Terhubung!');
+          }
         } else {
           // Tampilkan error spesifik dari Supabase
           const errMsg = sessionStorage.getItem('jg_lastSyncError');

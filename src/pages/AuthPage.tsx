@@ -1,459 +1,196 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useSupabase } from '@/context/SupabaseContext';
 import { useApp } from '@/context/AppContext';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Cloud, Lock, Mail, User as UserIcon, ShieldAlert, ArrowRight, CheckCircle2, ChevronRight, Eye, EyeOff } from 'lucide-react';
+import { Cloud, ShieldAlert, CheckCircle2, Lock, Smartphone, RefreshCw, LogOut } from 'lucide-react';
+
+// Google icon SVG component
+function GoogleIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>
+  );
+}
 
 export default function AuthPage() {
-  const { user, profile, isConfigured, signIn, signUp, signOut, syncState, lastSyncTime } = useSupabase();
+  const { user, profile, isConfigured, signInWithGoogle, signOut, syncState, lastSyncTime } = useSupabase();
   const { syncWithCloud, showToast } = useApp();
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [namaGuru, setNamaGuru] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      showToast('⚠️ Mohon isi email dan password');
-      return;
-    }
+  const handleGoogleLogin = async () => {
     setLoading(true);
-    const { error } = await signIn(email, password);
-    setLoading(false);
+    const { error } = await signInWithGoogle();
     if (error) {
-      showToast(`❌ Gagal masuk: ${error.message || 'Email atau password salah'}`);
-    } else {
-      showToast('🔑 Berhasil masuk ke akun Cloud!');
+      showToast(`❌ Gagal masuk: ${error.message}`);
+      setLoading(false);
     }
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password || !namaGuru) {
-      showToast('⚠️ Mohon lengkapi semua kolom');
-      return;
-    }
-    if (password.length < 6) {
-      showToast('⚠️ Password minimal harus 6 karakter');
-      return;
-    }
-    setLoading(true);
-    const { error } = await signUp(email, password, namaGuru);
-    setLoading(false);
-    if (error) {
-      showToast(`❌ Gagal mendaftar: ${error.message}`);
-    } else {
-      showToast('🎉 Pendaftaran berhasil! Silakan cek email konfirmasi (jika ada) atau masuk.');
-    }
+    // Jika berhasil, browser akan redirect ke Google — loading tetap true
   };
 
   const handleManualSync = async () => {
     setLoading(true);
-    const success = await syncWithCloud();
+    await syncWithCloud();
     setLoading(false);
   };
 
-  // ── 1. JIKA SUPABASE BELUM DIKONFIGURASI ───────────────────────────────────
+  const handleSignOut = async () => {
+    setLoading(true);
+    await signOut();
+    setLoading(false);
+  };
+
+  // ── 1. SUPABASE BELUM DIKONFIGURASI ──────────────────────────────────────────
   if (!isConfigured) {
     return (
-      <div className="container max-w-4xl mx-auto px-4 py-8 animate-fade-in">
-        <div className="text-center mb-8">
-          <div className="inline-flex p-3 bg-amber-50 dark:bg-amber-950/30 rounded-2xl mb-4 text-amber-500 ring-4 ring-amber-500/10">
-            <ShieldAlert size={32} className="animate-pulse" />
+      <div className="container max-w-xl mx-auto px-4 py-12 animate-fade-in">
+        <div className="bg-surface rounded-2xl shadow-soft border border-amber-200 dark:border-amber-900/50 p-8 text-center space-y-4">
+          <div className="inline-flex p-4 bg-amber-50 dark:bg-amber-950/30 rounded-2xl text-amber-500">
+            <ShieldAlert size={32} />
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
-            Cloud Sync Belum Siap
-          </h1>
-          <p className="mt-2 text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-            Supabase Client belum memiliki kredensial API. Silakan ikuti panduan setup di bawah untuk mengaktifkan sinkronisasi cloud.
+          <h2 className="text-xl font-bold text-foreground">Cloud Sync Belum Siap</h2>
+          <p className="text-sm text-text-secondary">
+            Supabase belum terkonfigurasi. Pastikan variabel <code className="px-1.5 py-0.5 bg-bg-2 rounded text-xs font-mono text-amber-600">VITE_SUPABASE_URL</code> dan <code className="px-1.5 py-0.5 bg-bg-2 rounded text-xs font-mono text-amber-600">VITE_SUPABASE_ANON_KEY</code> sudah diisi.
           </p>
         </div>
-
-        <div className="grid md:grid-cols-5 gap-6">
-          <Card className="md:col-span-3 border-amber-200/60 dark:border-amber-500/20 bg-gradient-to-b from-white to-amber-50/10 dark:from-slate-900 dark:to-amber-950/5 shadow-xl shadow-amber-500/5">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl font-bold">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-500 text-white text-xs">!</span>
-                Panduan Setup File Kredensial
-              </CardTitle>
-              <CardDescription>
-                Hubungkan aplikasi ini ke basis data Supabase Anda dalam 3 langkah mudah.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-sm">
-                    1
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-slate-900 dark:text-slate-100">Buat File `.env.local`</h4>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                      Buat file baru bernama <code className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded font-mono text-xs text-amber-600">.env.local</code> di root direktori proyek ini.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-sm">
-                    2
-                  </div>
-                  <div className="w-full">
-                    <h4 className="font-semibold text-slate-900 dark:text-slate-100">Salin Kunci API Supabase</h4>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5 mb-2">
-                      Masukkan URL Project dan Kunci Anonim Anda dari dashboard Supabase ke file tersebut:
-                    </p>
-                    <pre className="p-3 bg-slate-950 text-slate-100 rounded-xl font-mono text-xs overflow-x-auto border border-slate-800 leading-relaxed shadow-inner">
-{`VITE_SUPABASE_URL=https://your-project-id.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key-here`}
-                    </pre>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-sm">
-                    3
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-slate-900 dark:text-slate-100">Jalankan Ulang Server Proyek</h4>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                      Matikan server pengembangan saat ini lalu ketik <code className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded font-mono text-xs text-amber-600">npm run dev</code> untuk memuat ulang variabel lingkungan.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="md:col-span-2 border-slate-200 dark:border-slate-800 shadow-lg bg-slate-50/50 dark:bg-slate-900/50">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold">Mengapa Cloud Sync?</CardTitle>
-              <CardDescription>Keunggulan sinkronisasi cloud.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="text-indigo-500 flex-shrink-0 mt-0.5" size={18} />
-                <div>
-                  <h5 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Aman & Terenkripsi</h5>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Semua jurnal, kasus, dan absensi tersimpan dengan aman di database cloud.</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="text-indigo-500 flex-shrink-0 mt-0.5" size={18} />
-                <div>
-                  <h5 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Multi Perangkat</h5>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Akses data yang sama dari Handphone, Laptop, atau Tablet guru secara real-time.</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="text-indigo-500 flex-shrink-0 mt-0.5" size={18} />
-                <div>
-                  <h5 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Local-First (Offline OK)</h5>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Aplikasi tetap lancar dipakai di daerah tanpa sinyal. Sync berjalan saat internet terdeteksi.</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     );
   }
 
-  // ── 2. JIKA USER SUDAH MASUK (LOGGED IN) ──────────────────────────────────
+  // ── 2. SUDAH LOGIN ────────────────────────────────────────────────────────────
   if (user) {
     return (
-      <div className="container max-w-2xl mx-auto px-4 py-8 animate-fade-in">
-        <Card className="border-indigo-100 dark:border-indigo-950 bg-gradient-to-b from-white to-indigo-50/5 dark:from-slate-950 dark:to-indigo-950/10 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl -mr-10 -mt-10" />
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl -ml-10 -mb-10" />
-
-          <CardHeader className="text-center pb-4">
-            <div className="inline-flex p-3.5 bg-indigo-500/10 rounded-2xl mb-4 text-indigo-500 ring-4 ring-indigo-500/5">
-              <Cloud size={32} className="animate-bounce" />
+      <div className="container max-w-md mx-auto px-4 py-10 animate-fade-in">
+        <div className="bg-surface rounded-2xl shadow-soft border border-indigo-100 dark:border-indigo-950 overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-6 text-center text-white">
+            <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-3 ring-4 ring-white/30">
+              <Cloud size={30} className="text-white" />
             </div>
-            <CardTitle className="text-2xl font-bold text-slate-900 dark:text-slate-50">
-              Sinkronisasi Cloud Aktif
-            </CardTitle>
-            <CardDescription className="text-indigo-600 dark:text-indigo-400 font-medium">
-              Sesi terhubung sebagai {profile?.nama_guru || 'Guru'}
-            </CardDescription>
-          </CardHeader>
+            <h2 className="text-xl font-bold">Cloud Sync Aktif</h2>
+            <p className="text-indigo-100 text-sm mt-1">{profile?.nama_guru || user.email}</p>
+          </div>
 
-          <CardContent className="space-y-6">
-            <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Email Akun</span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">{user.email}</span>
-              </div>
-              <div className="h-px bg-slate-200 dark:bg-slate-800" />
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Status Sinkronisasi</span>
-                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                  syncState === 'syncing' ? 'bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400' :
-                  syncState === 'error' ? 'bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-400' :
-                  'bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
-                }`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${
-                    syncState === 'syncing' ? 'bg-blue-500 animate-pulse' :
-                    syncState === 'error' ? 'bg-rose-500' :
-                    'bg-emerald-500'
-                  }`} />
-                  {syncState === 'syncing' ? 'Menyinkronkan...' :
-                   syncState === 'error' ? 'Gagal Sinkron' :
-                   'Tersinkronisasi'}
-                </span>
-              </div>
-              <div className="h-px bg-slate-200 dark:bg-slate-800" />
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500">Sinkronisasi Terakhir</span>
-                <span className="font-mono text-slate-900 dark:text-slate-100">{lastSyncTime || 'Belum pernah'}</span>
-              </div>
+          {/* Status */}
+          <div className="p-5 space-y-3">
+            <div className="flex justify-between items-center text-sm py-2.5 border-b border-border/40">
+              <span className="text-text-secondary">Email Akun</span>
+              <span className="font-medium text-foreground truncate max-w-[180px]">{user.email}</span>
             </div>
-
-            <div className="space-y-2">
-              <Button 
-                onClick={handleManualSync} 
-                disabled={loading || syncState === 'syncing'} 
-                className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/20 active:scale-[0.98] transition-transform"
-              >
-                {syncState === 'syncing' ? 'Menyinkronkan...' : 'Sinkronkan Sekarang ☁️'}
-              </Button>
-              <p className="text-center text-xs text-slate-400">
-                Pembaruan lokal akan otomatis terunggah ke basis data cloud dalam beberapa detik.
-              </p>
+            <div className="flex justify-between items-center text-sm py-2.5 border-b border-border/40">
+              <span className="text-text-secondary">Status</span>
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                syncState === 'syncing' ? 'bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400' :
+                syncState === 'error'   ? 'bg-rose-50 text-rose-600 dark:bg-rose-950 dark:text-rose-400' :
+                'bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  syncState === 'syncing' ? 'bg-blue-500 animate-pulse' :
+                  syncState === 'error'   ? 'bg-rose-500' : 'bg-emerald-500'
+                }`} />
+                {syncState === 'syncing' ? 'Menyinkronkan...' :
+                 syncState === 'error'   ? 'Gagal Sinkron' : 'Tersinkronisasi'}
+              </span>
             </div>
-          </CardContent>
+            <div className="flex justify-between items-center text-sm py-2.5">
+              <span className="text-text-secondary">Terakhir Sync</span>
+              <span className="font-mono text-xs text-foreground">{lastSyncTime || 'Belum pernah'}</span>
+            </div>
+          </div>
 
-          <CardFooter>
-            <Button 
-              variant="outline" 
-              onClick={signOut} 
-              disabled={loading}
-              className="w-full border-slate-200 dark:border-slate-800 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/20 rounded-xl"
+          {/* Actions */}
+          <div className="px-5 pb-5 space-y-2.5">
+            <button
+              onClick={handleManualSync}
+              disabled={loading || syncState === 'syncing'}
+              className="w-full h-11 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-all active:scale-[0.98]"
             >
-              Keluar Akun Cloud
-            </Button>
-          </CardFooter>
-        </Card>
+              <RefreshCw size={16} className={syncState === 'syncing' ? 'animate-spin' : ''} />
+              {syncState === 'syncing' ? 'Menyinkronkan...' : 'Sinkronkan Sekarang'}
+            </button>
+            <button
+              onClick={handleSignOut}
+              disabled={loading}
+              className="w-full h-11 flex items-center justify-center gap-2 border border-border hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 hover:text-rose-700 font-semibold rounded-xl transition-all"
+            >
+              <LogOut size={16} />
+              Keluar Akun
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
-  // ── 3. FORM AUTH (MASUK / DAFTAR TABS) ────────────────────────────────────
+  // ── 3. BELUM LOGIN — Google Sign In ───────────────────────────────────────────
   return (
-    <div className="container max-w-5xl mx-auto px-4 py-8 animate-fade-in">
-      <div className="grid md:grid-cols-12 gap-8 items-center max-w-4xl mx-auto">
-        
-        {/* Kolom Informasi Benefit (Kiri) */}
-        <div className="md:col-span-5 space-y-6 hidden md:block">
+    <div className="container max-w-4xl mx-auto px-4 py-10 animate-fade-in">
+      <div className="grid md:grid-cols-2 gap-8 items-center max-w-3xl mx-auto">
+
+        {/* Kiri: Benefit */}
+        <div className="space-y-6 hidden md:block">
           <div className="space-y-2">
-            <span className="px-3 py-1 bg-indigo-500/10 text-indigo-500 rounded-full text-xs font-semibold tracking-wider uppercase">
-              Cloud Storage
-            </span>
-            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-50">
-              Satu Jurnal, Banyak Perangkat
-            </h2>
-            <p className="text-slate-500 dark:text-slate-400">
-              Dengan mengaktifkan Cloud Sync, Anda tidak perlu khawatir kehilangan jurnal guru saat HP rusak atau hilang.
-            </p>
+            <span className="px-3 py-1 bg-indigo-500/10 text-indigo-500 rounded-full text-xs font-semibold tracking-wider uppercase">Cloud Storage</span>
+            <h2 className="text-3xl font-extrabold tracking-tight text-foreground">Satu Jurnal,<br/>Semua Perangkat</h2>
+            <p className="text-text-secondary text-sm">Akses data jurnal yang sama dari HP, laptop, atau tablet kapan pun dan di mana pun.</p>
           </div>
-
           <div className="space-y-4">
-            <div className="flex gap-3">
-              <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-500 flex-shrink-0">
-                <Cloud size={20} />
+            {[
+              { icon: <Cloud size={18} />, title: 'Auto Background Sync', desc: 'Data tersinkron otomatis saat ada perubahan.' },
+              { icon: <Lock size={18} />, title: 'Aman & Terisolasi', desc: 'Data Anda dilindungi Row Level Security — hanya Anda yang bisa akses.' },
+              { icon: <Smartphone size={18} />, title: 'Offline-First', desc: 'Tetap bisa input data tanpa internet. Sync otomatis saat terkoneksi.' },
+            ].map((f, i) => (
+              <div key={i} className="flex gap-3">
+                <div className="p-2 bg-indigo-500/10 text-indigo-500 rounded-xl flex-shrink-0 h-fit">{f.icon}</div>
+                <div>
+                  <h4 className="font-semibold text-foreground text-sm">{f.title}</h4>
+                  <p className="text-text-secondary text-xs">{f.desc}</p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 text-sm">Auto Background Sync</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Data otomatis tersinkron secara hening di latar belakang saat Anda terhubung ke internet.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-500 flex-shrink-0">
-                <Lock size={20} />
-              </div>
-              <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 text-sm">Aman & Terkendali</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Data Anda diisolasi menggunakan Row Level Security (RLS) Supabase, menjamin privasi penuh.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-500 flex-shrink-0">
-                <CheckCircle2 size={20} />
-              </div>
-              <div>
-                <h4 className="font-semibold text-slate-800 dark:text-slate-200 text-sm">Mudah & Cepat</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Daftar akun gratis, integrasi langsung aktif tanpa ribet import & export manual lagi.
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* Kolom Form (Kanan) */}
-        <div className="md:col-span-7 w-full">
-          <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid grid-cols-2 mb-4 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl">
-              <TabsTrigger value="login" className="rounded-lg font-semibold py-2">Masuk Akun</TabsTrigger>
-              <TabsTrigger value="register" className="rounded-lg font-semibold py-2">Daftar Cloud</TabsTrigger>
-            </TabsList>
+        {/* Kanan: Sign In Card */}
+        <div>
+          <div className="bg-surface rounded-2xl shadow-soft border border-border/50 overflow-hidden">
+            {/* Header Card */}
+            <div className="p-8 text-center border-b border-border/40">
+              <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center mx-auto mb-4">
+                <Cloud size={28} className="text-indigo-500" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground">Masuk ke Cloud Sync</h3>
+              <p className="text-text-secondary text-sm mt-1">Gunakan akun Google untuk masuk dengan aman dan cepat.</p>
+            </div>
 
-            {/* Tab Masuk */}
-            <TabsContent value="login" className="animate-in fade-in-50 duration-200">
-              <Card className="border-slate-100 dark:border-slate-800 shadow-2xl">
-                <CardHeader>
-                  <CardTitle className="text-xl font-bold">Masuk Cloud Sync</CardTitle>
-                  <CardDescription>Masukkan email dan kata sandi Anda untuk mulai sinkronisasi.</CardDescription>
-                </CardHeader>
-                <form onSubmit={handleSignIn}>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email-login">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                        <Input 
-                          id="email-login" 
-                          type="email" 
-                          placeholder="nama@email.com" 
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10 h-11 rounded-xl"
-                          required
-                        />
-                      </div>
-                    </div>
+            {/* Google Button */}
+            <div className="p-6 space-y-4">
+              <button
+                id="btn-google-signin"
+                onClick={handleGoogleLogin}
+                disabled={loading}
+                className="w-full h-12 flex items-center justify-center gap-3 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold text-slate-700 dark:text-slate-200 shadow-sm transition-all active:scale-[0.98] disabled:opacity-60"
+              >
+                {loading ? (
+                  <RefreshCw size={18} className="animate-spin text-slate-400" />
+                ) : (
+                  <GoogleIcon className="w-5 h-5" />
+                )}
+                {loading ? 'Menghubungkan...' : 'Lanjutkan dengan Google'}
+              </button>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="password-login">Kata Sandi</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                        <Input 
-                          id="password-login" 
-                          type={showPassword ? 'text' : 'password'} 
-                          placeholder="••••••••" 
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="pl-10 pr-10 h-11 rounded-xl"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                        >
-                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      type="submit" 
-                      disabled={loading} 
-                      className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/10"
-                    >
-                      {loading ? 'Memproses...' : 'Masuk Ke Cloud'}
-                      <ArrowRight size={16} className="ml-2" />
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Card>
-            </TabsContent>
-
-            {/* Tab Daftar */}
-            <TabsContent value="register" className="animate-in fade-in-50 duration-200">
-              <Card className="border-slate-100 dark:border-slate-800 shadow-2xl">
-                <CardHeader>
-                  <CardTitle className="text-xl font-bold">Daftar Akun Baru</CardTitle>
-                  <CardDescription>Lengkapi formulir untuk membuat profil guru dan database cloud.</CardDescription>
-                </CardHeader>
-                <form onSubmit={handleSignUp}>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="nama-register">Nama Lengkap Guru</Label>
-                      <div className="relative">
-                        <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                        <Input 
-                          id="nama-register" 
-                          type="text" 
-                          placeholder="Budi Sudarsono, S.Pd." 
-                          value={namaGuru}
-                          onChange={(e) => setNamaGuru(e.target.value)}
-                          className="pl-10 h-11 rounded-xl"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email-register">Alamat Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                        <Input 
-                          id="email-register" 
-                          type="email" 
-                          placeholder="nama@email.com" 
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="pl-10 h-11 rounded-xl"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="password-register">Kata Sandi</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                        <Input 
-                          id="password-register" 
-                          type={showPassword ? 'text' : 'password'} 
-                          placeholder="Minimal 6 karakter" 
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="pl-10 pr-10 h-11 rounded-xl"
-                          required
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                        >
-                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      type="submit" 
-                      disabled={loading} 
-                      className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-500/10"
-                    >
-                      {loading ? 'Mendaftar...' : 'Buat Akun Cloud'}
-                      <ChevronRight size={16} className="ml-1" />
-                    </Button>
-                  </CardFooter>
-                </form>
-              </Card>
-            </TabsContent>
-          </Tabs>
+              <div className="flex items-center gap-2 text-xs text-text-tertiary">
+                <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" />
+                <span>Tidak perlu password — cukup akun Google Anda</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-text-tertiary">
+                <CheckCircle2 size={13} className="text-emerald-500 flex-shrink-0" />
+                <span>Data lokal Anda aman dan tidak akan terhapus saat login</span>
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>

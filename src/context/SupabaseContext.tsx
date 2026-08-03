@@ -15,6 +15,7 @@ interface SupabaseContextType {
   setLastSyncTime: (t: string | null) => void;
   signUp: (email: string, password: string, namaGuru: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signInWithGoogle: () => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
   syncData: (localState: BackupData) => Promise<BackupData | null>;
   setSyncState: (state: SyncState) => void;
@@ -122,6 +123,21 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       setProfile(null);
       localStorage.removeItem('jg_lastSyncTime');
       setLastSyncTime(null);
+      return { error: null };
+    } catch (error: any) {
+      return { error };
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    if (!supabase) return { error: new Error('Supabase belum dikonfigurasi') };
+    try {
+      const redirectTo = window.location.origin;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo },
+      });
+      if (error) throw error;
       return { error: null };
     } catch (error: any) {
       return { error };
@@ -485,6 +501,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       setLastSyncTime,
       signUp,
       signIn,
+      signInWithGoogle,
       signOut,
       syncData,
       setSyncState
