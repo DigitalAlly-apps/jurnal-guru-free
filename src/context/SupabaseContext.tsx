@@ -388,7 +388,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
 
       // ── C. RAKIT BALIK KE BACKUPDATA FORMAT (LOCAL STATE) ──────────────────
 
-      // Petakan siswa ke dalam kelas
+      // Petakan siswa ke dalam kelas (urutkan abjad)
       const mappedKelasList: Kelas[] = (dbKelas || []).map(k => {
         const classStudents: Student[] = (dbStudents || [])
           .filter(s => s.kelas_id === k.id)
@@ -396,7 +396,8 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
             id: s.id,
             name: s.name,
             nis: s.nis || ''
-          }));
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name, 'id', { numeric: true, sensitivity: 'base' }));
         return {
           id: k.id,
           name: k.name,

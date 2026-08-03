@@ -123,10 +123,12 @@ export function SiswaPage() {
 
   // ── Filter search (hook harus dipanggil sebelum early return) ──
   const filteredStudents = useMemo(() =>
-    (kelas?.students || []).filter(s =>
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.nis.includes(search)
-    ),
+    (kelas?.students || [])
+      .filter(s =>
+        s.name.toLowerCase().includes(search.toLowerCase()) ||
+        s.nis.includes(search)
+      )
+      .sort((a, b) => a.name.localeCompare(b.name, 'id', { numeric: true, sensitivity: 'base' })),
     [kelas, search]
   );
 

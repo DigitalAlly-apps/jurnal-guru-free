@@ -328,18 +328,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         id: `${kelasId}_${Date.now()}_${i}`,
         name: s.name.trim(), nis: s.nis.trim(),
       })).filter(s => s.name);
-      return { ...k, students: [...k.students, ...newStudents] };
+      const combined = [...k.students, ...newStudents];
+      combined.sort((a, b) => a.name.localeCompare(b.name, 'id', { numeric: true, sensitivity: 'base' }));
+      return { ...k, students: combined };
     }));
   }, []);
   const updateStudent = useCallback((kelasId: string, studentId: string, updates: { name?: string; nis?: string }) => {
-    setKelasList(prev => prev.map(k =>
-      k.id !== kelasId ? k : {
-        ...k,
-        students: k.students.map(s =>
-          s.id !== studentId ? s : { ...s, ...updates }
-        )
-      }
-    ));
+    setKelasList(prev => prev.map(k => {
+      if (k.id !== kelasId) return k;
+      const updated = k.students.map(s =>
+        s.id !== studentId ? s : { ...s, ...updates }
+      );
+      updated.sort((a, b) => a.name.localeCompare(b.name, 'id', { numeric: true, sensitivity: 'base' }));
+      return { ...k, students: updated };
+    }));
   }, []);
   const removeStudentFromKelas = useCallback((kelasId: string, studentId: string) => {
     setKelasList(prev => prev.map(k =>

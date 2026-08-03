@@ -94,7 +94,9 @@ export function AbsenPage() {
 
   const students = useMemo(() => {
     if (!kelas) return [];
-    return kelas.students.filter(s => s.name.toLowerCase().includes(search.toLowerCase()));
+    return kelas.students
+      .filter(s => s.name.toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => a.name.localeCompare(b.name, 'id', { numeric: true, sensitivity: 'base' }));
   }, [kelas, search]);
 
   const getStatus = (studentId: string): AbsenStatus => {
