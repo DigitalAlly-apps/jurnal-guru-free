@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import type { User } from '@supabase/supabase-js';
 import type { BackupData, Kelas, Student, AbsenRecord, KasusRecord, CatatanRecord, JadwalSlot, LiburDate, ConfirmedDate, SemesterConfig } from '@/types';
@@ -129,7 +129,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   };
 
   // ── Sync Engine: Bidirectional Local-First Sync ──────────────────────────────
-  const syncData = async (localState: BackupData): Promise<BackupData | null> => {
+  const syncData = useCallback(async (localState: BackupData): Promise<BackupData | null> => {
     if (!supabase || !user) {
       setSyncState('error');
       return null;
@@ -463,12 +463,16 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       setSyncState('success');
 
       return finalState;
-    } catch (err) {
-      console.error('Sync error:', err);
+    } catch (err: any) {
+      const msg = err?.message || err?.details || JSON.stringify(err) || 'Unknown error';
+      console.error('Sync error:', msg, err);
       setSyncState('error');
+      // Simpan error ke sessionStorage agar bisa ditampilkan di UI
+      sessionStorage.setItem('jg_lastSyncError', msg);
       return null;
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   return (
     <SupabaseContext.Provider value={{

@@ -446,11 +446,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  // ── Sync awal saat user pertama kali login ────────────────────────────────
+  // ── Sync awal saat user pertama kali login ────────────────────────────────────
   useEffect(() => {
     if (user && lastSyncedUserIdRef.current !== user.id) {
       lastSyncedUserIdRef.current = user.id;
       const triggerInitialSync = async () => {
+        // Tunggu sebentar agar React selesai render sebelum mulai sync
+        await new Promise(r => setTimeout(r, 300));
+        if (isSyncingRef.current) return;
+        isSyncingRef.current = true;
+
         const localState: BackupData = {
           version: '5.0',
           exportedAt: new Date().toISOString(),
@@ -466,6 +471,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         };
 
         const synced = await syncData(localState);
+        isSyncingRef.current = false;
+
         if (synced) {
           // Set lastSyncedDataRef agar tidak men-trigger auto-sync setelah ini
           lastSyncedDataRef.current = getSerializedState(
@@ -490,6 +497,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setLiburDates(synced.liburDates || []);
           setConfirmedDates(synced.confirmedDates || []);
           showToast('☁️ Cloud Sync: Data berhasil dipulihkan dari Cloud!');
+        } else {
+          // Tampilkan error spesifik dari Supabase
+          const errMsg = sessionStorage.getItem('jg_lastSyncError');
+          showToast(`❌ Gagal sinkronisasi: ${errMsg || 'Cek koneksi internet'}`);
         }
       };
 
@@ -550,7 +561,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   // syncState sengaja DIHAPUS dari dependency array untuk mencegah infinite loop
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, confirmedDates, user, getSerializedState]);
+  }, [namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, confirmedDates, user, syncData, getSerializedState]);
 
   const syncWithCloud = useCallback(async () => {
     if (!user) {
