@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS public.catatan_records (
     date TEXT NOT NULL,
     content TEXT NOT NULL,
     kelas_id TEXT REFERENCES public.kelas(id) ON DELETE CASCADE NOT NULL,
-    tipe TEXT CHECK (tipe IN ('prestasi', 'perkembangan', 'umum')),
+    tipe TEXT CHECK (tipe IN ('prestasi', 'perkembangan', 'sholat', 'umum')),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL DEFAULT auth.uid(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );

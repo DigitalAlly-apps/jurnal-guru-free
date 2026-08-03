@@ -5,6 +5,7 @@ import type { CatatanRecord } from '@/types';
 
 const TIPE_CATATAN = [
   { id: 'umum',         label: '📝 Umum',          desc: 'Catatan observasi lainnya' },
+  { id: 'sholat',       label: '🕌 Sholat & Ibadah', desc: 'Catatan kedisiplinan & pelaksanaan sholat/ibadah' },
   { id: 'prestasi',     label: '🏆 Prestasi',       desc: 'Pencapaian atau penghargaan' },
   { id: 'perkembangan', label: '📈 Perkembangan',   desc: 'Kemajuan belajar atau sikap' },
 ] as const;
@@ -88,6 +89,7 @@ export function CatatanPage() {
   const TIPE_BADGE: Record<string, string> = {
     prestasi:     'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
     perkembangan: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    sholat:       'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
     umum:         'bg-bg-2 text-text-secondary',
   };
 

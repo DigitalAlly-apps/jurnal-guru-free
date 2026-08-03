@@ -52,7 +52,7 @@ export interface CatatanRecord {
   date: string;
   content: string;
   kelasId: string;
-  tipe?: 'prestasi' | 'perkembangan' | 'umum';
+  tipe?: 'prestasi' | 'perkembangan' | 'sholat' | 'umum';
 }
 
 export type TabId = 'home' | 'siswa' | 'absen' | 'jurnal' | 'jadwal' | 'laporan' | 'setelan' | 'auth';

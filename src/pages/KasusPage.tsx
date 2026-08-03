@@ -3,15 +3,17 @@ import { useApp } from '@/context/AppContext';
 import { AlertTriangle, Zap } from 'lucide-react';
 import type { KasusRecord, PeriodeUjian, KasusStatus } from '@/types';
 
-const KATEGORI = ['Akademik', 'Kedisiplinan', 'Perilaku', 'Kehadiran', 'Lainnya'];
+const KATEGORI = ['Akademik', 'Kedisiplinan', 'Perilaku', 'Kehadiran', 'Sholat / Ibadah', 'Lainnya'];
 const PERIODE_OPTIONS: PeriodeUjian[] = ['Harian', 'UTS', 'UAS'];
 const STATUS_OPTIONS: KasusStatus[] = ['baru', 'proses', 'selesai'];
 
 const TEMPLATE_KASUS = [
   'Tidak mengerjakan PR',
   'Terlambat masuk kelas',
+  'Tidak melaksanakan sholat berjamaah',
+  'Terlambat masuk masjid / tempat sholat',
   'Mengganggu teman saat pelajaran',
-  'Tidak membawa perlengkapan belajar',
+  'Tidak membawa perlengkapan belajar / alat sholat',
   'Berbicara tidak sopan',
   'Bermain HP saat pelajaran',
   'Tidak mengikuti pelajaran dengan serius',
@@ -21,6 +23,7 @@ const TEMPLATE_KASUS = [
 const TIPE_CATATAN = [
   { id: 'prestasi',     label: '🏆 Prestasi',     desc: 'Pencapaian atau penghargaan' },
   { id: 'perkembangan', label: '📈 Perkembangan',  desc: 'Kemajuan belajar atau sikap' },
+  { id: 'sholat',       label: '🕌 Sholat & Ibadah', desc: 'Pelaksanaan sholat/ibadah' },
   { id: 'umum',         label: '📝 Umum',          desc: 'Catatan observasi lainnya' },
 ] as const;
 

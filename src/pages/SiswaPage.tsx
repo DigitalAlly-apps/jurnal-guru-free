@@ -622,9 +622,11 @@ function StudentDetail({ student, kelasId, kelasName }: {
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                       c.tipe === 'prestasi'
                         ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                        : c.tipe === 'sholat'
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                         : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                     }`}>
-                      {c.tipe === 'prestasi' ? '🏆 Prestasi' : '📈 Perkembangan'}
+                      {c.tipe === 'prestasi' ? '🏆 Prestasi' : c.tipe === 'sholat' ? '🕌 Sholat' : '📈 Perkembangan'}
                     </span>
                   )}
                 </div>
