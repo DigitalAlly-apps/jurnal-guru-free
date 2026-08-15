@@ -48,6 +48,7 @@ export function AbsenPage() {
   const [showLiburForm, setShowLiburForm] = useState(false);
   const [liburKet, setLiburKet] = useState('');
   const [showKalender, setShowKalender] = useState(false);
+  const [attendanceTab, setAttendanceTab] = useState<'harian' | 'ujian' | 'kalender'>('harian');
 
   const isUjian = periode === 'UTS' || periode === 'UAS';
 
@@ -255,6 +256,11 @@ export function AbsenPage() {
   const statusLabel: Record<AbsenStatus, string> = {
     H: 'Hadir', S: 'Sakit', I: 'Izin', A: 'Alpha',
   };
+  const attendanceSummary = kelas?.students.reduce((summary, student) => {
+    const status = getStatus(student.id);
+    summary[status]++;
+    return summary;
+  }, { H: 0, S: 0, I: 0, A: 0 } as Record<AbsenStatus, number>) || { H: 0, S: 0, I: 0, A: 0 };
 
   if (!kelas || kelas.students.length === 0) {
     return (
@@ -268,6 +274,15 @@ export function AbsenPage() {
   return (
     <div className="flex flex-col gap-4 w-full max-w-4xl mx-auto overflow-hidden">
 
+      <div className="flex rounded-xl bg-bg-2 p-1 gap-1">
+        {([['harian', 'Harian'], ['ujian', 'Ujian'], ['kalender', 'Kalender']] as const).map(([id, label]) => <button key={id} onClick={() => {
+          setAttendanceTab(id);
+          setShowKalender(id === 'kalender');
+          if (id === 'harian') handlePeriodeChange('Harian');
+          if (id === 'ujian' && !isUjian) handlePeriodeChange('UTS');
+        }} className={`flex-1 rounded-lg py-2.5 text-xs font-bold ${attendanceTab === id ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary'}`}>{label}</button>)}
+      </div>
+
       {/* ── Card kontrol: Tanggal · Periode · Mapel ── */}
       <div className="bg-surface rounded-2xl shadow-soft p-4 flex flex-col gap-3 overflow-hidden">
 
@@ -280,7 +295,7 @@ export function AbsenPage() {
             className="input-soft flex-1 min-w-0 w-0"
           />
           <button
-            onClick={() => setShowKalender(v => !v)}
+            onClick={() => { setAttendanceTab('kalender'); setShowKalender(v => !v); }}
             title="Lihat kalender absensi"
             className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-semibold transition-all ${
               showKalender ? 'bg-primary text-white' : 'bg-bg-2 text-text-secondary hover:text-primary hover:bg-accent-light'
@@ -292,7 +307,7 @@ export function AbsenPage() {
         </div>
 
         {/* Baris 2: Toggle Harian / UTS / UAS */}
-        <div className="flex bg-bg-2 rounded-xl p-1 gap-1">
+        {attendanceTab === 'ujian' && <div className="flex bg-bg-2 rounded-xl p-1 gap-1">
           {PERIODE_OPTIONS.map(p => (
             <button
               key={p}
@@ -304,7 +319,7 @@ export function AbsenPage() {
               {p}
             </button>
           ))}
-        </div>
+        </div>}
 
         {/* Kalender mini */}
         {showKalender && (
@@ -467,6 +482,10 @@ export function AbsenPage() {
         )}
       </div>
 
+      {attendanceTab !== 'kalender' && !liburForDate && <div className="grid grid-cols-4 gap-2">
+        {([['H', 'Hadir'], ['S', 'Sakit'], ['I', 'Izin'], ['A', 'Alpha']] as [AbsenStatus, string][]).map(([id, label]) => <div key={id} className="rounded-xl bg-surface p-3 text-center shadow-soft"><p className={`text-lg font-bold ${id === 'A' ? 'text-semantic-red' : ''}`}>{attendanceSummary[id]}</p><p className="text-[9px] font-bold uppercase text-text-tertiary">{label}</p></div>)}
+      </div>}
+
       {liburForDate && (
         <div className="bg-semantic-yellow-light rounded-2xl px-4 py-5 flex items-start gap-3">
           <div className="w-9 h-9 rounded-xl bg-white/60 dark:bg-black/10 flex items-center justify-center flex-shrink-0">
@@ -481,7 +500,7 @@ export function AbsenPage() {
         </div>
       )}
 
-      {!liburForDate && (
+      {attendanceTab !== 'kalender' && !liburForDate && (
         <>
 
       {/* Edit mode banner */}
@@ -545,17 +564,7 @@ export function AbsenPage() {
                   )}
                 </div>
 
-                {/* Tombol status H/S/I/A */}
-                <div className="flex rounded-xl overflow-hidden border border-border flex-shrink-0">
-                  {statuses.map(st => (
-                    <button key={st} onClick={() => toggleStatus(s.id, st)}
-                      className={`px-3 py-1.5 text-[12px] font-semibold transition-all duration-150 ${
-                        status === st ? statusColors[st] : 'bg-surface text-text-tertiary hover:bg-bg-2'
-                      } ${st !== 'A' ? 'border-r border-border' : ''}`}>
-                      {st}
-                    </button>
-                  ))}
-                </div>
+                {status === 'H' ? <button onClick={() => { toggleStatus(s.id, 'A'); setExpandedId(s.id); }} className="rounded-xl border border-border bg-bg-2 px-3 py-2 text-[11px] font-bold text-text-secondary">Tandai tidak hadir</button> : <button onClick={() => setExpandedId(isOpen ? null : s.id)} className={`rounded-xl px-3 py-2 text-[11px] font-bold ${statusColors[status]}`}>{statusLabel[status]}</button>}
 
                 {/* Tombol expand keterangan — hanya muncul kalau S/I/A */}
                 {needsKet && (
@@ -574,6 +583,9 @@ export function AbsenPage() {
               {/* Panel keterangan — slide down */}
               {needsKet && isOpen && (
                 <div className="px-4 pb-3 flex flex-col gap-2 bg-bg-2 border-t border-border">
+                  <div className="grid grid-cols-4 gap-1 pt-2">
+                    {statuses.map(st => <button key={st} onClick={() => toggleStatus(s.id, st)} className={`rounded-lg py-2 text-[10px] font-bold ${status === st ? statusColors[st] : 'bg-surface text-text-tertiary'}`}>{statusLabel[st]}</button>)}
+                  </div>
                   <label className="label-upper pt-2 block">
                     Keterangan {statusLabel[status]}
                   </label>

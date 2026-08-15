@@ -17,8 +17,8 @@ export function LaporanRiwayatPage() {
           }`}
         >
           <BarChart3 className="w-4 h-4" />
-          <span className="hidden sm:inline">Rekap</span>
-          <span className="sm:hidden">Rekap</span>
+          <span className="hidden sm:inline">Pantauan</span>
+          <span className="sm:hidden">Pantauan</span>
         </button>
         <button
           onClick={() => setTab('ujian')}
