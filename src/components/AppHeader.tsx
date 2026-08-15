@@ -38,7 +38,7 @@ export function AppHeader() {
 
   const backupOk = (() => {
     if (!lastBackupDate) return false;
-    return (Date.now() - new Date(lastBackupDate).getTime()) / 86400000 <= 7;
+    return (Date.now() - new Date(lastBackupDate).getTime()) / 86400000 <= 30;
   })();
 
   const firstName = namaGuru ? namaGuru.split(' ')[0] : null;

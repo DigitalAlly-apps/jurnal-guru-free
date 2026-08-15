@@ -13,7 +13,7 @@ import { useEffect, useRef } from 'react';
 import { storageSet, storageGet } from '@/lib/storage';
 import type { BackupData } from '@/types';
 
-const AUTO_BACKUP_DAYS = 3; // lebih agresif dari reminder 7 hari
+const AUTO_BACKUP_DAYS = 30;
 
 interface AutoBackupOptions {
   data: BackupData;
@@ -53,9 +53,10 @@ export function useAutoBackup({
     if (!enabled || autoBackupTriggeredRef.current) return;
 
     // Hitung hari sejak backup terakhir
-    const daysSinceBackup = lastBackupDate
-      ? (Date.now() - new Date(lastBackupDate).getTime()) / 86400000
-      : Infinity;
+    // Cloud sync is the primary copy. Do not download a backup on first run;
+    // after a manual backup, at most one automatic copy is made per month.
+    if (!lastBackupDate) return;
+    const daysSinceBackup = (Date.now() - new Date(lastBackupDate).getTime()) / 86400000;
 
     if (daysSinceBackup < AUTO_BACKUP_DAYS) return;
 
