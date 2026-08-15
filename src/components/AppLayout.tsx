@@ -34,11 +34,11 @@ export function AppLayout() {
   return (
     <SidebarProvider>
       <OnboardingWizard />
-      <div className="min-h-screen flex w-full">
+      <div className="flex h-[100dvh] w-full overflow-hidden overscroll-none">
         <AppSidebar />
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <AppHeader />
-          <main className="flex-1 p-4 md:p-6 overflow-y-auto">
+          <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:p-6 md:pb-6">
             {renderPage()}
           </main>
         </div>
