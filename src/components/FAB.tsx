@@ -14,7 +14,7 @@ export function FAB() {
   const { setActiveTab, activeTab } = useApp();
 
   // Sembunyikan di halaman setelan
-  if (activeTab === 'setelan') return null;
+  if (activeTab === 'setelan' || activeTab === 'laporan') return null;
 
   const handleAction = (tab: TabId) => {
     setActiveTab(tab);
