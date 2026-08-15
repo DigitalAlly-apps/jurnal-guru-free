@@ -55,7 +55,7 @@ export interface CatatanRecord {
   tipe?: 'prestasi' | 'perkembangan' | 'sholat' | 'umum';
 }
 
-export type TabId = 'home' | 'siswa' | 'absen' | 'jurnal' | 'jadwal' | 'laporan' | 'setelan' | 'auth';
+export type TabId = 'home' | 'siswa' | 'absen' | 'jurnal' | 'laporan' | 'setelan' | 'auth';
 
 export type SemesterPeriod = 'ganjil' | 'genap';
 
@@ -64,17 +64,6 @@ export interface UjianSchedule {
   utsEnd: string;
   uasStart: string;
   uasEnd: string;
-}
-
-export type HariSekolah = 'Senin' | 'Selasa' | 'Rabu' | 'Kamis' | 'Jumat' | 'Sabtu';
-
-export interface JadwalSlot {
-  id: string;
-  hari: HariSekolah;
-  jamMulai: string;
-  jamSelesai: string;
-  mataPelajaran: string;
-  kelasId: string;
 }
 
 export interface LiburDate {
@@ -111,7 +100,6 @@ export interface BackupData {
   absenRecords: AbsenRecord[];
   kasusRecords: KasusRecord[];
   catatanRecords: CatatanRecord[];
-  jadwalList: JadwalSlot[];
   liburDates?: LiburDate[];
   confirmedDates?: ConfirmedDate[];
 }

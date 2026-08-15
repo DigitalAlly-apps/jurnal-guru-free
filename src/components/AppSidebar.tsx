@@ -2,7 +2,6 @@ import {
   LayoutDashboard,
   ClipboardCheck,
   AlertTriangle,
-  CalendarDays,
   History,
   BarChart3,
   Users,
@@ -30,7 +29,6 @@ const NAV_ITEMS: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = 
   { id: 'siswa',     label: 'Data Kelas',       icon: Users },
   { id: 'absen',     label: 'Absensi Harian',   icon: ClipboardCheck },
   { id: 'jurnal',    label: 'Buku Jurnal Guru', icon: AlertTriangle },
-  { id: 'jadwal',    label: 'Jadwal Pelajaran', icon: CalendarDays },
   { id: 'laporan',   label: 'Buku Induk',       icon: BarChart3 },
 ];
 

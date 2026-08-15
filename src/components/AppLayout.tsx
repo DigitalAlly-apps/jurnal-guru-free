@@ -6,7 +6,6 @@ import { ToastContainer } from './ToastContainer';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { HomePage } from '@/pages/HomePage';
 import { AbsenPage } from '@/pages/AbsenPage';
-import { JadwalPage } from '@/pages/JadwalPage';
 import { SiswaPage } from '@/pages/SiswaPage';
 import { SetelanPage } from '@/pages/SetelanPage';
 import { JurnalPage } from '@/pages/JurnalPage';
@@ -23,7 +22,6 @@ export function AppLayout() {
       case 'siswa':      return <SiswaPage />;
       case 'absen':      return <AbsenPage />;
       case 'jurnal':     return <JurnalPage />;
-      case 'jadwal':     return <JadwalPage />;
       case 'laporan':    return <LaporanRiwayatPage />;
       case 'setelan':    return <SetelanPage />;
       case 'auth':       return <AuthPage />;

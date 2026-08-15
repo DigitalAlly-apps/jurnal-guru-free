@@ -18,7 +18,7 @@ interface Props {
 const HARI_SINGKAT = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
 export function AbsensiKalender({ onSelectDate, selectedDate }: Props) {
-  const { activeKelas, kelasList, absenRecords, liburDates, jadwalList, confirmedDates } = useApp();
+  const { activeKelas, kelasList, absenRecords, liburDates, confirmedDates } = useApp();
 
   const kelas = kelasList.find(k => k.id === activeKelas);
   const jenjangAktif = kelas?.jenjang || 'SMP';
@@ -28,10 +28,6 @@ export function AbsensiKalender({ onSelectDate, selectedDate }: Props) {
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth()); // 0-indexed
 
-  const adaJadwalSabtu = useMemo(
-    () => jadwalList.some(j => j.kelasId === activeKelas && j.hari === 'Sabtu'),
-    [jadwalList, activeKelas]
-  );
 
   // Set tanggal yang sudah ada absensi S/I/A
   const tanggalSudahAbsen = useMemo(() => {
@@ -90,7 +86,7 @@ export function AbsensiKalender({ onSelectDate, selectedDate }: Props) {
         status = 'future';
       } else if (tanggalLibur.has(dateStr)) {
         status = 'libur';
-      } else if (dow === 0 || (dow === 6 && !adaJadwalSabtu)) {
+      } else if (dow === 0 || dow === 6) {
         status = 'weekend';
       } else if (tanggalSudahAbsen.has(dateStr) || tanggalSudahKonfirmasi.has(dateStr)) {
         status = 'sudah';
@@ -102,7 +98,7 @@ export function AbsensiKalender({ onSelectDate, selectedDate }: Props) {
     }
 
     return days;
-  }, [viewYear, viewMonth, tanggalSudahAbsen, tanggalSudahKonfirmasi, tanggalLibur, adaJadwalSabtu]);
+  }, [viewYear, viewMonth, tanggalSudahAbsen, tanggalSudahKonfirmasi, tanggalLibur]);
 
   // Hitung ringkasan bulan ini
   const summary = useMemo(() => {

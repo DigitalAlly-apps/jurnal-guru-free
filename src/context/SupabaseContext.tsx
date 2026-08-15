@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import type { User } from '@supabase/supabase-js';
-import type { BackupData, Kelas, Student, AbsenRecord, KasusRecord, CatatanRecord, JadwalSlot, LiburDate, ConfirmedDate, SemesterConfig } from '@/types';
+import type { BackupData, Kelas, Student, AbsenRecord, KasusRecord, CatatanRecord, LiburDate, ConfirmedDate, SemesterConfig } from '@/types';
 
 export type SyncState = 'idle' | 'syncing' | 'success' | 'error';
 
@@ -266,24 +266,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // 6. Upload Jadwal Pelajaran
-      if (localState.jadwalList.length > 0) {
-        const payloadJadwal = dedupeById(localState.jadwalList.map(r => ({
-          id: r.id,
-          hari: r.hari,
-          jam_mulai: r.jamMulai,
-          jam_selesai: r.jamSelesai,
-          mata_pelajaran: r.mataPelajaran,
-          kelas_id: r.kelasId,
-          user_id: uid
-        })));
-        if (payloadJadwal.length > 0) {
-          const { error: errJad } = await supabase.from('jadwal_slots').upsert(payloadJadwal);
-          if (errJad) throw errJad;
-        }
-      }
-
-      // 7. Upload Libur Dates
+      // 6. Upload Libur Dates
       if (localState.liburDates && localState.liburDates.length > 0) {
         const payloadLibur = dedupeById(localState.liburDates.map(r => ({
           id: r.id,
@@ -298,7 +281,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // 8. Upload Confirmed Dates
+      // 7. Upload Confirmed Dates
       if (localState.confirmedDates && localState.confirmedDates.length > 0) {
         const payloadConf = dedupeById(localState.confirmedDates.map(r => ({
           id: r.id,
@@ -315,7 +298,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // 9. Upload Semester Config
+      // 8. Upload Semester Config
       if (localState.semester) {
         const payloadSemester = {
           user_id: uid,
@@ -370,19 +353,15 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       const { data: dbCatatan, error: errFetchCat } = await supabase.from('catatan_records').select('*');
       if (errFetchCat) throw errFetchCat;
 
-      // 7. Fetch jadwal slots
-      const { data: dbJadwal, error: errFetchJad } = await supabase.from('jadwal_slots').select('*');
-      if (errFetchJad) throw errFetchJad;
-
-      // 8. Fetch libur dates
+      // 7. Fetch libur dates
       const { data: dbLibur, error: errFetchLib } = await supabase.from('libur_dates').select('*');
       if (errFetchLib) throw errFetchLib;
 
-      // 9. Fetch confirmed dates
+      // 8. Fetch confirmed dates
       const { data: dbConfirmed, error: errFetchConf } = await supabase.from('confirmed_dates').select('*');
       if (errFetchConf) throw errFetchConf;
 
-      // 10. Fetch semester config
+      // 9. Fetch semester config
       const { data: dbSemester, error: errFetchSem } = await supabase.from('semester_config').select('*').eq('user_id', uid).maybeSingle();
       if (errFetchSem) throw errFetchSem;
 
@@ -447,16 +426,6 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         tipe: r.tipe as any
       }));
 
-      // Petakan Jadwal Slots
-      const mappedJadwal: JadwalSlot[] = (dbJadwal || []).map(r => ({
-        id: r.id,
-        hari: r.hari as any,
-        jamMulai: r.jam_mulai,
-        jamSelesai: r.jam_selesai,
-        mataPelajaran: r.mata_pelajaran,
-        kelasId: r.kelas_id
-      }));
-
       // Petakan Libur Dates
       const mappedLibur: LiburDate[] = (dbLibur || []).map(r => ({
         id: r.id,
@@ -498,7 +467,6 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         absenRecords: mappedAbsen,
         kasusRecords: mappedKasus,
         catatanRecords: mappedCatatan,
-        jadwalList: mappedJadwal,
         liburDates: mappedLibur,
         confirmedDates: mappedConfirmed
       };

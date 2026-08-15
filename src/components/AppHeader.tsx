@@ -13,7 +13,6 @@ const TAB_TITLES: Record<TabId, string> = {
   siswa:     'Data Kelas & Siswa',
   absen:     'Absensi Harian',
   jurnal:    'Buku Jurnal Guru',
-  jadwal:    'Jadwal Pelajaran',
   laporan:   'Buku Induk & Laporan',
   setelan:   'Setelan & Informasi',
   auth:      'Cloud Sync',

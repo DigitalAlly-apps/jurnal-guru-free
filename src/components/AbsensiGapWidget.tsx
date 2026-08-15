@@ -4,7 +4,7 @@ import { CalendarCheck, ChevronRight, AlertCircle, CheckCircle2, ChevronDown } f
 
 /**
  * Widget yang menampilkan hari-hari sekolah yang belum ada absensi.
- * Logika: hari kerja (Senin–Jumat, atau sampai Sabtu jika ada jadwal Sabtu)
+ * Logika: hari kerja Senin–Jumat
  * dalam rentang N hari ke belakang, bukan libur, belum ada record absensi.
  */
 
@@ -21,23 +21,13 @@ interface Props {
 }
 
 export function AbsensiGapWidget({ onGoToAbsen, lookbackDays = 30 }: Props) {
-  const { activeKelas, kelasList, absenRecords, liburDates, jadwalList, confirmedDates } = useApp();
+  const { activeKelas, kelasList, absenRecords, liburDates, confirmedDates } = useApp();
   const [expanded, setExpanded] = useState(false);
 
   const kelas = kelasList.find(k => k.id === activeKelas);
   const jenjangAktif = kelas?.jenjang || 'SMP';
 
-  // Cek apakah ada jadwal Sabtu untuk kelas ini
-  const adaJadwalSabtu = useMemo(
-    () => jadwalList.some(j => j.kelasId === activeKelas && j.hari === 'Sabtu'),
-    [jadwalList, activeKelas]
-  );
-
-  const hariAktif = useMemo(() => {
-    const days = [...HARI_KERJA];
-    if (adaJadwalSabtu) days.push(6);
-    return days;
-  }, [adaJadwalSabtu]);
+  const hariAktif = HARI_KERJA;
 
   // Set tanggal yang sudah ada absensi S/I/A
   const tanggalSudahAbsen = useMemo(() => {

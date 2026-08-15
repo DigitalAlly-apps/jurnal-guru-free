@@ -101,7 +101,7 @@ function EditStudentModal({ studentId, initialName, initialNis, onSave, onClose 
 // ── Main SiswaPage ────────────────────────────────────────────────────────────
 export function SiswaPage() {
   const {
-    kelasList, activeKelas, activeStudentId, setActiveStudentId,
+    kelasList, activeKelas, setActiveKelas, activeStudentId, setActiveStudentId,
     absenRecords, kasusRecords, catatanRecords,
     addKelas, deleteKelas, addStudentsToKelas, removeStudentFromKelas,
     updateStudent, showToast,
@@ -232,26 +232,33 @@ export function SiswaPage() {
         />
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-text-secondary">
-            {kelas?.students.length || 0} siswa terdaftar
-          </p>
-        </div>
-        <div className="flex gap-2">
+      {/* Ringkasan kelas dan kontrol utama */}
+      <section className="card-soft !p-5 md:!p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="label-upper">Data kelas</p>
+            <h1 className="mt-1 text-2xl font-bold text-foreground">Kelola kelas & siswa</h1>
+            <p className="mt-1 text-sm text-text-secondary">Pilih kelas, perbarui daftar siswa, dan pantau data penting.</p>
+          </div>
+          <div className="flex gap-2">
           <button onClick={() => setShowAddKelas(true)}
-            className="btn-soft btn-secondary-soft text-[12px] py-1.5 px-3 gap-1 flex items-center">
-            <Plus className="w-3 h-3" /> Kelas
+            className="btn-soft btn-secondary-soft flex items-center gap-1.5 px-3 py-2 text-xs">
+            <Plus className="h-3.5 w-3.5" /> Tambah Kelas
           </button>
           {kelasList.length > 1 && (
             <button onClick={handleDeleteKelas}
-              className="btn-soft text-[12px] py-1.5 px-3 bg-semantic-red-light text-semantic-red gap-1 flex items-center">
+              className="btn-soft flex items-center gap-1.5 bg-semantic-red-light px-3 py-2 text-xs text-semantic-red">
               <Trash2 className="w-3 h-3" />
             </button>
           )}
+          </div>
         </div>
-      </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <div className="sm:col-span-1"><label className="label-upper mb-1.5 block">Kelas aktif</label><select value={activeKelas} onChange={e => setActiveKelas(e.target.value)} className="input-soft py-3">{kelasList.map(k => <option key={k.id} value={k.id}>Kelas {k.name}</option>)}</select></div>
+          <div className="rounded-xl bg-accent-light p-3"><p className="text-2xl font-black text-primary">{kelas?.students.length || 0}</p><p className="text-xs font-semibold text-text-secondary">Siswa terdaftar</p></div>
+          <div className="rounded-xl bg-bg-2 p-3"><p className="text-2xl font-black text-foreground">{absenRecords.filter(a => a.kelasId === activeKelas && a.status === 'A').length}</p><p className="text-xs font-semibold text-text-secondary">Total alpha tercatat</p></div>
+        </div>
+      </section>
 
       {/* Add Kelas */}
       {showAddKelas && (

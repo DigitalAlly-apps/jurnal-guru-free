@@ -17,7 +17,7 @@ const KETERANGAN_SUGGESTIONS: Record<AbsenStatus, string[]> = {
 
 export function AbsenPage() {
   const {
-    kelasList, activeKelas, absenRecords, addAbsenRecords, jadwalList, showToast,
+    kelasList, activeKelas, absenRecords, addAbsenRecords, showToast,
     liburDates, addLiburDate, deleteLiburDate, deleteAbsenRecordsByDateAndJenjang,
     confirmDate, unconfirmDate, isDateConfirmed,
   } = useApp();
@@ -51,9 +51,6 @@ export function AbsenPage() {
   const [attendanceTab, setAttendanceTab] = useState<'harian' | 'ujian' | 'kalender'>('harian');
 
   const isUjian = periode === 'UTS' || periode === 'UAS';
-
-  const hariIni       = new Date(date).toLocaleDateString('id-ID', { weekday: 'long' });
-  const jadwalHariIni = jadwalList.filter(j => j.kelasId === activeKelas && j.hari === hariIni);
 
   // Sesi ujian yang sudah ada di tanggal ini (untuk periode UTS/UAS)
   const sesiUjianHariIni = useMemo(() => {
@@ -412,36 +409,12 @@ export function AbsenPage() {
             </div>
           )}
 
-          {jadwalHariIni.length > 0 ? (
-            <select
-              value={mataPelajaran}
-              onChange={e => setMataPelajaran(e.target.value)}
-              className={`input-soft w-full ${isUjian && !mataPelajaran ? 'border-semantic-red/50' : ''}`}
-            >
-              <option value="">{isUjian ? '-- Pilih mapel ujian --' : '-- Pilih dari jadwal --'}</option>
-              {jadwalHariIni.map(j => (
-                <option key={j.id} value={j.mataPelajaran}>
-                  {j.mataPelajaran} ({j.jamMulai}–{j.jamSelesai})
-                </option>
-              ))}
-              <option value="__custom">Lainnya...</option>
-            </select>
-          ) : (
-            <input
-              value={mataPelajaran}
-              onChange={e => setMataPelajaran(e.target.value)}
-              placeholder={isUjian ? `Nama mapel ${periode} (wajib)` : 'Contoh: Matematika, IPA...'}
-              className={`input-soft w-full ${isUjian && !mataPelajaran ? 'border-semantic-red/50' : ''}`}
-            />
-          )}
-          {mataPelajaran === '__custom' && (
-            <input
-              className="input-soft w-full mt-2"
-              placeholder="Nama mata pelajaran"
-              onChange={e => setMataPelajaran(e.target.value)}
-              autoFocus
-            />
-          )}
+          <input
+            value={mataPelajaran}
+            onChange={e => setMataPelajaran(e.target.value)}
+            placeholder={isUjian ? `Nama mapel ${periode} (wajib)` : 'Contoh: Matematika, IPA...'}
+            className={`input-soft w-full ${isUjian && !mataPelajaran ? 'border-semantic-red/50' : ''}`}
+          />
           {isUjian && !mataPelajaran && (
             <p className="text-[11px] text-semantic-red mt-1 flex items-center gap-1">
               <AlertCircle className="w-3 h-3" /> Isi mapel dulu sebelum simpan

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { Kelas, AbsenRecord, KasusRecord, CatatanRecord, TabId, SemesterConfig, BackupData, JadwalSlot, LiburDate, Jenjang, ConfirmedDate, PeriodeUjian } from '@/types';
+import type { Kelas, AbsenRecord, KasusRecord, CatatanRecord, TabId, SemesterConfig, BackupData, LiburDate, Jenjang, ConfirmedDate, PeriodeUjian } from '@/types';
 import { storageGet, storageSet, storageRemove, initStorage } from '@/lib/storage';
 import { useAutoBackup } from '@/hooks/use-auto-backup';
 import { useSupabase } from './SupabaseContext';
@@ -71,9 +71,6 @@ interface AppState {
   addCatatanRecord: (record: CatatanRecord) => void;
   updateCatatanRecord: (id: string, updates: Partial<CatatanRecord>) => void;
   deleteCatatanRecord: (id: string) => void;
-  jadwalList: JadwalSlot[];
-  addJadwal: (slot: JadwalSlot) => void;
-  deleteJadwal: (id: string) => void;
   liburDates: LiburDate[];
   addLiburDate: (libur: LiburDate) => void;
   deleteLiburDate: (id: string) => void;
@@ -105,7 +102,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [absenRecords, setAbsenRecordsRaw] = useState<AbsenRecord[]>(() => ls<AbsenRecord[]>('jg_absenRecords', []));
   const [kasusRecords, setKasusRecordsRaw] = useState<KasusRecord[]>(() => ls<KasusRecord[]>('jg_kasusRecords', []));
   const [catatanRecords, setCatatanRecordsRaw] = useState<CatatanRecord[]>(() => ls<CatatanRecord[]>('jg_catatanRecords', []));
-  const [jadwalList, setJadwalListRaw] = useState<JadwalSlot[]>(() => ls<JadwalSlot[]>('jg_jadwalList', []));
   const [liburDates, setLiburDatesRaw] = useState<LiburDate[]>(() => ls<LiburDate[]>('jg_liburDates', []));
   const [confirmedDates, setConfirmedDatesRaw] = useState<ConfirmedDate[]>(() => ls<ConfirmedDate[]>('jg_confirmedDates', []));
   const [toasts, setToasts] = useState<{ id: string; message: string }[]>([]);
@@ -161,13 +157,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return next;
     });
   }, []);
-  const setJadwalList = useCallback((v: React.SetStateAction<JadwalSlot[]>) => {
-    setJadwalListRaw(prev => {
-      const next = typeof v === 'function' ? v(prev) : v;
-      save('jg_jadwalList', next);
-      return next;
-    });
-  }, []);
   const setLiburDates = useCallback((v: React.SetStateAction<LiburDate[]>) => {
     setLiburDatesRaw(prev => {
       const next = typeof v === 'function' ? v(prev) : v;
@@ -186,6 +175,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ── Inisialisasi IndexedDB storage saat pertama mount ─────────────────────
   useEffect(() => {
     initStorage().catch(() => {/* fallback ke localStorage sudah ditangani di storage.ts */ });
+    storageRemove('jg_jadwalList');
   }, []);
 
   // ── Auto-set activeKelas ───────────────────────────────────────────────────
@@ -264,12 +254,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCatatanRecords(prev => prev.filter(r => r.id !== id));
   }, []);
 
-  const addJadwal = useCallback((slot: JadwalSlot) => {
-    setJadwalList(prev => [...prev, slot]);
-  }, []);
-  const deleteJadwal = useCallback((id: string) => {
-    setJadwalList(prev => prev.filter(j => j.id !== id));
-  }, []);
   const addLiburDate = useCallback((libur: LiburDate) => {
     setLiburDates(prev => {
       const filtered = prev.filter(l => !(l.jenjang === libur.jenjang && l.date === libur.date));
@@ -355,7 +339,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setAbsenRecords([]);
     setKasusRecords([]);
     setCatatanRecords([]);
-    setJadwalList([]);
     setLiburDates([]);
     setConfirmedDates([]);
     setLastBackupDate('');
@@ -371,7 +354,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const exportBackup = useCallback(() => {
     const data: BackupData = {
       version: '5.0', exportedAt: new Date().toISOString(),
-      namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, confirmedDates,
+      namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, liburDates, confirmedDates,
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -383,7 +366,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const today = new Date().toISOString().split('T')[0];
     setLastBackupDate(today);
     showToast('Backup berhasil diunduh');
-  }, [namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, showToast]);
+  }, [namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, liburDates, showToast]);
 
   // ── Fix 3: Zod-lite validation, reject corrupt/random JSON ────────────────
   const importBackup = useCallback((data: BackupData) => {
@@ -396,7 +379,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setAbsenRecords(data.absenRecords || []);
     setKasusRecords(data.kasusRecords || []);
     setCatatanRecords(data.catatanRecords || []);
-    if (data.jadwalList) setJadwalList(data.jadwalList);
     if (data.liburDates) setLiburDates(data.liburDates);
     if (data.confirmedDates) setConfirmedDates(data.confirmedDates);
     if (data.semester) setSemester(data.semester);
@@ -408,7 +390,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const autoBackupData: BackupData = {
     version: '5.0',
     exportedAt: new Date().toISOString(),
-    namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, confirmedDates,
+    namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, liburDates, confirmedDates,
   };
   useAutoBackup({
     data: autoBackupData,
@@ -431,7 +413,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     absen: AbsenRecord[],
     kasus: KasusRecord[],
     catatan: CatatanRecord[],
-    jadwal: JadwalSlot[],
     libur: LiburDate[],
     confirmed: ConfirmedDate[]
   ) => {
@@ -442,7 +423,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       absenRecords: absen,
       kasusRecords: kasus,
       catatanRecords: catatan,
-      jadwalList: jadwal,
       liburDates: libur,
       confirmedDates: confirmed
     });
@@ -467,7 +447,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           absenRecords,
           kasusRecords,
           catatanRecords,
-          jadwalList,
           liburDates,
           confirmedDates
         };
@@ -493,7 +472,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               synced.absenRecords || [],
               synced.kasusRecords || [],
               synced.catatanRecords || [],
-              synced.jadwalList || [],
               synced.liburDates || [],
               synced.confirmedDates || []
             );
@@ -503,7 +481,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             setAbsenRecords(synced.absenRecords || []);
             setKasusRecords(synced.kasusRecords || []);
             setCatatanRecords(synced.catatanRecords || []);
-            setJadwalList(synced.jadwalList || []);
             setLiburDates(synced.liburDates || []);
             setConfirmedDates(synced.confirmedDates || []);
             showToast('☁️ Cloud Sync: Data berhasil dipulihkan dari Cloud!');
@@ -542,7 +519,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       absenRecords,
       kasusRecords,
       catatanRecords,
-      jadwalList,
       liburDates,
       confirmedDates
     );
@@ -564,7 +540,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         absenRecords,
         kasusRecords,
         catatanRecords,
-        jadwalList,
         liburDates,
         confirmedDates
       };
@@ -579,7 +554,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   // syncState sengaja DIHAPUS dari dependency array untuk mencegah infinite loop
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, confirmedDates, user, syncData, getSerializedState]);
+  }, [namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, liburDates, confirmedDates, user, syncData, getSerializedState]);
 
   const syncWithCloud = useCallback(async () => {
     if (!user) {
@@ -595,7 +570,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       absenRecords,
       kasusRecords,
       catatanRecords,
-      jadwalList,
       liburDates,
       confirmedDates
     };
@@ -608,7 +582,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         synced.absenRecords || [],
         synced.kasusRecords || [],
         synced.catatanRecords || [],
-        synced.jadwalList || [],
         synced.liburDates || [],
         synced.confirmedDates || []
       );
@@ -619,7 +592,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setAbsenRecords(synced.absenRecords || []);
       setKasusRecords(synced.kasusRecords || []);
       setCatatanRecords(synced.catatanRecords || []);
-      setJadwalList(synced.jadwalList || []);
       setLiburDates(synced.liburDates || []);
       setConfirmedDates(synced.confirmedDates || []);
       showToast('☁️ Sukses menyinkronkan data dengan Cloud!');
@@ -628,7 +600,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       showToast('❌ Gagal sinkronisasi data dengan Cloud');
       return false;
     }
-  }, [user, namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, jadwalList, liburDates, confirmedDates, syncData, showToast, getSerializedState]);
+  }, [user, namaGuru, semester, kelasList, absenRecords, kasusRecords, catatanRecords, liburDates, confirmedDates, syncData, showToast, getSerializedState]);
 
   return (
     <AppContext.Provider value={{
@@ -642,7 +614,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       absenRecords, addAbsenRecords, updateAbsenRecord, deleteAbsenRecord, deleteAbsenRecordsByDateAndJenjang,
       kasusRecords, addKasusRecord, updateKasusRecord, deleteKasusRecord,
       catatanRecords, addCatatanRecord, updateCatatanRecord, deleteCatatanRecord,
-      jadwalList, addJadwal, deleteJadwal,
       liburDates, addLiburDate, deleteLiburDate,
       confirmedDates, confirmDate, unconfirmDate, isDateConfirmed,
       toasts, showToast,
