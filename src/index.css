@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -25,15 +25,15 @@
     --text-3:   220 10% 60%;
 
     /* Vibrant Ocean Blue Accent */
-    --accent:         215 90% 55%;
-    --accent-light:   215 90% 96%;
-    --accent-hover:   215 90% 50%;
+    --accent:         188 58% 42%;
+    --accent-light:   188 58% 95%;
+    --accent-hover:   188 58% 35%;
 
     --red:          345 80% 55%;
     --red-light:    345 80% 96%;
     --yellow:       40 95% 50%;
     --yellow-light: 40 95% 95%;
-    --blue:         210 90% 55%;
+    --blue:         205 78% 52%;
     --blue-light:   210 90% 96%;
     --green:        150 75% 45%;
     --green-light:  150 75% 95%;
@@ -88,9 +88,9 @@
     --text-2:   210 10% 70%;
     --text-3:   210 10% 50%;
 
-    --accent:         215 100% 65%;
-    --accent-light:   215 40% 16%;
-    --accent-hover:   215 100% 70%;
+    --accent:         188 58% 52%;
+    --accent-light:   188 40% 16%;
+    --accent-hover:   188 58% 60%;
 
     --red:          345 80% 65%;
     --red-light:    345 40% 16%;
@@ -121,12 +121,15 @@
   * { @apply border-border; }
 
   body {
-    font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
+    font-family: 'Manrope', sans-serif;
     font-size: 15px;
     font-weight: 400;
     line-height: 1.6;
     color: hsl(var(--text));
-    background: hsl(var(--bg));
+    background:
+      radial-gradient(circle at 18% -8%, hsl(var(--accent) / 0.12) 0, transparent 34%),
+      radial-gradient(circle at 92% 12%, hsl(var(--blue) / 0.09) 0, transparent 30%),
+      linear-gradient(145deg, hsl(var(--bg)), hsl(var(--bg-2)) 70%);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     margin: 0;
@@ -639,4 +642,45 @@
     background: hsl(var(--surface) / 0.9) !important;
     backdrop-filter: blur(8px) !important;
   }
+}
+
+/* ── Jurnal Guru app shell: visual system shared by every page ─────────── */
+@layer components {
+  .font-display { font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.045em; }
+  .app-frame-jurnal {
+    background:
+      linear-gradient(180deg, hsl(var(--surface) / .76) 0%, transparent 28%),
+      radial-gradient(circle at 12% 8%, hsl(var(--accent) / .12) 0, transparent 34%),
+      radial-gradient(circle at 88% 26%, hsl(var(--blue) / .10) 0, transparent 38%),
+      hsl(var(--bg));
+  }
+  .glass-panel-jurnal {
+    background: hsl(var(--surface) / .78);
+    border: 1px solid hsl(var(--border) / .8);
+    box-shadow: 0 18px 48px hsl(220 35% 12% / .14);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+  }
+  .app-card, .card-soft {
+    border-radius: 1.25rem;
+    border-color: hsl(var(--border) / .72);
+    box-shadow: 0 10px 28px hsl(220 35% 12% / .07);
+  }
+  .dark .app-card, .dark .card-soft { box-shadow: 0 16px 42px rgba(0,0,0,.28); }
+  .app-card-soft { background: hsl(var(--surface) / .64); border: 1px solid hsl(var(--border) / .7); border-radius: 1rem; }
+  .app-icon-button, .icon-btn-rich {
+    width: 2.75rem; height: 2.75rem; border-radius: 1rem;
+    background: hsl(var(--surface) / .8); border: 1px solid hsl(var(--border) / .8);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: hsl(var(--text-2)); transition: .2s ease;
+  }
+  .app-icon-button:hover, .icon-btn-rich:hover { color: hsl(var(--accent)); border-color: hsl(var(--accent) / .35); background: hsl(var(--accent-light)); }
+  .app-bottom-sheet { border-radius: 1.75rem 1.75rem 0 0; background: hsl(var(--surface)); border: 1px solid hsl(var(--border)); box-shadow: 0 -18px 52px rgba(0,0,0,.18); }
+  .app-sheet-handle { width: 2.5rem; height: .3rem; border-radius: 99px; background: hsl(var(--border-2)); margin: .75rem auto; }
+  .app-sheet-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.125rem; }
+  .input-soft, .form-input-style, .form-select-style {
+    border-radius: .9rem; border-color: hsl(var(--border) / .85); background: hsl(var(--surface) / .82);
+  }
+  .btn-soft, .btn-primary-soft { border-radius: .9rem; font-weight: 800; }
+  .label-upper { font-size: 10px; font-weight: 800; letter-spacing: .14em; }
 }

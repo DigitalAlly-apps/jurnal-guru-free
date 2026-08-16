@@ -5,8 +5,8 @@ import {
   History,
   BarChart3,
   Users,
-  Info,
   Settings,
+  Cloud,
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import type { TabId } from '@/types';
@@ -45,13 +45,13 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="border-r border-border/60 bg-surface/60 backdrop-blur-xl">
       <SidebarContent>
-        <div className="flex items-center justify-center border-b border-sidebar-border py-4 px-3">
+        <div className="flex items-center justify-center border-b border-sidebar-border/60 py-6 px-3">
           {collapsed ? (
             <JurnalGuruLogo size={32} showText={false} />
           ) : (
-            <JurnalGuruLogo size={100} showText={true} className="my-1" />
+            <JurnalGuruLogo size={112} showText={true} className="my-1" />
           )}
         </div>
 
@@ -59,7 +59,7 @@ export function AppSidebar() {
           <div className="px-3 pt-3">
             <label className="label-upper block mb-1.5 px-1">Kelas Aktif</label>
             <select value={activeKelas} onChange={e => setActiveKelas(e.target.value)}
-              className="w-full px-3 py-2 bg-bg-2 border border-border rounded-md text-sm text-foreground outline-none focus:border-primary transition-colors">
+              className="input-soft w-full px-3 py-2 text-sm text-foreground outline-none transition-colors">
               {kelasList.map(k => (
                 <option key={k.id} value={k.id}>Kelas {k.name}</option>
               ))}
@@ -96,6 +96,12 @@ export function AppSidebar() {
             <SidebarMenuButton onClick={() => handleNav('setelan')} isActive={activeTab === 'setelan'} tooltip="Setelan">
               <Settings className="w-4 h-4" />
               <span>Setelan</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={() => handleNav('auth')} isActive={activeTab === 'auth'} tooltip="Cloud Sync">
+              <Cloud className="w-4 h-4" />
+              <span>Cloud Sync</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

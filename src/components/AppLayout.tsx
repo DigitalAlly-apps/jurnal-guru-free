@@ -12,6 +12,7 @@ import { JurnalPage } from '@/pages/JurnalPage';
 import { LaporanRiwayatPage } from '@/pages/LaporanRiwayatPage';
 import AuthPage from '@/pages/AuthPage';
 import { OnboardingWizard } from '@/components/OnboardingWizard';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
 
 export function AppLayout() {
   const { activeTab } = useApp();
@@ -32,15 +33,16 @@ export function AppLayout() {
   return (
     <SidebarProvider>
       <OnboardingWizard />
-      <div className="flex h-[100dvh] w-full overflow-hidden overscroll-none">
+      <div className="app-frame-jurnal flex h-[100dvh] w-full overflow-hidden overscroll-none">
         <AppSidebar />
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           <AppHeader />
-          <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:p-6 md:pb-6">
-            {renderPage()}
+          <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pb-[calc(104px+env(safe-area-inset-bottom))] pt-3 md:p-6 md:pb-6">
+            <div className="mx-auto w-full max-w-7xl">{renderPage()}</div>
           </main>
         </div>
         <FAB />
+        <MobileBottomNav />
         <ToastContainer />
       </div>
     </SidebarProvider>

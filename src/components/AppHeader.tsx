@@ -43,7 +43,9 @@ export function AppHeader() {
   const firstName = namaGuru ? namaGuru.split(' ')[0] : null;
 
   return (
-    <header className="header-rich">
+    <header className="sticky top-0 z-30 px-4 pt-4 pb-2 lg:static lg:px-6 lg:pt-5">
+      <div className="glass-panel-jurnal flex items-center justify-between rounded-3xl px-4 py-3 relative overflow-hidden">
+        <div className="pointer-events-none absolute -left-8 -top-10 h-24 w-24 rounded-full bg-primary/15 blur-2xl" />
       {/* Left */}
       <div className="flex items-center gap-3">
         <SidebarTrigger className="icon-btn-rich w-auto h-9 px-2.5 rounded-xl border border-border/40 hover:bg-bg-2 flex items-center gap-1.5 transition-all active:scale-95 shadow-soft">
@@ -186,6 +188,7 @@ export function AppHeader() {
             </div>
           </SheetContent>
         </Sheet>
+      </div>
       </div>
     </header>
   );
