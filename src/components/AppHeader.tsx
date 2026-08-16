@@ -1,8 +1,6 @@
-import { ShieldCheck, ShieldAlert, Moon, Sun, Menu, Info, Cloud } from 'lucide-react';
+import { Moon, Sun, Menu, Info } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
-import { useSupabase } from '@/context/SupabaseContext';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { JurnalGuruLogo } from '@/components/JurnalGuruLogo';
 import { useDarkMode } from '@/hooks/use-dark-mode';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { InformasiPage } from '@/pages/InformasiPage';
@@ -25,122 +23,40 @@ const today = new Date();
 const tanggalStr = `${HARI[today.getDay()]}, ${today.getDate()} ${today.toLocaleString('id-ID', { month: 'short' })}`;
 
 export function AppHeader() {
-  const { activeTab, kelasList, activeKelas, setActiveKelas, namaGuru, lastBackupDate, semester, setActiveTab } = useApp();
-  const { user, syncState, isConfigured } = useSupabase();
+  const { activeTab, kelasList, activeKelas, namaGuru, semester } = useApp();
   const { isDark, toggle: toggleDark } = useDarkMode();
   
   const semLabel = semester.semester === 'ganjil' ? 'Semester 1 (Ganjil)' : 'Semester 2 (Genap)';
   const currentSchedule = semester.semester === 'ganjil' ? semester.ganjil : semester.genap;
 
-  const isHome = activeTab === 'home';
   const kelasName = kelasList.find(k => k.id === activeKelas)?.name;
-
-  const backupOk = (() => {
-    if (!lastBackupDate) return false;
-    return (Date.now() - new Date(lastBackupDate).getTime()) / 86400000 <= 30;
-  })();
-
   const firstName = namaGuru ? namaGuru.split(' ')[0] : null;
 
   return (
     <header className="sticky top-0 z-30 px-4 pt-4 pb-2 lg:static lg:px-6 lg:pt-5">
       <div className="glass-panel-jurnal flex items-center justify-between rounded-3xl px-4 py-3 relative overflow-hidden">
         <div className="pointer-events-none absolute -left-8 -top-10 h-24 w-24 rounded-full bg-primary/15 blur-2xl" />
-      {/* Left */}
-      <div className="flex items-center gap-3">
-        <SidebarTrigger className="icon-btn-rich w-auto h-9 px-2.5 rounded-xl border border-border/40 hover:bg-bg-2 flex items-center gap-1.5 transition-all active:scale-95 shadow-soft">
-          <Menu className="w-4 h-4 text-text-secondary" />
-          <span className="text-[12px] font-bold text-foreground pr-0.5">Menu</span>
-        </SidebarTrigger>
-
-        {isHome ? (
-          <JurnalGuruLogo size={30} showText={false} className="md:hidden" />
-        ) : (
-          <div className="md:hidden">
-            <h2 className="text-[13px] font-semibold text-foreground leading-tight">{TAB_TITLES[activeTab]}</h2>
-            {kelasName && <p className="text-[11px] text-text-tertiary">{kelasName}</p>}
-          </div>
-        )}
-
-        <div className="hidden md:block">
-          <h2 className="text-[13px] font-semibold text-foreground leading-tight">{TAB_TITLES[activeTab]}</h2>
-          {kelasName && <p className="text-[11px] text-text-tertiary">{kelasName}</p>}
+      <div className="relative z-10 min-w-0">
+        <div className="mb-1 flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_14px_hsl(var(--accent))]" />
+          <span className="text-[10px] font-black uppercase tracking-[.14em] text-text-tertiary">{tanggalStr}</span>
         </div>
+        <div className="font-display truncate text-[19px] font-bold leading-none text-foreground">{activeTab === 'home' ? (firstName || 'Jurnal Guru') : TAB_TITLES[activeTab]}</div>
+        <div className="mt-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-primary">{kelasName ? `Kelas ${kelasName}` : 'Jurnal Guru'}</div>
       </div>
 
-      {/* Right */}
-      <div className="flex items-center gap-1.5">
-        {/* Kelas selector — mobile */}
-        {kelasList.length > 1 && (
-          <select
-            value={activeKelas}
-            onChange={e => setActiveKelas(e.target.value)}
-            className="input-soft px-2 py-1.5 text-xs w-auto max-w-[120px] md:hidden"
-          >
-            {kelasList.map(k => <option key={k.id} value={k.id}>{k.name}</option>)}
-          </select>
-        )}
-
-        {/* Date + greeting */}
-        <div className="hidden sm:flex flex-col items-end gap-0 mr-1">
-          {firstName && (
-            <span className="text-[12px] font-semibold text-foreground leading-tight">{firstName}</span>
-          )}
-          <span className="text-[11px] text-text-tertiary leading-tight font-mono-rich">{tanggalStr}</span>
-        </div>
-
-        {/* Backup indicator */}
-        <button
-          title={backupOk ? `Backup: ${lastBackupDate}` : 'Belum backup minggu ini'}
-          className={`icon-btn-rich ${
-            backupOk
-              ? 'text-semantic-green hover:bg-semantic-green-light'
-              : 'text-semantic-red hover:bg-semantic-red-light'
-          }`}
-        >
-          {backupOk
-            ? <ShieldCheck className="w-3.5 h-3.5" />
-            : <ShieldAlert className="w-3.5 h-3.5" />
-          }
-        </button>
- 
-        {/* Cloud Sync Indicator */}
-        <button
-          onClick={() => setActiveTab('auth')}
-          title={
-            !isConfigured ? 'Cloud Sync: Belum Dikonfigurasi' :
-            !user ? 'Cloud Sync: Masuk Akun Cloud' :
-            syncState === 'syncing' ? 'Menyinkronkan...' :
-            syncState === 'error' ? 'Cloud Sync: Gagal Sinkronisasi' :
-            'Cloud Sync: Aktif & Tersinkron'
-          }
-          className={`icon-btn-rich flex items-center justify-center relative ${
-            !isConfigured ? 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800' :
-            !user ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/20' :
-            syncState === 'syncing' ? 'text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20' :
-            syncState === 'error' ? 'text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20' :
-            'text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/20'
-          }`}
-        >
-          <Cloud className={`w-3.5 h-3.5 ${syncState === 'syncing' ? 'animate-pulse' : ''}`} />
-          {user && (
-            <span className={`absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full ${
-              syncState === 'syncing' ? 'bg-blue-500 animate-ping' :
-              syncState === 'error' ? 'bg-rose-500' :
-              'bg-emerald-500'
-            }`} />
-          )}
-        </button>
+      <div className="relative z-10 flex shrink-0 items-center gap-2">
+        <SidebarTrigger className="app-icon-button" title="Buka menu"><Menu className="h-4 w-4" /></SidebarTrigger>
 
         {/* Theme toggle */}
-        <button onClick={() => toggleDark()} className="icon-btn-rich" title={isDark ? 'Mode Terang' : 'Mode Gelap'}>
+        <button onClick={() => toggleDark()} className="app-icon-button" title={isDark ? 'Mode Terang' : 'Mode Gelap'}>
           {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
         </button>
 
         {/* Info & Tutorial Toggle */}
         <Sheet>
           <SheetTrigger asChild>
-            <button className="icon-btn-rich" title="Informasi & Bantuan">
+            <button className="app-icon-button" title="Informasi & Bantuan">
               <Info className="w-3.5 h-3.5 text-primary" />
             </button>
           </SheetTrigger>
