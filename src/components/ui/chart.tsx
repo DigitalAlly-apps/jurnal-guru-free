@@ -221,9 +221,23 @@ ChartTooltipContent.displayName = "ChartTooltip";
 
 const ChartLegend = RechartsPrimitive.Legend;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ChartLegendContent = React.forwardRef<HTMLDivElement, any>(
-  ({ className, hideIcon = false, payload, verticalAlign = "bottom", nameKey }: any, ref: any) => {
+type ChartLegendPayloadItem = {
+  value?: string | number;
+  dataKey?: string | number;
+  color?: string;
+  payload?: Record<string, unknown>;
+  [key: string]: unknown;
+};
+
+type ChartLegendContentProps = React.HTMLAttributes<HTMLDivElement> & {
+  hideIcon?: boolean;
+  payload?: ChartLegendPayloadItem[];
+  verticalAlign?: "top" | "bottom";
+  nameKey?: string;
+};
+
+const ChartLegendContent = React.forwardRef<HTMLDivElement, ChartLegendContentProps>(
+  ({ className, hideIcon = false, payload, verticalAlign = "bottom", nameKey }, ref) => {
   const { config } = useChart();
 
   if (!payload?.length) {
@@ -241,7 +255,7 @@ const ChartLegendContent = React.forwardRef<HTMLDivElement, any>(
 
         return (
           <div
-            key={item.value}
+            key={String(item.value)}
             className={cn("flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground")}
           >
             {itemConfig?.icon && !hideIcon ? (

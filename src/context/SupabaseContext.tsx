@@ -4,6 +4,12 @@ import type { User } from '@supabase/supabase-js';
 import type { BackupData, Kelas, Student, AbsenRecord, KasusRecord, CatatanRecord, LiburDate, ConfirmedDate, SemesterConfig } from '@/types';
 
 export type SyncState = 'idle' | 'syncing' | 'success' | 'error';
+type AuthResult = { error: Error | null };
+type StudentPayload = { id: string; name: string; nis: string; kelas_id: string; user_id: string };
+
+function toError(error: unknown): Error {
+  return error instanceof Error ? error : new Error(typeof error === 'string' ? error : 'Terjadi kesalahan yang tidak diketahui');
+}
 
 function dedupeById<T extends { id: string }>(items: T[]): T[] {
   const seen = new Set<string>();
@@ -26,10 +32,10 @@ interface SupabaseContextType {
   lastSyncTime: string | null;
   lastSyncError: string | null;
   setLastSyncTime: (t: string | null) => void;
-  signUp: (email: string, password: string, namaGuru: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signInWithGoogle: () => Promise<{ error: any }>;
-  signOut: () => Promise<{ error: any }>;
+  signUp: (email: string, password: string, namaGuru: string) => Promise<AuthResult>;
+  signIn: (email: string, password: string) => Promise<AuthResult>;
+  signInWithGoogle: () => Promise<AuthResult>;
+  signOut: () => Promise<AuthResult>;
   syncData: (localState: BackupData) => Promise<BackupData | null>;
   setSyncState: (state: SyncState) => void;
 }
@@ -114,8 +120,8 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         setProfile({ nama_guru: namaGuru });
       }
       return { error: null };
-    } catch (error: any) {
-      return { error };
+    } catch (error: unknown) {
+      return { error: toError(error) };
     }
   };
 
@@ -125,8 +131,8 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       return { error: null };
-    } catch (error: any) {
-      return { error };
+    } catch (error: unknown) {
+      return { error: toError(error) };
     }
   };
 
@@ -140,8 +146,8 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('jg_lastSyncTime');
       setLastSyncTime(null);
       return { error: null };
-    } catch (error: any) {
-      return { error };
+    } catch (error: unknown) {
+      return { error: toError(error) };
     }
   };
 
@@ -155,8 +161,8 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       });
       if (error) throw error;
       return { error: null };
-    } catch (error: any) {
-      return { error };
+    } catch (error: unknown) {
+      return { error: toError(error) };
     }
   };
 
@@ -186,7 +192,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       }
 
       // 2. Upload Students
-      const rawStudents: any[] = [];
+      const rawStudents: StudentPayload[] = [];
       localState.kelasList.forEach(k => {
         k.students.forEach(s => {
           rawStudents.push({
@@ -394,7 +400,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         status: r.status as 'H' | 'S' | 'I' | 'A',
         keterangan: r.keterangan || undefined,
         kelasId: r.kelas_id,
-        periodeUjian: r.periode_ujian as any,
+        periodeUjian: r.periode_ujian as AbsenRecord['periodeUjian'],
         mataPelajaran: r.mata_pelajaran || undefined,
         jamUjian: r.jam_ujian || undefined
       }));
@@ -408,10 +414,10 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         description: r.description,
         category: r.category,
         kelasId: r.kelas_id,
-        periodeUjian: r.periode_ujian as any,
+        periodeUjian: r.periode_ujian as KasusRecord['periodeUjian'],
         waktuPemanggilan: r.waktu_pemanggilan || undefined,
         tanggalPemanggilan: r.tanggal_pemanggilan || undefined,
-        status: r.status as any,
+        status: r.status as KasusRecord['status'],
         tindakLanjut: r.tindak_lanjut || undefined
       }));
 
@@ -423,14 +429,14 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         date: r.date,
         content: r.content,
         kelasId: r.kelas_id,
-        tipe: r.tipe as any
+        tipe: r.tipe as CatatanRecord['tipe']
       }));
 
       // Petakan Libur Dates
       const mappedLibur: LiburDate[] = (dbLibur || []).map(r => ({
         id: r.id,
         date: r.date,
-        jenjang: r.jenjang as any,
+        jenjang: r.jenjang as LiburDate['jenjang'],
         keterangan: r.keterangan || undefined
       }));
 
@@ -439,7 +445,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         id: r.id,
         kelasId: r.kelas_id,
         date: r.date,
-        periodeUjian: r.periode_ujian as any,
+        periodeUjian: r.periode_ujian as ConfirmedDate['periodeUjian'],
         mataPelajaran: r.mata_pelajaran || undefined,
         jamUjian: r.jam_ujian || undefined
       }));
@@ -448,9 +454,9 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       const currentYear = new Date().getFullYear();
       const mappedSemester: SemesterConfig = dbSemester ? {
         tahunAjaran: dbSemester.tahun_ajaran,
-        semester: dbSemester.semester as any,
-        ganjil: dbSemester.ganjil as any,
-        genap: dbSemester.genap as any
+        semester: dbSemester.semester as SemesterConfig['semester'],
+        ganjil: dbSemester.ganjil as SemesterConfig['ganjil'],
+        genap: dbSemester.genap as SemesterConfig['genap']
       } : {
         tahunAjaran: `${currentYear}/${currentYear + 1}`,
         semester: new Date().getMonth() < 6 ? 'genap' : 'ganjil',
@@ -479,8 +485,9 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       sessionStorage.removeItem('jg_lastSyncError');
 
       return finalState;
-    } catch (err: any) {
-      const msg = err?.message || err?.details || JSON.stringify(err) || 'Unknown error';
+    } catch (err: unknown) {
+      const error = toError(err);
+      const msg = error.message || 'Unknown error';
       console.error('Sync error:', msg, err);
       setSyncState('error');
       setLastSyncError(msg);

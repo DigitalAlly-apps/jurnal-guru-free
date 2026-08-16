@@ -103,7 +103,7 @@ export function RiwayatPage() {
   const catatanPage = catatanFiltered.slice(0, catatanShown);
 
   const startEdit = (id: string, type: 'absen' | 'kasus' | 'catatan') => {
-    setEditId(id); setEditType(type as any);
+    setEditId(id); setEditType(type);
     if (type === 'absen') {
       const r = absenRecords.find(r => r.id === id)!;
       setEditData({ status: r.status, periodeUjian: r.periodeUjian, date: r.date, mataPelajaran: r.mataPelajaran || '', jamUjian: r.jamUjian || '' });
@@ -190,7 +190,7 @@ export function RiwayatPage() {
                         <p className="text-sm font-semibold text-foreground">{r.studentName}</p>
                         <div className="flex gap-2 flex-wrap">
                           <input type="date" value={editData.date || ''} onChange={e => setEditData(p => ({ ...p, date: e.target.value }))} className="input-soft text-xs flex-1 min-w-[130px]" />
-                          <select value={editData.status || 'H'} onChange={e => setEditData(p => ({ ...p, status: e.target.value as any }))} className="input-soft text-xs flex-1">
+                          <select value={editData.status || 'H'} onChange={e => setEditData(p => ({ ...p, status: e.target.value as AbsenRecord['status'] }))} className="input-soft text-xs flex-1">
                             {['H','S','I','A'].map(s => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
                           </select>
                           <select value={editData.periodeUjian || 'Harian'} onChange={e => setEditData(p => ({ ...p, periodeUjian: e.target.value as PeriodeUjian }))} className="input-soft text-xs flex-1">
@@ -263,7 +263,7 @@ export function RiwayatPage() {
                             {periodeOptions.map(p => <option key={p} value={p}>{p}</option>)}
                           </select>
                         </div>
-                        <input value={(editData as any).tindakLanjut || ''} onChange={e => setEditData(p => ({ ...p, tindakLanjut: e.target.value }))} placeholder="Tindak lanjut (opsional)" className="input-soft text-xs" />
+                        <input value={editData.tindakLanjut || ''} onChange={e => setEditData(p => ({ ...p, tindakLanjut: e.target.value }))} placeholder="Tindak lanjut (opsional)" className="input-soft text-xs" />
                         <div className="flex gap-2 justify-end">
                           <button onClick={() => setEditId(null)} className="btn-soft btn-secondary-soft px-3 py-1.5 text-xs flex items-center gap-1"><X className="w-3 h-3"/>Batal</button>
                           <button onClick={saveEdit} className="btn-soft btn-primary-soft px-3 py-1.5 text-xs flex items-center gap-1"><Check className="w-3 h-3"/>Simpan</button>
