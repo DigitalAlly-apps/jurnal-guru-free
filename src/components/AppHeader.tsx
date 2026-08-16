@@ -1,6 +1,5 @@
-import { Moon, Sun, Menu, Info } from 'lucide-react';
+import { Moon, Sun, Info } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
-import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useDarkMode } from '@/hooks/use-dark-mode';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { InformasiPage } from '@/pages/InformasiPage';
@@ -46,8 +45,6 @@ export function AppHeader() {
       </div>
 
       <div className="relative z-10 flex shrink-0 items-center gap-2">
-        <SidebarTrigger className="app-icon-button" title="Buka menu"><Menu className="h-4 w-4" /></SidebarTrigger>
-
         {/* Theme toggle */}
         <button onClick={() => toggleDark()} className="app-icon-button" title={isDark ? 'Mode Terang' : 'Mode Gelap'}>
           {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}

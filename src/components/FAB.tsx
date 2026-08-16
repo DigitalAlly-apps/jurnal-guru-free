@@ -19,7 +19,7 @@ export function FAB() {
   const actions = actionsByTab[activeTab] ?? [];
   if (!actions.length || activeTab === 'setelan' || activeTab === 'auth') return null;
 
-  return <div className="fixed bottom-[calc(94px+env(safe-area-inset-bottom))] right-5 z-50 lg:bottom-7 lg:right-7">
+  return <div className="fixed bottom-[calc(102px+env(safe-area-inset-bottom))] right-5 z-50 lg:bottom-7 lg:right-7">
     {open && <button aria-label="Tutup aksi cepat" onClick={() => setOpen(false)} className="fixed inset-0 -z-10 bg-black/15 backdrop-blur-[1px]" />}
     {open && <div className="glass-panel-jurnal absolute bottom-16 right-0 w-64 rounded-3xl p-2 animate-in fade-in zoom-in-95 duration-200">
       <div className="px-3 pb-2 pt-1 text-[10px] font-black uppercase tracking-widest text-text-tertiary">Aksi cepat</div>
