@@ -1,14 +1,14 @@
-import { BarChart3, ChevronLeft, ChevronRight, Cloud, ClipboardCheck, Info, LayoutDashboard, NotebookPen, Settings, Users, X } from 'lucide-react';
+import { BookOpenCheck, BookUser, CalendarCheck2, ChevronLeft, ChevronRight, Cloud, House, Info, PanelsTopLeft, Settings, Users, X } from 'lucide-react';
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import type { TabId } from '@/types';
 import { InformasiPage } from '@/pages/InformasiPage';
 
-const items: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = [
-  { id: 'home', label: 'Beranda', icon: LayoutDashboard },
-  { id: 'absen', label: 'Absen', icon: ClipboardCheck },
-  { id: 'jurnal', label: 'Jurnal', icon: NotebookPen },
-  { id: 'laporan', label: 'Buku Induk', icon: BarChart3 },
+const items: { id: TabId; label: string; icon: typeof House }[] = [
+  { id: 'home', label: 'Beranda', icon: House },
+  { id: 'absen', label: 'Absen', icon: CalendarCheck2 },
+  { id: 'jurnal', label: 'Jurnal', icon: BookOpenCheck },
+  { id: 'laporan', label: 'Buku Induk', icon: BookUser },
 ];
 
 export function MobileBottomNav() {
@@ -38,7 +38,7 @@ export function MobileBottomNav() {
         })}
         <button onClick={() => { setShowInfo(false); setMoreOpen(true); }} className={`relative flex min-h-[54px] flex-1 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[11px] font-bold transition-all ${moreOpen ? 'text-primary-foreground' : 'text-text-tertiary hover:text-foreground'}`}>
           {moreOpen && <span className="absolute inset-1 rounded-2xl bg-gradient-to-br from-primary to-blue shadow-accent" />}
-          <span className="relative z-10 text-lg leading-none">•••</span>
+          <PanelsTopLeft className="relative z-10 h-5 w-5 opacity-75" strokeWidth={2.2} />
           <span className="relative z-10 whitespace-nowrap">Lainnya</span>
         </button>
       </nav>
