@@ -563,24 +563,6 @@
   .dark .student-alert-item { background: hsl(230 25% 10%); }
   .dark .student-alert-item:hover { background: hsl(230 25% 14%); }
 
-  /* FAB */
-  .fab-rich {
-    width: 56px; height: 56px;
-    border-radius: 20px;
-    background: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-hover)));
-    color: white;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: var(--shadow-accent);
-    cursor: pointer;
-    border: none;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-  .fab-rich:hover {
-    transform: translateY(-4px) scale(1.05);
-    box-shadow: 0 12px 30px hsl(var(--accent) / 0.4);
-  }
-  .fab-rich:active { transform: scale(0.9); }
-
   /* Section heading */
   .section-heading {
     font-size: 26px;

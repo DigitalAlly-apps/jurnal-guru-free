@@ -1,15 +1,13 @@
 import { useApp } from '@/context/AppContext';
 import { AppHeader } from './AppHeader';
 import { AppSidebar } from './AppSidebar';
-import { FAB } from './FAB';
 import { ToastContainer } from './ToastContainer';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { HomePage } from '@/pages/HomePage';
-import { AbsenPage } from '@/pages/AbsenPage';
 import { SiswaPage } from '@/pages/SiswaPage';
 import { SetelanPage } from '@/pages/SetelanPage';
-import { JurnalPage } from '@/pages/JurnalPage';
 import { LaporanRiwayatPage } from '@/pages/LaporanRiwayatPage';
+import { ActivityPage } from '@/pages/ActivityPage';
 import AuthPage from '@/pages/AuthPage';
 import { OnboardingWizard } from '@/components/OnboardingWizard';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
@@ -21,8 +19,7 @@ export function AppLayout() {
     switch (activeTab) {
       case 'home':       return <HomePage />;
       case 'siswa':      return <SiswaPage />;
-      case 'absen':      return <AbsenPage />;
-      case 'jurnal':     return <JurnalPage />;
+      case 'aktivitas':  return <ActivityPage />;
       case 'laporan':    return <LaporanRiwayatPage />;
       case 'setelan':    return <SetelanPage />;
       case 'auth':       return <AuthPage />;
@@ -41,7 +38,6 @@ export function AppLayout() {
             <div className="mx-auto w-full max-w-7xl">{renderPage()}</div>
           </main>
         </div>
-        <FAB />
         <MobileBottomNav />
         <ToastContainer />
       </div>

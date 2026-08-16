@@ -1,8 +1,6 @@
 import {
   LayoutDashboard,
-  ClipboardCheck,
-  AlertTriangle,
-  History,
+  Activity,
   BarChart3,
   Users,
   Settings,
@@ -26,10 +24,8 @@ import { PantauKelasLogo } from '@/components/PantauKelasLogo';
 
 const NAV_ITEMS: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'home',      label: 'Beranda',          icon: LayoutDashboard },
-  { id: 'siswa',     label: 'Data Kelas',       icon: Users },
-  { id: 'absen',     label: 'Absensi Harian',   icon: ClipboardCheck },
-  { id: 'jurnal',    label: 'Buku Jurnal Guru', icon: AlertTriangle },
-  { id: 'laporan',   label: 'Buku Induk',       icon: BarChart3 },
+  { id: 'aktivitas', label: 'Aktivitas',        icon: Activity },
+  { id: 'laporan',   label: 'Laporan',          icon: BarChart3 },
 ];
 
 export function AppSidebar() {
@@ -92,6 +88,12 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={() => handleNav('siswa')} isActive={activeTab === 'siswa'} tooltip="Data Kelas & Siswa">
+              <Users className="w-4 h-4" />
+              <span>Data Kelas & Siswa</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton onClick={() => handleNav('setelan')} isActive={activeTab === 'setelan'} tooltip="Setelan">
               <Settings className="w-4 h-4" />

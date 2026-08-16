@@ -1,4 +1,4 @@
-import { BookOpenCheck, BookUser, CalendarCheck2, ChevronLeft, ChevronRight, Cloud, House, Info, PanelsTopLeft, Settings, Users, X } from 'lucide-react';
+import { Activity, BarChart3, ChevronLeft, ChevronRight, Cloud, House, Info, PanelsTopLeft, Settings, Users, X } from 'lucide-react';
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import type { TabId } from '@/types';
@@ -6,9 +6,8 @@ import { InformasiPage } from '@/pages/InformasiPage';
 
 const items: { id: TabId; label: string; icon: typeof House }[] = [
   { id: 'home', label: 'Beranda', icon: House },
-  { id: 'absen', label: 'Absen', icon: CalendarCheck2 },
-  { id: 'jurnal', label: 'Jurnal', icon: BookOpenCheck },
-  { id: 'laporan', label: 'Buku Induk', icon: BookUser },
+  { id: 'aktivitas', label: 'Aktivitas', icon: Activity },
+  { id: 'laporan', label: 'Laporan', icon: BarChart3 },
 ];
 
 export function MobileBottomNav() {

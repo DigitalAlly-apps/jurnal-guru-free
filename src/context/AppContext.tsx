@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import type { Kelas, AbsenRecord, KasusRecord, CatatanRecord, TabId, SemesterConfig, BackupData, LiburDate, Jenjang, ConfirmedDate, PeriodeUjian } from '@/types';
+import type { Kelas, AbsenRecord, KasusRecord, CatatanRecord, TabId, ActivityView, ReportView, SemesterConfig, BackupData, LiburDate, Jenjang, ConfirmedDate, PeriodeUjian } from '@/types';
 import { storageGet, storageSet, storageRemove, initStorage } from '@/lib/storage';
 import { useAutoBackup } from '@/hooks/use-auto-backup';
 import { useSupabase } from './SupabaseContext';
@@ -46,7 +46,11 @@ interface AppState {
   lastBackupDate: string | null;
   setLastBackupDate: (d: string) => void;
   activeTab: TabId;
-  setActiveTab: (tab: TabId) => void;
+  setActiveTab: (tab: TabId | 'absen' | 'jurnal') => void;
+  activityView: ActivityView;
+  setActivityView: (view: ActivityView) => void;
+  reportView: ReportView;
+  setReportView: (view: ReportView) => void;
   activeKelas: string;
   setActiveKelas: (id: string) => void;
   activeStudentId: string | null;
@@ -95,7 +99,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ── Fix 1: All state loaded from localStorage ──────────────────────────────
   const [namaGuru, setNamaGuruRaw] = useState(() => ls<string>('jg_namaGuru', ''));
   const [lastBackupDate, setLastBackupRaw] = useState(() => ls<string | null>('jg_lastBackup', null));
-  const [activeTab, setActiveTabRaw] = useState<TabId>(() => ls<TabId>('jg_activeTab', 'home'));
+  const legacyTab = ls<string>('jg_activeTab', 'home');
+  const initialTab: TabId = legacyTab === 'absen' || legacyTab === 'jurnal' ? 'aktivitas' : legacyTab === 'siswa' ? 'siswa' : (['home', 'aktivitas', 'laporan', 'setelan', 'auth'].includes(legacyTab) ? legacyTab as TabId : 'home');
+  const [activeTab, setActiveTabRaw] = useState<TabId>(initialTab);
+  const [activityView, setActivityViewRaw] = useState<ActivityView>(() => ls<ActivityView>('jg_activityView', legacyTab === 'jurnal' ? 'jurnal' : 'absen'));
+  const [reportView, setReportViewRaw] = useState<ReportView>(() => ls<ReportView>('jg_reportView', 'pantauan'));
   const [activeKelas, setActiveKelasRaw] = useState<string>(() => ls<string>('jg_activeKelas', ''));
   const [activeStudentId, setActiveStudentId] = useState<string | null>(null);
   const [kelasList, setKelasListRaw] = useState<Kelas[]>(() => ls<Kelas[]>('jg_kelasList', []));
@@ -114,8 +122,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const setLastBackupDate = useCallback((v: string) => {
     setLastBackupRaw(v); save('jg_lastBackup', v);
   }, []);
-  const setActiveTab = useCallback((v: TabId) => {
+  const setActiveTab = useCallback((v: TabId | 'absen' | 'jurnal') => {
+    if (v === 'absen' || v === 'jurnal') {
+      setActivityViewRaw(v); save('jg_activityView', v);
+      setActiveTabRaw('aktivitas'); save('jg_activeTab', 'aktivitas');
+      return;
+    }
     setActiveTabRaw(v); save('jg_activeTab', v);
+  }, []);
+  const setActivityView = useCallback((v: ActivityView) => {
+    setActivityViewRaw(v); save('jg_activityView', v); setActiveTabRaw('aktivitas'); save('jg_activeTab', 'aktivitas');
+  }, []);
+  const setReportView = useCallback((v: ReportView) => {
+    setReportViewRaw(v); save('jg_reportView', v); setActiveTabRaw('laporan'); save('jg_activeTab', 'laporan');
   }, []);
   const setActiveKelas = useCallback((v: string) => {
     setActiveKelasRaw(v); save('jg_activeKelas', v);
@@ -607,6 +626,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       namaGuru, setNamaGuru,
       lastBackupDate, setLastBackupDate,
       activeTab, setActiveTab,
+      activityView, setActivityView,
+      reportView, setReportView,
       activeKelas, setActiveKelas,
       activeStudentId, setActiveStudentId,
       kelasList, setKelasList,

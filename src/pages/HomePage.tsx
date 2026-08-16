@@ -4,8 +4,8 @@ import { AbsensiGapWidget } from '@/components/AbsensiGapWidget';
 import { AlertCircle, AlertTriangle, ArrowRight, Bell, BookOpen, Calendar, CheckCircle2, ClipboardCheck, FileWarning, Users, UserX } from 'lucide-react';
 
 export function HomePage() {
-  const { kelasList, activeKelas, absenRecords, kasusRecords, liburDates, namaGuru, semester, lastBackupDate, setActiveTab, setActiveStudentId } = useApp();
-  const handleGoToAbsen = useCallback((date: string) => { sessionStorage.setItem('jg_absen_target_date', date); setActiveTab('absen'); }, [setActiveTab]);
+  const { kelasList, activeKelas, absenRecords, kasusRecords, liburDates, namaGuru, semester, lastBackupDate, setActiveTab, setActivityView, setActiveStudentId } = useApp();
+  const handleGoToAbsen = useCallback((date: string) => { sessionStorage.setItem('jg_absen_target_date', date); setActivityView('absen'); }, [setActivityView]);
   const kelas = kelasList.find(k => k.id === activeKelas);
   const jenjangAktif = kelas?.jenjang || 'SMP';
   const today = new Date().toISOString().split('T')[0];

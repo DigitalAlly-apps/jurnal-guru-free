@@ -1,50 +1,29 @@
-import { useState } from 'react';
 import { LaporanPage } from './LaporanPage';
 import { RiwayatPage } from './RiwayatPage';
 import { RekapUjianPage } from './RekapUjianPage';
-import { BarChart3, History, GraduationCap } from 'lucide-react';
+import { useApp } from '@/context/AppContext';
 
 export function LaporanRiwayatPage() {
-  const [tab, setTab] = useState<'laporan' | 'riwayat' | 'ujian'>('laporan');
+  const { reportView, setReportView } = useApp();
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex bg-bg-2 rounded-xl p-1 gap-1">
-        <button
-          onClick={() => setTab('laporan')}
-          className={`flex-1 py-3 text-sm flex items-center justify-center gap-2 font-bold rounded-lg transition-all ${
-            tab === 'laporan' ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary hover:text-text-secondary'
-          }`}
-        >
-          <BarChart3 className="w-4 h-4" />
-          <span className="hidden sm:inline">Pantauan</span>
-          <span className="sm:hidden">Pantauan</span>
-        </button>
-        <button
-          onClick={() => setTab('ujian')}
-          className={`flex-1 py-3 text-sm flex items-center justify-center gap-2 font-bold rounded-lg transition-all ${
-            tab === 'ujian' ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary hover:text-text-secondary'
-          }`}
-        >
-          <GraduationCap className="w-4 h-4" />
-          <span>Ujian</span>
-        </button>
-        <button
-          onClick={() => setTab('riwayat')}
-          className={`flex-1 py-3 text-sm flex items-center justify-center gap-2 font-bold rounded-lg transition-all ${
-            tab === 'riwayat' ? 'bg-surface shadow-soft text-foreground' : 'text-text-tertiary hover:text-text-secondary'
-          }`}
-        >
-          <History className="w-4 h-4" />
-          <span className="hidden sm:inline">Riwayat</span>
-          <span className="sm:hidden">Riwayat</span>
-        </button>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="label-upper">Buku induk</p>
+          <h1 className="mt-1 text-lg font-bold">Laporan kelas</h1>
+        </div>
+        <select value={reportView} onChange={event => setReportView(event.target.value as 'pantauan' | 'ujian' | 'riwayat')} className="input-soft w-auto min-w-[140px] py-2 text-xs font-bold" aria-label="Pilih laporan">
+          <option value="pantauan">Pantauan</option>
+          <option value="ujian">Ujian</option>
+          <option value="riwayat">Riwayat</option>
+        </select>
       </div>
 
       <div className="mt-1">
-        {tab === 'laporan' && <LaporanPage />}
-        {tab === 'ujian'   && <RekapUjianPage />}
-        {tab === 'riwayat' && <RiwayatPage />}
+        {reportView === 'pantauan' && <LaporanPage />}
+        {reportView === 'ujian'   && <RekapUjianPage />}
+        {reportView === 'riwayat' && <RiwayatPage />}
       </div>
     </div>
   );

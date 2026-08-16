@@ -8,8 +8,7 @@ import type { TabId } from '@/types';
 const TAB_TITLES: Record<TabId, string> = {
   home:      'Beranda',
   siswa:     'Data Kelas & Siswa',
-  absen:     'Absensi Harian',
-  jurnal:    'Buku Jurnal Guru',
+  aktivitas: 'Aktivitas',
   laporan:   'Buku Induk & Laporan',
   setelan:   'Setelan & Informasi',
   auth:      'Cloud Sync',
