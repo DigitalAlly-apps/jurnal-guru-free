@@ -644,7 +644,7 @@
   }
 }
 
-/* ── Jurnal Guru app shell: visual system shared by every page ─────────── */
+/* ── Pantau Kelas app shell: visual system shared by every page ────────── */
 @layer components {
   .font-display { font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.045em; }
   .app-frame-jurnal {

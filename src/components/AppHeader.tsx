@@ -40,8 +40,8 @@ export function AppHeader() {
           <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_14px_hsl(var(--accent))]" />
           <span className="text-[10px] font-black uppercase tracking-[.14em] text-text-tertiary">{tanggalStr}</span>
         </div>
-        <div className="font-display truncate text-[19px] font-bold leading-none text-foreground">{activeTab === 'home' ? (firstName || 'Jurnal Guru') : TAB_TITLES[activeTab]}</div>
-        <div className="mt-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-primary">{kelasName ? `Kelas ${kelasName}` : 'Jurnal Guru'}</div>
+        <div className="font-display truncate text-[19px] font-bold leading-none text-foreground">{activeTab === 'home' ? (firstName || 'Pantau Kelas') : TAB_TITLES[activeTab]}</div>
+        <div className="mt-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-primary">{kelasName ? `Kelas ${kelasName}` : 'Pantau Kelas'}</div>
       </div>
 
       <div className="relative z-10 flex shrink-0 items-center gap-2">

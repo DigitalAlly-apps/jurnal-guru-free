@@ -36,9 +36,9 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       manifest: {
-        name: "Jurnal Guru Pro",
-        short_name: "Jurnal Guru",
-        description: "Aplikasi jurnal kelas untuk guru Indonesia",
+        name: "Pantau Kelas",
+        short_name: "Pantau Kelas",
+        description: "Asisten wali kelas untuk absensi, pantauan siswa, dan tindak lanjut.",
         start_url: "/",
         display: "standalone",
         background_color: "#0cc0df",

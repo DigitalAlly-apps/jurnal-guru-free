@@ -1,5 +1,5 @@
 import { BookOpen, ClipboardCheck, Download, AlertTriangle, Info, ChevronRight } from 'lucide-react';
-import { JurnalGuruLogo } from '@/components/JurnalGuruLogo';
+import { PantauKelasLogo } from '@/components/PantauKelasLogo';
 
 const tutorials = [
   {
@@ -60,10 +60,10 @@ export function InformasiPage() {
     <div className="flex flex-col gap-4 max-w-4xl mx-auto w-full">
       {/* Logo & Intro */}
       <div className="bg-surface rounded-2xl shadow-soft p-6 flex flex-col items-center text-center">
-        <JurnalGuruLogo size={110} showText={true} className="mb-2" />
+        <PantauKelasLogo size={110} showText={true} className="mb-2" />
         <p className="text-sm text-text-secondary leading-relaxed mt-3 max-w-xs">
-          Jurnal Guru Pro adalah solusi administrasi digital mandiri dari Digital Ally untuk membantu guru
-          mendokumentasikan kegiatan belajar mengajar secara praktis, modern, dan aman di perangkat sendiri.
+          Pantau Kelas adalah asisten wali kelas dari Digital Ally untuk mencatat absensi, memantau perkembangan siswa,
+          dan menindaklanjuti kebutuhan kelas dengan praktis dan aman di perangkat sendiri.
         </p>
         <div className="mt-4 pt-4 border-t border-border w-full">
           <p className="text-xs text-text-tertiary font-semibold tracking-widest uppercase">Developer</p>
@@ -117,7 +117,7 @@ export function InformasiPage() {
         </div>
       </div>
 
-      <p className="text-[11px] text-text-tertiary text-center pb-2">Jurnal Guru Pro v5 — Digital Ally Project</p>
+      <p className="text-[11px] text-text-tertiary text-center pb-2">Pantau Kelas v5 — Digital Ally Project</p>
     </div>
   );
 }

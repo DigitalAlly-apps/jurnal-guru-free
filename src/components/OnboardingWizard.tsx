@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { School, User, CheckCircle, ArrowRight } from 'lucide-react';
-import { JurnalGuruLogo } from './JurnalGuruLogo';
+import { PantauKelasLogo } from './PantauKelasLogo';
 
 export function OnboardingWizard() {
   const { setNamaGuru, addKelas } = useApp();
@@ -38,8 +38,8 @@ export function OnboardingWizard() {
       <div className="bg-surface w-full max-w-sm rounded-2xl shadow-xl overflow-hidden flex flex-col scale-in">
           {/* Header */}
           <div className="p-6 pb-5 flex flex-col items-center text-center bg-accent-light border-b border-border">
-             <JurnalGuruLogo size={70} showText={false} />
-             <h2 className="text-xl font-bold mt-3 text-foreground">Jurnal Guru Pro</h2>
+             <PantauKelasLogo size={70} showText={false} />
+             <h2 className="text-xl font-bold mt-3 text-foreground">Pantau Kelas</h2>
              <p className="text-[13px] text-primary font-semibold mt-1 uppercase tracking-wider">Persiapan Awal</p>
           </div>
 

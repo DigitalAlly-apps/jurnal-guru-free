@@ -22,7 +22,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { JurnalGuruLogo } from '@/components/JurnalGuruLogo';
+import { PantauKelasLogo } from '@/components/PantauKelasLogo';
 
 const NAV_ITEMS: { id: TabId; label: string; icon: typeof LayoutDashboard }[] = [
   { id: 'home',      label: 'Beranda',          icon: LayoutDashboard },
@@ -49,9 +49,9 @@ export function AppSidebar() {
       <SidebarContent>
         <div className="flex items-center justify-center border-b border-sidebar-border/60 py-6 px-3">
           {collapsed ? (
-            <JurnalGuruLogo size={32} showText={false} />
+            <PantauKelasLogo size={32} showText={false} />
           ) : (
-            <JurnalGuruLogo size={112} showText={true} className="my-1" />
+            <PantauKelasLogo size={112} showText={true} className="my-1" />
           )}
         </div>
 
